@@ -1,6 +1,8 @@
+import { eq } from "drizzle-orm";
 import { createTransport } from "nodemailer";
 
-import type { Job } from "../db/schema";
+import { db } from "../db/client";
+import { managerInvitations, type Job } from "../db/schema";
 import type { JobPayload } from "./queue";
 
 export type ProcessableJob = Pick<Job, "id" | "type" | "payload">;
@@ -35,6 +37,13 @@ async function sendEmail(payload: JobPayload) {
     text,
     html,
   });
+
+  if (typeof payload.invitationId === "string") {
+    await db
+      .update(managerInvitations)
+      .set({ lastSentAt: new Date() })
+      .where(eq(managerInvitations.id, payload.invitationId));
+  }
 }
 
 async function ping() {

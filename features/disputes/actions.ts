@@ -260,6 +260,10 @@ export async function resolveDisputeAction(
     return { status: "error", code: "forbidden" };
   }
 
+  if (dispute.match.competition.status === "cancelled") {
+    return { status: "error", code: "competition_cancelled" };
+  }
+
   if (dispute.status !== "open") {
     return { status: "error", code: "already_closed" };
   }

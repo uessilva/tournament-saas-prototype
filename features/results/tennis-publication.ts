@@ -1,26 +1,18 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import type { db } from "@/lib/db/client";
 import {
   auditEvents,
   competitions,
-  groupEntries,
-  groups,
-  matchEntries,
   matches,
-  matchSlots,
   participantStatistics,
   resultVersions,
-  teams,
   tennisResults,
 } from "@/lib/db/schema";
-import { calculateTennisStandings } from "@/features/competitions/tennis-standings";
 import {
-  resolveKnockoutEntrants,
-  groupQualifierKey,
-  type AdvancementMatch,
-  type AdvancementSource,
-} from "@/features/matches/advancement";
+  planCompetitionAdvancement,
+  recalculateCompetition,
+} from "@/features/results/recalculation";
 import {
   validateTennisResult,
   type TennisResultInput,
@@ -69,73 +61,6 @@ async function currentTennisResult(tx: Transaction, matchId: string) {
     .limit(1);
 
   return row ?? null;
-}
-
-/**
- * A changed knockout winner cannot silently invalidate later published
- * results. Every match fed by this winner is inspected; if any has a current
- * result the correction is blocked so the bracket can be repaired in reverse
- * order first.
- */
-async function assertNoDownstreamResult(
-  tx: Transaction,
-  match: {
-    id: string;
-    stage: "group" | "knockout";
-    competitionId: string;
-  },
-  previousWinnerTeamId: string | null,
-  nextWinnerTeamId: string | null,
-) {
-  if (
-    match.stage !== "knockout" ||
-    !previousWinnerTeamId ||
-    !nextWinnerTeamId ||
-    previousWinnerTeamId === nextWinnerTeamId
-  ) {
-    return;
-  }
-
-  const slotRows = await tx
-    .select({
-      matchId: matchSlots.matchId,
-      sourceMatchId: matchSlots.sourceMatchId,
-    })
-    .from(matchSlots)
-    .innerJoin(matches, eq(matches.id, matchSlots.matchId))
-    .where(eq(matches.competitionId, match.competitionId));
-
-  const downstream = new Set<string>();
-  const queue = [match.id];
-  while (queue.length) {
-    const source = queue.shift()!;
-    for (const slot of slotRows) {
-      if (slot.sourceMatchId !== source || downstream.has(slot.matchId)) {
-        continue;
-      }
-      downstream.add(slot.matchId);
-      queue.push(slot.matchId);
-    }
-  }
-
-  if (!downstream.size) {
-    return;
-  }
-
-  const [confirmed] = await tx
-    .select({ matchId: resultVersions.matchId })
-    .from(resultVersions)
-    .where(
-      and(
-        inArray(resultVersions.matchId, [...downstream]),
-        eq(resultVersions.isCurrent, true),
-      ),
-    )
-    .limit(1);
-
-  if (confirmed) {
-    throw new TennisPublicationError("downstream_result_exists");
-  }
 }
 
 /**
@@ -200,12 +125,20 @@ export async function publishTennisResult(
     throw new TennisPublicationError("result_already_published");
   }
 
-  await assertNoDownstreamResult(
-    tx,
-    match,
-    current?.winnerTeamId ?? null,
-    validation.winnerTeamId,
-  );
+  if (validation.winnerTeamId && (!current || current.winnerTeamId !== validation.winnerTeamId)) {
+    const plan = await planCompetitionAdvancement(tx, match.competitionId, {
+      matchId: match.id,
+      winnerTeamId: validation.winnerTeamId,
+      tennis: {
+        winnerTeamId: validation.winnerTeamId,
+        sets: validation.sets,
+        isWalkover: Boolean(input.result.isWalkover),
+      },
+    });
+    if (plan.blockedMatchIds.length) {
+      throw new TennisPublicationError("downstream_result_exists");
+    }
+  }
 
   const [latest] = await tx
     .select({ version: resultVersions.version })
@@ -327,226 +260,11 @@ export async function publishTennisResult(
     },
   });
 
-  await recalculateTennisCompetition(tx, match.competitionId);
+  await recalculateCompetition(tx, match.competitionId);
 
   return {
     resultVersionId: version.id,
     version: version.version,
     winnerTeamId: validation.winnerTeamId,
   };
-}
-
-/**
- * Refreshes tennis group qualifiers and knockout entrants from current result
- * versions. Standings and leaders are read models derived from the same
- * versions, so no public cache needs a separate update.
- */
-export async function recalculateTennisCompetition(
-  tx: Transaction,
-  competitionId: string,
-): Promise<{ competitionId: string; updatedEntries: number }> {
-  const competition = await tx.query.competitions.findFirst({
-    where: eq(competitions.id, competitionId),
-  });
-
-  if (!competition || competition.sport !== "tennis") {
-    return { competitionId, updatedEntries: 0 };
-  }
-
-  const matchRows = await tx.query.matches.findMany({
-    where: eq(matches.competitionId, competitionId),
-    with: {
-      entries: true,
-      resultVersions: {
-        where: eq(resultVersions.isCurrent, true),
-        with: { tennisResult: true },
-      },
-    },
-  });
-
-  if (!matchRows.some((match) => match.stage === "knockout")) {
-    return { competitionId, updatedEntries: 0 };
-  }
-
-  const slotRows = await tx
-    .select({
-      matchId: matchSlots.matchId,
-      side: matchSlots.side,
-      sourceType: matchSlots.sourceType,
-      groupId: matchSlots.groupId,
-      groupPosition: matchSlots.groupPosition,
-      sourceMatchId: matchSlots.sourceMatchId,
-    })
-    .from(matchSlots)
-    .innerJoin(matches, eq(matches.id, matchSlots.matchId))
-    .where(eq(matches.competitionId, competitionId));
-
-  const groupRows = await tx
-    .select({ id: groups.id, name: groups.name, sortOrder: groups.sortOrder })
-    .from(groups)
-    .where(eq(groups.competitionId, competitionId));
-
-  const groupIds = groupRows.map((group) => group.id);
-  const entryRows = groupIds.length
-    ? await tx
-        .select({
-          groupId: groupEntries.groupId,
-          teamId: groupEntries.teamId,
-          teamName: teams.name,
-          seedPosition: groupEntries.seedPosition,
-        })
-        .from(groupEntries)
-        .innerJoin(teams, eq(groupEntries.teamId, teams.id))
-        .where(inArray(groupEntries.groupId, groupIds))
-    : [];
-
-  const groupQualifiers = new Map<string, string>();
-
-  for (const group of groupRows) {
-    const groupTeams = entryRows
-      .filter((entry) => entry.groupId === group.id)
-      .map((entry) => ({
-        teamId: entry.teamId,
-        teamName: entry.teamName,
-        seedPosition: entry.seedPosition,
-      }));
-
-    const standingsMatches = matchRows
-      .filter(
-        (match) =>
-          match.groupId === group.id &&
-          match.stage === "group" &&
-          match.resultVersions[0]?.tennisResult != null,
-      )
-      .map((match) => {
-        const result = match.resultVersions[0]!.tennisResult!;
-        return {
-          homeTeamId:
-            match.entries.find((entry) => entry.side === "home")?.teamId ?? "",
-          awayTeamId:
-            match.entries.find((entry) => entry.side === "away")?.teamId ?? "",
-          winnerTeamId: result.winnerTeamId,
-          sets: result.sets,
-          isWalkover: result.isWalkover,
-          isCancelled:
-            match.status === "cancelled" || match.cancelledAt != null,
-        };
-      })
-      .filter((match) => match.homeTeamId && match.awayTeamId);
-
-    const standings = calculateTennisStandings(
-      groupTeams,
-      standingsMatches,
-      competition.drawSeed ?? "",
-    );
-
-    standings
-      .slice(0, competition.qualifiersPerGroup)
-      .forEach((row, index) => {
-        groupQualifiers.set(
-          groupQualifierKey(group.id, index + 1),
-          row.teamId,
-        );
-      });
-  }
-
-  const matchWinners = new Map<string, string>();
-  for (const match of matchRows) {
-    if (
-      match.stage !== "knockout" ||
-      match.isBye ||
-      match.status === "cancelled" ||
-      match.cancelledAt != null
-    ) {
-      continue;
-    }
-    const winner = match.resultVersions[0]?.tennisResult?.winnerTeamId;
-    if (winner) {
-      matchWinners.set(match.id, winner);
-    }
-  }
-
-  const advancementMatches: AdvancementMatch[] = matchRows.map((match) => {
-    const sourceFor = (side: "home" | "away"): AdvancementSource | null => {
-      const slot = slotRows.find(
-        (candidate) => candidate.matchId === match.id && candidate.side === side,
-      );
-      if (!slot) {
-        // Single-elimination first-round sides are stored as direct entries.
-        const teamId = match.entries.find((entry) => entry.side === side)?.teamId;
-        return teamId ? { type: "entrant", teamId } : null;
-      }
-      if (slot.sourceType === "group_qualifier" && slot.groupId) {
-        return {
-          type: "group_qualifier",
-          groupId: slot.groupId,
-          groupPosition: slot.groupPosition ?? 1,
-        };
-      }
-      if (slot.sourceType === "match_winner" && slot.sourceMatchId) {
-        return {
-          type: "match_winner",
-          sourceMatchId: slot.sourceMatchId,
-        };
-      }
-      return { type: "bye" };
-    };
-
-    return {
-      id: match.id,
-      stage: match.stage,
-      roundNumber: match.roundNumber,
-      bracketSlot: match.bracketSlot,
-      isBye: match.isBye,
-      home: sourceFor("home"),
-      away: sourceFor("away"),
-    };
-  });
-
-  const resolved = resolveKnockoutEntrants(advancementMatches, {
-    groupQualifiers,
-    matchWinners,
-    resolveByes: true,
-  });
-
-  const publishedKnockoutIds = new Set(
-    matchRows
-      .filter(
-        (match) =>
-          match.stage === "knockout" &&
-          match.resultVersions.some((version) => version.isCurrent),
-      )
-      .map((match) => match.id),
-  );
-
-  const editableTargets = matchRows
-    .filter(
-      (match) =>
-        match.stage === "knockout" &&
-        !match.isBye &&
-        !publishedKnockoutIds.has(match.id),
-    )
-    .map((match) => match.id);
-
-  if (!editableTargets.length) {
-    return { competitionId, updatedEntries: 0 };
-  }
-
-  await tx
-    .delete(matchEntries)
-    .where(inArray(matchEntries.matchId, editableTargets));
-
-  const values = resolved.entries
-    .filter((entry) => editableTargets.includes(entry.matchId))
-    .map((entry) => ({
-      matchId: entry.matchId,
-      side: entry.side,
-      teamId: entry.teamId,
-    }));
-
-  if (values.length) {
-    await tx.insert(matchEntries).values(values);
-  }
-
-  return { competitionId, updatedEntries: values.length };
 }

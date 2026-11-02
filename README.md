@@ -11,7 +11,7 @@ This is throwaway demonstration software. There is deliberately no automated tes
 `pnpm db:reset` restores the same starting point on every run:
 
 - **Under-12 Football** — 8 Teams, 96 Participants, open registration, 6 accepted Team Managers, 2 pending email invitations, and one reusable Team-scoped share link. The seeded draw is previewable immediately, but the tournament is **not generated** until the Owner closes registration. This is intentional: the guided path needs the draw step.
-- **Tennis Open** — 8 individual entrants, each represented by a one-Participant Team. Two groups, 12 group fixtures, 8 published results and aces/double-fault leaders are ready to explore.
+- **Tennis Open** — 8 individual entrants, each represented by a one-Participant Team. Two groups, 12 group fixtures (8 published), semifinal/final knockout matches, and aces/double-fault leaders are ready to explore. The final stays TBD until the semifinals are published.
 - **Venues** — Campo Principal, Campo 2, Quadra Central and Quadra 2.
 - **Event** — `Summer Cup 2026`, `America/Sao_Paulo`, Parque Esportivo do Sol, São Paulo. Event and fixture dates are relative to the reset time so the demo always feels current.
 - **Accounts** — one Owner and six accepted Team Managers. All people, emails, teams and results are fictitious.

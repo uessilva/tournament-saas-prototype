@@ -68,6 +68,34 @@ export function CompetitionPage({
         })
       : "—";
 
+  const bracketBlock = data.bracket.length ? (
+    <div className="space-y-5">
+      {bracketRounds.map((roundNumber) => (
+        <div key={roundNumber}>
+          <p className="eyebrow text-muted">
+            {knockoutRoundLabel(
+              roundNumber,
+              data.bracket[0]?.knockoutRoundCount ?? 1,
+              t,
+            )}
+          </p>
+          <div className="mt-1">
+            {data.bracket
+              .filter((match) => match.roundNumber === roundNumber)
+              .map((match) => (
+                <MatchRow
+                  key={match.id}
+                  match={match}
+                  timezone={data.event.timezone}
+                  eventSlug={data.event.slug}
+                />
+              ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : null;
+
   return (
     <div className="min-h-screen">
       <SiteHeader
@@ -263,35 +291,7 @@ export function CompetitionPage({
               ) : null}
 
               {isElimination ? (
-                data.bracket.length ? (
-                  <div className="mt-6 space-y-5">
-                    {bracketRounds.map((roundNumber) => (
-                      <div key={roundNumber}>
-                        <p className="eyebrow text-muted">
-                          {knockoutRoundLabel(
-                            roundNumber,
-                            data.bracket[0]?.knockoutRoundCount ?? 1,
-                            t,
-                          )}
-                        </p>
-                        <div className="mt-1">
-                          {data.bracket
-                            .filter(
-                              (match) => match.roundNumber === roundNumber,
-                            )
-                            .map((match) => (
-                              <MatchRow
-                                key={match.id}
-                                match={match}
-                                timezone={data.event.timezone}
-                                eventSlug={data.event.slug}
-                              />
-                            ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
+                bracketBlock ?? (
                   <div className="mt-6 rounded-2xl bg-cream p-5">
                     <p className="text-sm font-bold">
                       {competition.drawGeneratedAt
@@ -306,18 +306,47 @@ export function CompetitionPage({
                   </div>
                 )
               ) : data.groups.length ? (
-                <div className="mt-6 grid gap-8">
-                  {data.groups.map((group) => (
-                    <StandingsTable
-                      key={group.id}
-                      group={group}
-                      sport={competition.sport}
-                      qualifiersPerGroup={
-                        isGroups ? competition.qualifiersPerGroup : 0
-                      }
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="mt-6 grid gap-8">
+                    {data.groups.map((group) => (
+                      <StandingsTable
+                        key={group.id}
+                        group={group}
+                        sport={competition.sport}
+                        qualifiersPerGroup={
+                          isGroups ? competition.qualifiersPerGroup : 0
+                        }
+                      />
+                    ))}
+                  </div>
+                  {isGroups ? (
+                    <div className="mt-8 border-t border-line pt-6">
+                      <p className="eyebrow text-green">
+                        {t("competition.knockout")}
+                      </p>
+                      <h3 className="display-title mt-2 text-2xl">
+                        {t("competition.bracketTitle")}
+                      </h3>
+                      <p className="mt-1 text-xs leading-5 text-muted">
+                        {t("competition.bracketBody")}
+                      </p>
+                      <div className="mt-4">
+                        {bracketBlock ?? (
+                          <div className="rounded-2xl bg-cream p-5">
+                            <p className="text-sm font-bold">
+                              {t("competition.bracketPendingTitle")}
+                            </p>
+                            <p className="mt-1.5 text-sm leading-6 text-muted">
+                              {t("competition.bracketPendingBody")}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              ) : bracketBlock ? (
+                <div className="mt-6">{bracketBlock}</div>
               ) : (
                 <div className="mt-6 rounded-2xl bg-cream p-5">
                   <p className="text-sm font-bold">

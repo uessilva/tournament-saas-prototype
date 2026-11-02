@@ -63,6 +63,67 @@ function TieBreakExplanation({
   );
 }
 
+function KnockoutBracket({
+  competition,
+  eventSlug,
+  timezone,
+}: {
+  competition: StandingsPageData["standings"][number];
+  eventSlug: string;
+  timezone: string;
+}) {
+  const { t } = useI18n();
+
+  if (!competition.fixtures.length) {
+    return (
+      <div className="mt-5 rounded-2xl bg-cream p-5">
+        <p className="text-sm font-bold">
+          {competition.drawGeneratedAt
+            ? t("standings.noBracketTitle")
+            : t("standings.pendingTitle")}
+        </p>
+        <p className="mt-1.5 text-sm leading-6 text-muted">
+          {competition.drawGeneratedAt
+            ? t("standings.noBracketBody")
+            : t("standings.pendingBody")}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-5 flex flex-wrap items-start gap-5">
+      {[
+        ...new Set(
+          competition.fixtures.map((match) => match.roundNumber),
+        ),
+      ]
+        .sort((a, b) => a - b)
+        .map((roundNumber) => (
+          <div key={roundNumber} className="min-w-[260px] flex-1">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted">
+              {knockoutRoundLabel(
+                roundNumber,
+                competition.fixtures[0]?.knockoutRoundCount ?? 1,
+                t,
+              )}
+            </p>
+            {competition.fixtures
+              .filter((match) => match.roundNumber === roundNumber)
+              .map((match) => (
+                <MatchRow
+                  key={match.id}
+                  match={match}
+                  timezone={timezone}
+                  eventSlug={eventSlug}
+                />
+              ))}
+          </div>
+        ))}
+    </div>
+  );
+}
+
 export function StandingsPage({
   data,
   signedIn,
@@ -200,59 +261,11 @@ export function StandingsPage({
                 </div>
 
                 {competition.format === "single_elimination" ? (
-                  competition.fixtures.length ? (
-                    <div className="mt-5 flex flex-wrap items-start gap-5">
-                      {[
-                        ...new Set(
-                          competition.fixtures.map(
-                            (match) => match.roundNumber,
-                          ),
-                        ),
-                      ]
-                        .sort((a, b) => a - b)
-                        .map((roundNumber) => (
-                          <div
-                            key={roundNumber}
-                            className="min-w-[260px] flex-1"
-                          >
-                            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted">
-                              {knockoutRoundLabel(
-                                roundNumber,
-                                competition.fixtures[0]
-                                  ?.knockoutRoundCount ?? 1,
-                                t,
-                              )}
-                            </p>
-                            {competition.fixtures
-                              .filter(
-                                (match) =>
-                                  match.roundNumber === roundNumber,
-                              )
-                              .map((match) => (
-                                <MatchRow
-                                  key={match.id}
-                                  match={match}
-                                  timezone={data.event.timezone}
-                                  eventSlug={data.event.slug}
-                                />
-                              ))}
-                          </div>
-                        ))}
-                    </div>
-                  ) : (
-                    <div className="mt-5 rounded-2xl bg-cream p-5">
-                      <p className="text-sm font-bold">
-                        {competition.drawGeneratedAt
-                          ? t("standings.noBracketTitle")
-                          : t("standings.pendingTitle")}
-                      </p>
-                      <p className="mt-1.5 text-sm leading-6 text-muted">
-                        {competition.drawGeneratedAt
-                          ? t("standings.noBracketBody")
-                          : t("standings.pendingBody")}
-                      </p>
-                    </div>
-                  )
+                  <KnockoutBracket
+                    competition={competition}
+                    eventSlug={data.event.slug}
+                    timezone={data.event.timezone}
+                  />
                 ) : (
                   <>
                     <TieBreakExplanation
@@ -289,6 +302,19 @@ export function StandingsPage({
                         </p>
                       </div>
                     )}
+
+                    {competition.format === "groups_knockout" ? (
+                      <div className="mt-7 border-t border-line pt-5">
+                        <h3 className="display-title text-2xl">
+                          {t("competition.bracketTitle")}
+                        </h3>
+                        <KnockoutBracket
+                          competition={competition}
+                          eventSlug={data.event.slug}
+                          timezone={data.event.timezone}
+                        />
+                      </div>
+                    ) : null}
                   </>
                 )}
               </section>

@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 
 import { AppTopBar } from "@/components/app-top-bar";
 import { MatchCancellationPanel } from "@/components/admin/match-cancellation-panel";
+import { ActionFeedback } from "@/components/ui/action-feedback";
+import { SubmitButton } from "@/components/ui/submit-button";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
   ArrowUpRightIcon,
   CalendarIcon,
-  CheckIcon,
   ClockIcon,
   MapPinIcon,
   PlusIcon,
@@ -48,74 +48,29 @@ const fieldErrorKeys: Record<string, DictionaryKey> = {
   match_cancelled: "matchCancel.cancelledTitle",
 };
 
-function SubmitButton({
-  label,
-  pendingLabel,
-  tone = "primary",
-  name,
-  value,
-  disabled = false,
-}: {
-  label: string;
-  pendingLabel: string;
-  tone?: "primary" | "quiet";
-  name?: string;
-  value?: string;
-  disabled?: boolean;
-}) {
-  const { pending } = useFormStatus();
-  const className =
-    tone === "quiet"
-      ? "inline-flex items-center justify-center gap-1.5 rounded-full border border-line bg-white px-3 py-2 text-[11px] font-extrabold text-muted transition-colors hover:border-green hover:text-green disabled:cursor-not-allowed disabled:opacity-60"
-      : "inline-flex items-center justify-center gap-1.5 rounded-xl bg-green px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green-deep disabled:cursor-not-allowed disabled:opacity-60";
-
-  return (
-    <button
-      type="submit"
-      name={name}
-      value={value}
-      disabled={pending || disabled}
-      className={className}
-    >
-      {pending ? pendingLabel : label}
-      {pending ? null : name === "intent" ? null : (
-        <ArrowRightIcon className="size-3.5" />
-      )}
-    </button>
-  );
-}
-
 function Feedback({ state }: { state: ScheduleActionState }) {
   const { t } = useI18n();
-  if (state.status === "idle") {
-    return null;
-  }
-
-  if (state.status === "error") {
-    const key = fieldErrorKeys[state.code ?? ""];
-    return (
-      <p role="alert" className="mt-2 text-xs font-bold text-red-700">
-        {t(key ?? "schedule.actionFailed")}
-      </p>
-    );
-  }
-
-  const keys: Partial<Record<string, DictionaryKey>> = {
-    venue_created: "schedule.venueCreated",
-    match_scheduled: "schedule.saved",
-    match_unscheduled: "schedule.cleared",
-    timezone_updated: "schedule.timezoneSaved",
-    timezone_unchanged: "schedule.timezoneUnchanged",
-  };
+  const keys: Partial<Record<string, DictionaryKey>> =
+    state.status === "error"
+      ? fieldErrorKeys
+      : {
+          venue_created: "schedule.venueCreated",
+          match_scheduled: "schedule.saved",
+          match_unscheduled: "schedule.cleared",
+          timezone_updated: "schedule.timezoneSaved",
+          timezone_unchanged: "schedule.timezoneUnchanged",
+        };
 
   return (
-    <p
-      role="status"
-      className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-soft-green px-2.5 py-1.5 text-[11px] font-extrabold text-green"
-    >
-      <CheckIcon className="size-3.5" />
-      {t(keys[state.code ?? ""] ?? "schedule.saved")}
-    </p>
+    <ActionFeedback
+      status={state.status}
+      message={t(
+        keys[state.code ?? ""] ??
+          (state.status === "error"
+            ? "schedule.actionFailed"
+            : "schedule.saved"),
+      )}
+    />
   );
 }
 
@@ -429,6 +384,7 @@ function MatchScheduleCard({
               tone="quiet"
               name="intent"
               value="clear"
+              icon={false}
               disabled={formLocked}
             />
           ) : null}

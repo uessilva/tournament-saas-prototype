@@ -47,6 +47,9 @@ export type PublicMatch = {
   homeScore: string | null;
   awayScore: string | null;
   scoreDetail: string | null;
+  /** Football shootout score, rendered with the active locale dictionary. */
+  penaltyHome: number | null;
+  penaltyAway: number | null;
   winnerTeamId: string | null;
   isWalkover: boolean;
   isCancelled: boolean;

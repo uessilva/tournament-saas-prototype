@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 
-import { ArrowRightIcon, CheckIcon, RefreshIcon } from "@/components/icons";
+import { CheckIcon, RefreshIcon } from "@/components/icons";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { useI18n } from "@/lib/i18n/client";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type { ManagerScoresheetSummary } from "@/features/matches/manager-queries";
@@ -13,20 +13,6 @@ import {
 } from "@/features/scoresheets/actions";
 
 const EMPTY: ScoresheetActionState = { status: "idle" };
-
-function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="inline-flex items-center justify-center gap-1.5 rounded-full bg-green px-3 py-1.5 text-[11px] font-extrabold text-white transition-colors hover:bg-green-deep disabled:cursor-wait disabled:opacity-60"
-    >
-      {pending ? pendingLabel : label}
-      {pending ? null : <ArrowRightIcon className="size-3" />}
-    </button>
-  );
-}
 
 function statusTone(status: string) {
   if (status === "confirmed") return "bg-soft-green text-green";
@@ -144,6 +130,8 @@ export function ManagerScoresheetActions({
           <SubmitButton
             label={t("manageScoresheet.upload")}
             pendingLabel={t("manageScoresheet.uploading")}
+            tone="pillGreen"
+            arrowClassName="size-3"
           />
         </form>
       ) : null}

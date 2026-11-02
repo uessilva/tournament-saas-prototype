@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 
-import { CheckIcon, LockIcon, RefreshIcon } from "@/components/icons";
+import { LockIcon, RefreshIcon } from "@/components/icons";
+import { ActionFeedback } from "@/components/ui/action-feedback";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { useI18n } from "@/lib/i18n/client";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import {
@@ -14,59 +15,20 @@ import {
 
 const EMPTY: MatchCancellationActionState = { status: "idle" };
 
-function SubmitButton({
-  label,
-  pendingLabel,
-  tone = "danger",
-  disabled = false,
-}: {
-  label: string;
-  pendingLabel: string;
-  tone?: "danger" | "quiet";
-  disabled?: boolean;
-}) {
-  const { pending } = useFormStatus();
-  const className =
-    tone === "quiet"
-      ? "inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-xs font-extrabold text-ink transition-colors hover:border-green hover:text-green disabled:cursor-not-allowed disabled:opacity-60"
-      : "inline-flex items-center justify-center gap-2 rounded-xl bg-clay px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60";
-
-  return (
-    <button type="submit" disabled={pending || disabled} className={className}>
-      {pending ? pendingLabel : label}
-    </button>
-  );
-}
-
 function Feedback({ state }: { state: MatchCancellationActionState }) {
   const { t } = useI18n();
-  if (state.status === "idle") {
-    return null;
-  }
-
-  if (state.status === "error") {
-    return (
-      <p role="alert" className="mt-2 text-xs font-bold text-red-700">
-        {t(
+  const message =
+    state.status === "error"
+      ? t(
           `matchCancel.error.${state.code ?? "action_failed"}` as DictionaryKey,
-        )}
-      </p>
-    );
-  }
+        )
+      : t(
+          state.code === "match_restored"
+            ? "matchCancel.restoredNotice"
+            : "matchCancel.cancelledNotice",
+        );
 
-  return (
-    <p
-      role="status"
-      className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-soft-green px-2.5 py-1.5 text-[11px] font-extrabold text-green"
-    >
-      <CheckIcon className="size-3.5" />
-      {t(
-        state.code === "match_restored"
-          ? "matchCancel.restoredNotice"
-          : "matchCancel.cancelledNotice",
-      )}
-    </p>
-  );
+  return <ActionFeedback status={state.status} message={message} />;
 }
 
 export function MatchCancellationPanel({
@@ -143,7 +105,8 @@ export function MatchCancellationPanel({
             <SubmitButton
               label={t("matchCancel.restoreAction")}
               pendingLabel={t("matchCancel.restoring")}
-              tone="quiet"
+              tone="quietInk"
+              icon={false}
               disabled={competitionCancelled}
             />
           </form>
@@ -221,6 +184,8 @@ export function MatchCancellationPanel({
             <SubmitButton
               label={t("matchCancel.cancelAction")}
               pendingLabel={t("matchCancel.cancelling")}
+              tone="danger"
+              icon={false}
             />
           </form>
           <Feedback state={cancelState} />

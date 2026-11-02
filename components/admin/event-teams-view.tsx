@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import { useActionState, useCallback, useEffect, useState } from "react";
-import { useFormStatus } from "react-dom";
 
 import { AppTopBar } from "@/components/app-top-bar";
 import {
   ArrowLeftIcon,
-  ArrowRightIcon,
   ArrowUpRightIcon,
   CheckIcon,
   ClockIcon,
@@ -16,6 +14,7 @@ import {
   RefreshIcon,
 } from "@/components/icons";
 import { SportTag } from "@/components/public/badges";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { useI18n } from "@/lib/i18n/client";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type { DemoAccount } from "@/lib/auth/guards";
@@ -25,6 +24,7 @@ import {
   createShareLinkAction,
   removeManagerAction,
   replaceInvitationAction,
+  retryEmailJobAction,
   revokeInvitationAction,
   type AccessActionState,
 } from "@/features/teams/access-actions";
@@ -35,31 +35,6 @@ import type {
 } from "@/features/teams/types";
 
 const EMPTY_STATE: AccessActionState = { status: "idle" };
-
-function SubmitButton({
-  label,
-  pendingLabel,
-  tone = "primary",
-}: {
-  label: string;
-  pendingLabel: string;
-  tone?: "primary" | "dark" | "quiet";
-}) {
-  const { pending } = useFormStatus();
-  const className =
-    tone === "dark"
-      ? "inline-flex items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green disabled:cursor-wait disabled:opacity-70"
-      : tone === "quiet"
-        ? "inline-flex items-center justify-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-[11px] font-extrabold text-muted transition-colors hover:border-green hover:text-green disabled:cursor-wait disabled:opacity-60"
-        : "inline-flex items-center justify-center gap-2 rounded-xl bg-green px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green-deep disabled:cursor-wait disabled:opacity-70";
-
-  return (
-    <button type="submit" disabled={pending} className={className}>
-      {pending ? pendingLabel : label}
-      {pending ? null : <ArrowRightIcon className="size-3.5" />}
-    </button>
-  );
-}
 
 function TeamCheckboxes({
   teams,
@@ -322,7 +297,11 @@ function InvitationRow({
 
       {state.status === "error" ? (
         <p role="alert" className="mt-2 text-xs font-bold text-red-700">
-          {t("teamsAdmin.actionFailed")}
+          {t(
+            state.code === "competition_cancelled"
+              ? "teamsAdmin.competitionCancelled"
+              : "teamsAdmin.actionFailed",
+          )}
         </p>
       ) : null}
     </article>
@@ -427,15 +406,21 @@ export function EventTeamsView({
       ? "teamsAdmin.revokedNotice"
       : notice === "manager-removed"
         ? "teamsAdmin.managerRemovedNotice"
-        : null;
+        : notice === "email-retried"
+          ? "teamsAdmin.emailRetriedNotice"
+          : null;
   const errorKey: DictionaryKey | null =
     error === "invitation-not-found"
       ? "teamsAdmin.invitationNotFound"
       : error === "team-not-found"
         ? "teamsAdmin.teamNotFound"
-        : error
-          ? "teamsAdmin.actionFailed"
-          : null;
+        : error === "competition-cancelled"
+          ? "teamsAdmin.competitionCancelled"
+          : error === "email-retry-failed"
+            ? "teamsAdmin.emailRetryFailed"
+            : error
+              ? "teamsAdmin.actionFailed"
+              : null;
 
   return (
     <div className="min-h-screen bg-[#f2f1ea]">
@@ -649,7 +634,9 @@ export function EventTeamsView({
                         ? "teamsAdmin.teamRequired"
                         : emailState.code === "teams_invalid"
                           ? "teamsAdmin.teamsInvalid"
-                          : "teamsAdmin.actionFailed") as DictionaryKey,
+                          : emailState.code === "competition_cancelled"
+                            ? "teamsAdmin.competitionCancelled"
+                            : "teamsAdmin.actionFailed") as DictionaryKey,
                     )}
                   </p>
                 ) : null}
@@ -691,7 +678,9 @@ export function EventTeamsView({
                     {t(
                       linkState.code === "teams_invalid"
                         ? "teamsAdmin.teamsInvalid"
-                        : "teamsAdmin.teamRequired",
+                        : linkState.code === "competition_cancelled"
+                          ? "teamsAdmin.competitionCancelled"
+                          : "teamsAdmin.teamRequired",
                     )}
                   </p>
                 ) : null}
@@ -832,6 +821,59 @@ export function EventTeamsView({
             ) : null}
           </div>
         </section>
+
+        {data.failedEmailJobs.length ? (
+          <section className="surface mt-5 border-clay/40 p-5 sm:p-6">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <p className="eyebrow text-clay">
+                  {t("teamsAdmin.failedEmailsEyebrow")}
+                </p>
+                <h2 className="display-title mt-2 text-3xl">
+                  {t("teamsAdmin.failedEmailsTitle")}
+                </h2>
+              </div>
+              <span className="text-xs font-extrabold text-muted">
+                {data.failedEmailJobs.length}
+              </span>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              {t("teamsAdmin.failedEmailsBody")}
+            </p>
+            <div className="mt-4 space-y-2.5">
+              {data.failedEmailJobs.map((job) => (
+                <article
+                  key={job.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-paper/50 p-4"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-extrabold">
+                      {job.recipient ?? "—"}
+                    </p>
+                    <p className="mt-0.5 text-[11px] font-medium text-muted">
+                      {formatDateTime(job.createdAt, data.event.timezone)} ·{" "}
+                      {t("review.attempts")} {job.attempts}
+                    </p>
+                    {job.lastError ? (
+                      <p role="alert" className="mt-1 text-xs font-bold text-red-700">
+                        {job.lastError}
+                      </p>
+                    ) : null}
+                  </div>
+                  <form action={retryEmailJobAction}>
+                    <input type="hidden" name="eventId" value={data.event.id} />
+                    <input type="hidden" name="jobId" value={job.id} />
+                    <SubmitButton
+                      label={t("teamsAdmin.retryEmail")}
+                      pendingLabel={t("common.loading")}
+                      tone="quiet"
+                    />
+                  </form>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="surface mt-5 p-5 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-2">

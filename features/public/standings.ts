@@ -59,12 +59,13 @@ export async function getStandingsPage(
       drawGeneratedAt: competition.drawGeneratedAt?.toISOString() ?? null,
       groups: await loadCompetitionStandings(competition),
       fixtures:
-        competition.format === "single_elimination"
+        competition.format !== "round_robin"
           ? (
               await publicMatchQuery()
                 .where(
                   and(
                     eq(matches.competitionId, competition.id),
+                    eq(matches.stage, "knockout"),
                     eq(matches.isBye, false),
                   ),
                 )

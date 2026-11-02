@@ -11,26 +11,54 @@ import {
   matches,
   resultVersions,
   teams,
+  tennisResults,
+  type TennisSetScore,
 } from "@/lib/db/schema";
 import { calculateFootballStandings } from "@/features/competitions/football-standings";
+import { calculateTennisStandings } from "@/features/competitions/tennis-standings";
 import {
   groupQualifierKey,
   resolveKnockoutEntrants,
   type AdvancementMatch,
   type AdvancementSource,
 } from "@/features/matches/advancement";
+import { footballWinnerTeamId } from "@/features/results/winner";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-export type ProposedFootballResult = {
-  matchId: string;
+type FootballScoreSnapshot = {
+  homeScore: number;
+  awayScore: number;
+  isWalkover: boolean;
+  walkoverWinnerTeamId: string | null;
+  penaltyHome: number | null;
+  penaltyAway: number | null;
+};
+
+type TennisScoreSnapshot = {
+  winnerTeamId: string;
+  sets: TennisSetScore[];
+  isWalkover: boolean;
+};
+
+export type FootballResultScore = {
   homeScore: number;
   awayScore: number;
   isWalkover: boolean;
   walkoverWinnerSide?: "home" | "away" | null;
   penaltyHome?: number | null;
   penaltyAway?: number | null;
+};
+
+export type ProposedCompetitionResult = {
+  matchId: string;
   winnerTeamId: string | null;
+  football?: FootballResultScore;
+  tennis?: {
+    winnerTeamId: string;
+    sets: TennisSetScore[];
+    isWalkover: boolean;
+  };
 };
 
 type MatchRow = {
@@ -48,45 +76,10 @@ type ResultSnapshot = {
   matchId: string;
   homeTeamId: string;
   awayTeamId: string;
-  homeScore: number;
-  awayScore: number;
-  isWalkover: boolean;
-  walkoverWinnerTeamId: string | null;
-  penaltyHome: number | null;
-  penaltyAway: number | null;
+  football: FootballScoreSnapshot | null;
+  tennis: TennisScoreSnapshot | null;
   winnerTeamId: string | null;
 };
-
-function winnerFromResult(result: {
-  homeTeamId: string;
-  awayTeamId: string;
-  homeScore: number;
-  awayScore: number;
-  isWalkover: boolean;
-  walkoverWinnerTeamId: string | null;
-  penaltyHome: number | null;
-  penaltyAway: number | null;
-}) {
-  if (result.isWalkover) {
-    return result.walkoverWinnerTeamId;
-  }
-  if (
-    result.penaltyHome != null &&
-    result.penaltyAway != null &&
-    result.penaltyHome !== result.penaltyAway
-  ) {
-    return result.penaltyHome > result.penaltyAway
-      ? result.homeTeamId
-      : result.awayTeamId;
-  }
-  if (result.homeScore > result.awayScore) {
-    return result.homeTeamId;
-  }
-  if (result.awayScore > result.homeScore) {
-    return result.awayTeamId;
-  }
-  return null;
-}
 
 export type CompetitionAdvancementPlan = {
   matches: MatchRow[];
@@ -115,12 +108,13 @@ export type CompetitionAdvancementPlan = {
 export async function planCompetitionAdvancement(
   tx: Transaction,
   competitionId: string,
-  proposed?: ProposedFootballResult,
+  proposed?: ProposedCompetitionResult,
   removedMatchId?: string,
 ): Promise<CompetitionAdvancementPlan> {
   const [competition] = await tx
     .select({
       id: competitions.id,
+      sport: competitions.sport,
       qualifiersPerGroup: competitions.qualifiersPerGroup,
       drawSeed: competitions.drawSeed,
     })
@@ -204,18 +198,25 @@ export async function planCompetitionAdvancement(
   const resultRows = await tx
     .select({
       matchId: resultVersions.matchId,
-      homeScore: footballResults.homeScore,
-      awayScore: footballResults.awayScore,
-      isWalkover: footballResults.isWalkover,
-      walkoverWinnerTeamId: footballResults.walkoverWinnerTeamId,
-      penaltyHome: footballResults.penaltyHome,
-      penaltyAway: footballResults.penaltyAway,
+      footballHomeScore: footballResults.homeScore,
+      footballAwayScore: footballResults.awayScore,
+      footballIsWalkover: footballResults.isWalkover,
+      footballWalkoverWinnerTeamId: footballResults.walkoverWinnerTeamId,
+      footballPenaltyHome: footballResults.penaltyHome,
+      footballPenaltyAway: footballResults.penaltyAway,
+      tennisWinnerTeamId: tennisResults.winnerTeamId,
+      tennisSets: tennisResults.sets,
+      tennisIsWalkover: tennisResults.isWalkover,
     })
     .from(resultVersions)
     .innerJoin(matches, eq(resultVersions.matchId, matches.id))
-    .innerJoin(
+    .leftJoin(
       footballResults,
       eq(footballResults.resultVersionId, resultVersions.id),
+    )
+    .leftJoin(
+      tennisResults,
+      eq(tennisResults.resultVersionId, resultVersions.id),
     )
     .where(
       and(
@@ -233,25 +234,52 @@ export async function planCompetitionAdvancement(
     if (!homeTeamId || !awayTeamId) {
       continue;
     }
+
+    if (competition.sport === "tennis") {
+      if (!row.tennisWinnerTeamId) {
+        continue;
+      }
+      results.set(row.matchId, {
+        matchId: row.matchId,
+        homeTeamId,
+        awayTeamId,
+        football: null,
+        tennis: {
+          winnerTeamId: row.tennisWinnerTeamId,
+          sets: row.tennisSets ?? [],
+          isWalkover: row.tennisIsWalkover ?? false,
+        },
+        winnerTeamId: row.tennisWinnerTeamId,
+      });
+      continue;
+    }
+
+    if (row.footballHomeScore == null || row.footballAwayScore == null) {
+      continue;
+    }
+    const football: FootballScoreSnapshot = {
+      homeScore: row.footballHomeScore,
+      awayScore: row.footballAwayScore,
+      isWalkover: row.footballIsWalkover ?? false,
+      walkoverWinnerTeamId: row.footballWalkoverWinnerTeamId,
+      penaltyHome: row.footballPenaltyHome,
+      penaltyAway: row.footballPenaltyAway,
+    };
     results.set(row.matchId, {
       matchId: row.matchId,
       homeTeamId,
       awayTeamId,
-      homeScore: row.homeScore,
-      awayScore: row.awayScore,
-      isWalkover: row.isWalkover,
-      walkoverWinnerTeamId: row.walkoverWinnerTeamId,
-      penaltyHome: row.penaltyHome,
-      penaltyAway: row.penaltyAway,
-      winnerTeamId: winnerFromResult({
+      football,
+      tennis: null,
+      winnerTeamId: footballWinnerTeamId({
         homeTeamId,
         awayTeamId,
-        homeScore: row.homeScore,
-        awayScore: row.awayScore,
-        isWalkover: row.isWalkover,
-        walkoverWinnerTeamId: row.walkoverWinnerTeamId,
-        penaltyHome: row.penaltyHome,
-        penaltyAway: row.penaltyAway,
+        homeScore: football.homeScore,
+        awayScore: football.awayScore,
+        isWalkover: football.isWalkover,
+        walkoverWinnerTeamId: football.walkoverWinnerTeamId,
+        penaltyHome: football.penaltyHome,
+        penaltyAway: football.penaltyAway,
       }),
     });
   }
@@ -262,25 +290,47 @@ export async function planCompetitionAdvancement(
     if (!homeTeamId || !awayTeamId) {
       throw new Error("match_entrants_missing");
     }
-    const walkoverWinnerTeamId = proposed.isWalkover
-      ? proposed.walkoverWinnerSide === "home"
-        ? homeTeamId
-        : proposed.walkoverWinnerSide === "away"
-          ? awayTeamId
-          : null
-      : null;
-    results.set(proposed.matchId, {
-      matchId: proposed.matchId,
-      homeTeamId,
-      awayTeamId,
-      homeScore: proposed.homeScore,
-      awayScore: proposed.awayScore,
-      isWalkover: proposed.isWalkover,
-      walkoverWinnerTeamId,
-      penaltyHome: proposed.penaltyHome ?? null,
-      penaltyAway: proposed.penaltyAway ?? null,
-      winnerTeamId: proposed.winnerTeamId,
-    });
+
+    if (competition.sport === "tennis") {
+      if (!proposed.tennis) {
+        throw new Error("proposed_result_missing");
+      }
+      results.set(proposed.matchId, {
+        matchId: proposed.matchId,
+        homeTeamId,
+        awayTeamId,
+        football: null,
+        tennis: proposed.tennis,
+        winnerTeamId: proposed.tennis.winnerTeamId,
+      });
+    } else {
+      if (!proposed.football) {
+        throw new Error("proposed_result_missing");
+      }
+      const walkoverWinnerTeamId = proposed.football.isWalkover
+        ? proposed.football.walkoverWinnerSide === "home"
+          ? homeTeamId
+          : proposed.football.walkoverWinnerSide === "away"
+            ? awayTeamId
+            : null
+        : null;
+      const football: FootballScoreSnapshot = {
+        homeScore: proposed.football.homeScore,
+        awayScore: proposed.football.awayScore,
+        isWalkover: proposed.football.isWalkover,
+        walkoverWinnerTeamId,
+        penaltyHome: proposed.football.penaltyHome ?? null,
+        penaltyAway: proposed.football.penaltyAway ?? null,
+      };
+      results.set(proposed.matchId, {
+        matchId: proposed.matchId,
+        homeTeamId,
+        awayTeamId,
+        football,
+        tennis: null,
+        winnerTeamId: proposed.winnerTeamId,
+      });
+    }
   }
 
   if (removedMatchId) {
@@ -296,31 +346,51 @@ export async function planCompetitionAdvancement(
         teamName: entry.teamName,
         seedPosition: entry.seedPosition,
       }));
-    const standingsMatches = [...results.values()]
-      .filter((result) => {
-        const match = matchRows.find((candidate) => candidate.id === result.matchId);
-        return match?.stage === "group" && match.groupId === group.id;
-      })
-      .map((result) => ({
-        homeTeamId: result.homeTeamId,
-        awayTeamId: result.awayTeamId,
-        homeScore: result.homeScore,
-        awayScore: result.awayScore,
-        isWalkover: result.isWalkover,
-        walkoverWinnerTeamId: result.walkoverWinnerTeamId,
-      }));
+    const groupResults = [...results.values()].filter((result) => {
+      const match = matchRows.find((candidate) => candidate.id === result.matchId);
+      return match?.stage === "group" && match.groupId === group.id;
+    });
 
-    const calculated = calculateFootballStandings(
-      standingsTeams,
-      standingsMatches,
-      competition.drawSeed ?? competition.id,
-    );
+    const orderedTeamIds =
+      competition.sport === "tennis"
+        ? calculateTennisStandings(
+            standingsTeams,
+            groupResults
+              .filter(
+                (result) =>
+                  result.tennis != null && result.tennis.winnerTeamId,
+              )
+              .map((result) => ({
+                homeTeamId: result.homeTeamId,
+                awayTeamId: result.awayTeamId,
+                winnerTeamId: result.tennis!.winnerTeamId,
+                sets: result.tennis!.sets,
+                isWalkover: result.tennis!.isWalkover,
+              })),
+            competition.drawSeed ?? "",
+          ).map((row) => row.teamId)
+        : calculateFootballStandings(
+            standingsTeams,
+            groupResults
+              .filter((result) => result.football != null)
+              .map((result) => ({
+                homeTeamId: result.homeTeamId,
+                awayTeamId: result.awayTeamId,
+                homeScore: result.football!.homeScore,
+                awayScore: result.football!.awayScore,
+                isWalkover: result.football!.isWalkover,
+                walkoverWinnerTeamId:
+                  result.football!.walkoverWinnerTeamId,
+              })),
+            competition.drawSeed ?? competition.id,
+          ).rows.map((row) => row.teamId);
+
     for (
       let position = 1;
       position <= competition.qualifiersPerGroup;
       position += 1
     ) {
-      const teamId = calculated.rows[position - 1]?.teamId;
+      const teamId = orderedTeamIds[position - 1];
       if (teamId) {
         groupQualifiers.set(groupQualifierKey(group.id, position), teamId);
       }

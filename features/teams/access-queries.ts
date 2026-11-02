@@ -8,6 +8,7 @@ import {
   competitions,
   events,
   invitationTeams,
+  jobs,
   managerInvitations,
   participants,
   teamManagers,
@@ -19,6 +20,7 @@ import type {
   AccessHistoryEntry,
   AccessTeamRef,
   EventAccessData,
+  EventEmailJob,
   EventInvitation,
   EventTeamAccess,
 } from "@/features/teams/types";
@@ -247,11 +249,40 @@ export async function getEventAccessData(
           : [],
   }));
 
+  const emailJobRows = await db
+    .select()
+    .from(jobs)
+    .where(eq(jobs.type, "email.send"))
+    .orderBy(desc(jobs.createdAt))
+    .limit(200);
+
+  const failedEmailJobs: EventEmailJob[] = emailJobRows
+    .filter((job) => {
+      const payload = (job.payload ?? {}) as Record<string, unknown>;
+      return job.status === "failed" && payload.eventId === eventId;
+    })
+    .map((job) => {
+      const payload = (job.payload ?? {}) as Record<string, unknown>;
+      return {
+        id: job.id,
+        status: job.status,
+        attempts: job.attempts,
+        lastError: job.lastError,
+        createdAt: job.createdAt.toISOString(),
+        recipient: typeof payload.to === "string" ? payload.to : null,
+        invitationId:
+          typeof payload.invitationId === "string"
+            ? payload.invitationId
+            : null,
+      };
+    });
+
   return {
     event,
     teams: eventTeams,
     invitations,
     history,
+    failedEmailJobs,
     counts: {
       teams: eventTeams.length,
       managers: managerRows.length,
@@ -261,6 +292,7 @@ export async function getEventAccessData(
       activeLinks: invitations.filter(
         (invitation) => invitation.status === "active",
       ).length,
+      failedEmailJobs: failedEmailJobs.length,
     },
   };
 }

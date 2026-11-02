@@ -1,4 +1,4 @@
-import { createTransport } from "nodemailer";
+import { runEmailJob } from "@/lib/jobs/mail";
 
 function escapeHtml(value: string) {
   return value
@@ -8,23 +8,18 @@ function escapeHtml(value: string) {
     .replace(/"/g, "&quot;");
 }
 
-function transport() {
-  return createTransport({
-    host: process.env.SMTP_HOST ?? "127.0.0.1",
-    port: Number(process.env.SMTP_PORT ?? 1025),
-    secure: false,
-    ignoreTLS: true,
-  });
-}
-
 export async function sendInvitationEmail({
   to,
+  eventId,
+  invitationId,
   eventName,
   teamNames,
   url,
   expiresAt,
 }: {
   to: string;
+  eventId: string;
+  invitationId: string;
   eventName: string;
   teamNames: string[];
   url: string;
@@ -37,11 +32,12 @@ export async function sendInvitationEmail({
     timeStyle: "short",
     timeZone: "America/Sao_Paulo",
   }).format(expiresAt);
-  const from = process.env.EMAIL_FROM ?? "Summer Cup <summercup@example.com>";
 
-  await transport().sendMail({
+  return runEmailJob({
     to,
-    from,
+    eventId,
+    invitationId,
+    purpose: "invitation",
     subject: `Convite para gerenciar equipes · ${eventName}`,
     text: [
       `Você foi convidado a gerenciar ${safeTeams} no ${eventName}.`,
@@ -76,21 +72,14 @@ export async function sendInvitationEmail({
 }
 
 export async function sendMagicLinkEmail(email: string, url: string) {
-  const transport = createTransport({
-    host: process.env.SMTP_HOST ?? "127.0.0.1",
-    port: Number(process.env.SMTP_PORT ?? 1025),
-    secure: false,
-    ignoreTLS: true,
-  });
-
   const safeUrl = escapeHtml(url);
-  const from = process.env.EMAIL_FROM ?? "Summer Cup <summercup@example.com>";
 
-  await transport.sendMail({
-    to: email,
-    from,
-    subject: "Seu acesso ao Summer Cup 2026 / Your Summer Cup 2026 sign-in",
-    text: [
+  await runEmailJob(
+    {
+      to: email,
+      purpose: "magic_link",
+      subject: "Seu acesso ao Summer Cup 2026 / Your Summer Cup 2026 sign-in",
+      text: [
       "Use o link abaixo para entrar no Summer Cup 2026.",
       "Use the link below to sign in to Summer Cup 2026.",
       "",
@@ -115,5 +104,7 @@ export async function sendMagicLinkEmail(email: string, url: string) {
         </div>
       </div>
     `,
-  });
+    },
+    { throwOnError: true },
+  );
 }

@@ -10,38 +10,13 @@ import {
   MailIcon,
 } from "@/components/icons";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { useI18n } from "@/lib/i18n/client";
 import {
   requestMagicLink,
   switchDemoAccount,
 } from "@/features/auth/actions";
 import type { DemoAccount } from "@/lib/auth/guards";
-
-function SubmitButton({
-  label,
-  pendingLabel,
-  className,
-}: {
-  label: string;
-  pendingLabel: string;
-  className?: string;
-}) {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className={
-        className ??
-        "inline-flex items-center justify-center gap-2 rounded-xl bg-ink px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-green disabled:cursor-wait disabled:opacity-70"
-      }
-    >
-      {pending ? pendingLabel : label}
-      {pending ? null : <ArrowRightIcon className="size-4" />}
-    </button>
-  );
-}
 
 function DemoSubmit({ account }: { account: DemoAccount }) {
   const { pending } = useFormStatus();
@@ -186,6 +161,8 @@ export function SignInView({
             <SubmitButton
               label={t("auth.sendMagicLink")}
               pendingLabel={t("auth.sending")}
+              tone="auth"
+              arrowClassName="size-4"
             />
             <p className="text-xs leading-5 text-muted">
               {t("auth.magicLinkNote")}

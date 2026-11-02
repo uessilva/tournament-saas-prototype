@@ -2,14 +2,10 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 
-import {
-  ArrowRightIcon,
-  CheckIcon,
-  LockIcon,
-  TrophyIcon,
-} from "@/components/icons";
+import { LockIcon, TrophyIcon } from "@/components/icons";
+import { ActionFeedback } from "@/components/ui/action-feedback";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { useI18n } from "@/lib/i18n/client";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import {
@@ -29,70 +25,40 @@ const EMPTY_STATE: DrawActionState = { status: "idle" };
 
 function Feedback({ state }: { state: DrawActionState }) {
   const { t } = useI18n();
-  if (state.status === "idle") {
-    return null;
-  }
+  const keys: Partial<Record<string, DictionaryKey>> =
+    state.status === "error"
+      ? {
+          registration_open: "draw.errorRegistrationOpen",
+          ineligible_entrants: "draw.errorIneligible",
+          not_enough_entrants: "draw.errorNotEnough",
+          group_below_min: "draw.errorGroupMinimum",
+          insufficient_qualifiers: "draw.errorQualifiers",
+          invalid_group_count: "draw.errorGroupCount",
+          invalid_qualifiers: "draw.errorQualifierCount",
+          invalid_swap: "draw.errorSwap",
+          draw_locked: "draw.errorLocked",
+          cancelled_match_exists: "draw.errorCancelledMatch",
+          competition_locked: "draw.errorCompetitionLocked",
+          unsupported_format: "draw.errorFormat",
+          invalid_format: "draw.errorFormat",
+          format_locked: "draw.errorFormatLocked",
+          action_failed: "draw.errorFailed",
+        }
+      : {
+          draw_saved: "draw.saved",
+          draw_generated: "draw.generated",
+          seed_regenerated: "draw.seedRegenerated",
+          entrant_swapped: "draw.entrantSwapped",
+        };
 
-  if (state.status === "error") {
-    const keys: Partial<Record<string, DictionaryKey>> = {
-      registration_open: "draw.errorRegistrationOpen",
-      ineligible_entrants: "draw.errorIneligible",
-      not_enough_entrants: "draw.errorNotEnough",
-      group_below_min: "draw.errorGroupMinimum",
-      insufficient_qualifiers: "draw.errorQualifiers",
-      invalid_group_count: "draw.errorGroupCount",
-      invalid_qualifiers: "draw.errorQualifierCount",
-      invalid_swap: "draw.errorSwap",
-      draw_locked: "draw.errorLocked",
-      cancelled_match_exists: "draw.errorCancelledMatch",
-      competition_locked: "draw.errorCompetitionLocked",
-      unsupported_format: "draw.errorFormat",
-      invalid_format: "draw.errorFormat",
-      format_locked: "draw.errorFormatLocked",
-      action_failed: "draw.errorFailed",
-    };
-    return (
-      <p role="alert" className="mt-2 text-xs font-bold text-red-700">
-        {t(keys[state.code ?? ""] ?? "draw.errorFailed")}
-      </p>
-    );
-  }
-
-  const keys: Partial<Record<string, DictionaryKey>> = {
-    draw_saved: "draw.saved",
-    draw_generated: "draw.generated",
-    seed_regenerated: "draw.seedRegenerated",
-    entrant_swapped: "draw.entrantSwapped",
-  };
   return (
-    <p
-      role="status"
-      className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-soft-green px-2.5 py-1.5 text-[11px] font-extrabold text-green"
-    >
-      <CheckIcon className="size-3.5" />
-      {t(keys[state.code ?? ""] ?? "draw.saved")}
-    </p>
-  );
-}
-
-function SubmitButton({
-  label,
-  disabled,
-}: {
-  label: string;
-  disabled?: boolean;
-}) {
-  const { pending } = useFormStatus();
-  const { t } = useI18n();
-  return (
-    <button
-      type="submit"
-      disabled={pending || disabled}
-      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-green px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green-deep disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {pending ? t("common.loading") : label}
-      {pending ? null : <ArrowRightIcon className="size-3.5" />}
-    </button>
+    <ActionFeedback
+      status={state.status}
+      message={t(
+        keys[state.code ?? ""] ??
+          (state.status === "error" ? "draw.errorFailed" : "draw.saved"),
+      )}
+    />
   );
 }
 
@@ -349,6 +315,7 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
           <div className="mt-3 flex flex-wrap gap-2">
             <SubmitButton
               label={t("draw.saveConfig")}
+              pendingLabel={t("common.loading")}
               disabled={!canEdit}
             />
           </div>
@@ -372,6 +339,7 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
             />
             <SubmitButton
               label={t("draw.regenerate")}
+              pendingLabel={t("common.loading")}
               disabled={!canEdit}
             />
           </form>
@@ -415,6 +383,7 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
             </select>
             <SubmitButton
               label={t("draw.swapAction")}
+              pendingLabel={t("common.loading")}
               disabled={!canEdit || data.entrants.length < 2}
             />
             <Feedback state={swapState} />
@@ -470,6 +439,7 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
             label={
               draw.generated ? t("draw.regenerateDraw") : t("draw.generate")
             }
+            pendingLabel={t("common.loading")}
             disabled={
               !canEdit ||
               validationErrors.length > 0 ||

@@ -188,12 +188,13 @@ export async function getCompetitionPage(
   const results = resultRows.map(mapPublicMatch);
   const competitionGroups = await loadCompetitionStandings(competition);
   const bracket =
-    competition.format === "single_elimination"
+    competition.format !== "round_robin"
       ? (
           await publicMatchQuery()
             .where(
               and(
                 eq(matches.competitionId, competition.id),
+                eq(matches.stage, "knockout"),
                 eq(matches.isBye, false),
               ),
             )
