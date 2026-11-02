@@ -3,7 +3,12 @@ import { PDFDocument } from "pdf-lib";
 import {
   FOOTBALL_FIELD_KEYS,
   FOOTBALL_TEMPLATE_VERSION,
+  TENNIS_FIELD_KEYS,
+  TENNIS_TEMPLATE_VERSION,
+  scoresheetFieldKeys,
   scoresheetIdentityForMatch,
+  scoresheetTemplateVersion,
+  type ScoresheetSport,
 } from "./template";
 
 export type ExtractionSource = "acroform" | "qr_ocr" | "seeded_fallback";
@@ -35,50 +40,182 @@ export type ExtractionInput = {
   matchId: string;
   matchNumber: number;
   originalFilename: string;
+  sport: ScoresheetSport;
 };
 
-const SCORE_FIELDS = new Set([
-  "result_home_goals",
-  "result_away_goals",
-  "result_home_penalty",
-  "result_away_penalty",
-]);
+type FieldKind =
+  | "football_score"
+  | "tennis_games"
+  | "tennis_tiebreak"
+  | "tennis_stat"
+  | "walkover"
+  | "walkover_winner"
+  | "notes";
 
-const FIELD_LABELS: Record<string, string> = {
-  result_home_goals: "Gols da casa / Home goals",
-  result_away_goals: "Gols do visitante / Away goals",
-  result_home_penalty: "Pênaltis da casa / Home penalties",
-  result_away_penalty: "Pênaltis do visitante / Away penalties",
-  result_walkover: "W.O. / Walkover",
-  result_walkover_winner: "Vencedor do W.O. / Walkover winner",
-  result_notes: "Observações / Notes",
+type FieldMeta = {
+  label: string;
+  kind: FieldKind;
+  crop: { x: number; y: number };
 };
 
-const CROP_POSITIONS: Record<string, { x: number; y: number }> = {
-  result_home_goals: { x: 88, y: 300 },
-  result_away_goals: { x: 322, y: 300 },
-  result_home_penalty: { x: 88, y: 226 },
-  result_away_penalty: { x: 322, y: 226 },
-  result_walkover: { x: 32, y: 184 },
-  result_walkover_winner: { x: 182, y: 180 },
-  result_notes: { x: 32, y: 36 },
+const FOOTBALL_FIELD_META: Record<string, FieldMeta> = {
+  result_home_goals: {
+    label: "Gols da casa / Home goals",
+    kind: "football_score",
+    crop: { x: 88, y: 300 },
+  },
+  result_away_goals: {
+    label: "Gols do visitante / Away goals",
+    kind: "football_score",
+    crop: { x: 322, y: 300 },
+  },
+  result_home_penalty: {
+    label: "Pênaltis da casa / Home penalties",
+    kind: "football_score",
+    crop: { x: 88, y: 226 },
+  },
+  result_away_penalty: {
+    label: "Pênaltis do visitante / Away penalties",
+    kind: "football_score",
+    crop: { x: 322, y: 226 },
+  },
+  result_walkover: {
+    label: "W.O. / Walkover",
+    kind: "walkover",
+    crop: { x: 32, y: 184 },
+  },
+  result_walkover_winner: {
+    label: "Vencedor do W.O. / Walkover winner",
+    kind: "walkover_winner",
+    crop: { x: 182, y: 180 },
+  },
+  result_notes: {
+    label: "Observações / Notes",
+    kind: "notes",
+    crop: { x: 32, y: 36 },
+  },
 };
 
-function fieldLabel(fieldKey: string) {
-  return FIELD_LABELS[fieldKey] ?? fieldKey;
+const TENNIS_FIELD_META: Record<string, FieldMeta> = {
+  result_set1_home: {
+    label: "Set 1 · games casa / home games",
+    kind: "tennis_games",
+    crop: { x: 144, y: 566 },
+  },
+  result_set1_away: {
+    label: "Set 1 · games fora / away games",
+    kind: "tennis_games",
+    crop: { x: 244, y: 566 },
+  },
+  result_set1_tiebreak_home: {
+    label: "Set 1 · tie-break casa / home",
+    kind: "tennis_tiebreak",
+    crop: { x: 344, y: 566 },
+  },
+  result_set1_tiebreak_away: {
+    label: "Set 1 · tie-break fora / away",
+    kind: "tennis_tiebreak",
+    crop: { x: 444, y: 566 },
+  },
+  result_set2_home: {
+    label: "Set 2 · games casa / home games",
+    kind: "tennis_games",
+    crop: { x: 144, y: 520 },
+  },
+  result_set2_away: {
+    label: "Set 2 · games fora / away games",
+    kind: "tennis_games",
+    crop: { x: 244, y: 520 },
+  },
+  result_set2_tiebreak_home: {
+    label: "Set 2 · tie-break casa / home",
+    kind: "tennis_tiebreak",
+    crop: { x: 344, y: 520 },
+  },
+  result_set2_tiebreak_away: {
+    label: "Set 2 · tie-break fora / away",
+    kind: "tennis_tiebreak",
+    crop: { x: 444, y: 520 },
+  },
+  result_set3_home: {
+    label: "Set 3 · games casa / home games",
+    kind: "tennis_games",
+    crop: { x: 144, y: 474 },
+  },
+  result_set3_away: {
+    label: "Set 3 · games fora / away games",
+    kind: "tennis_games",
+    crop: { x: 244, y: 474 },
+  },
+  result_set3_tiebreak_home: {
+    label: "Set 3 · tie-break casa / home",
+    kind: "tennis_tiebreak",
+    crop: { x: 344, y: 474 },
+  },
+  result_set3_tiebreak_away: {
+    label: "Set 3 · tie-break fora / away",
+    kind: "tennis_tiebreak",
+    crop: { x: 444, y: 474 },
+  },
+  result_walkover: {
+    label: "W.O. / Walkover",
+    kind: "walkover",
+    crop: { x: 32, y: 392 },
+  },
+  result_walkover_winner: {
+    label: "Vencedor do W.O. / Walkover winner",
+    kind: "walkover_winner",
+    crop: { x: 352, y: 388 },
+  },
+  result_home_aces: {
+    label: "Aces da casa / Home aces",
+    kind: "tennis_stat",
+    crop: { x: 144, y: 342 },
+  },
+  result_away_aces: {
+    label: "Aces do visitante / Away aces",
+    kind: "tennis_stat",
+    crop: { x: 324, y: 342 },
+  },
+  result_home_double_faults: {
+    label: "Duplas faltas da casa / Home double faults",
+    kind: "tennis_stat",
+    crop: { x: 144, y: 296 },
+  },
+  result_away_double_faults: {
+    label: "Duplas faltas do visitante / Away double faults",
+    kind: "tennis_stat",
+    crop: { x: 324, y: 296 },
+  },
+  result_notes: {
+    label: "Observações / Notes",
+    kind: "notes",
+    crop: { x: 32, y: 164 },
+  },
+};
+
+function fieldMeta(fieldKey: string): FieldMeta {
+  return (
+    TENNIS_FIELD_META[fieldKey] ??
+    FOOTBALL_FIELD_META[fieldKey] ?? {
+      label: fieldKey,
+      kind: "notes",
+      crop: { x: 40, y: 40 },
+    }
+  );
 }
 
 function cropBox(fieldKey: string) {
-  const position = CROP_POSITIONS[fieldKey] ?? { x: 40, y: 40 };
+  const meta = fieldMeta(fieldKey);
   return {
-    x: position.x,
-    y: position.y,
-    width: fieldKey === "result_notes" ? 515 : 180,
-    height: fieldKey === "result_notes" ? 90 : 34,
+    x: meta.crop.x,
+    y: meta.crop.y,
+    width: meta.kind === "notes" ? 515 : 172,
+    height: meta.kind === "notes" ? 76 : 34,
   };
 }
 
-function normalizeInteger(raw: string | null) {
+function normalizeInteger(raw: string | null, max: number) {
   const value = raw?.trim() ?? "";
   if (!value) {
     return { normalized: null, flags: ["missing"] };
@@ -87,7 +224,7 @@ function normalizeInteger(raw: string | null) {
     return { normalized: null, flags: ["invalid_integer"] };
   }
   const number = Number(value);
-  if (number > 30) {
+  if (number > max) {
     return { normalized: String(number), flags: ["out_of_range"] };
   }
   return { normalized: String(number), flags: [] as string[] };
@@ -99,17 +236,31 @@ function fieldFromRaw(
   confidence: number,
   source: string,
 ): ExtractedFieldDraft {
+  const meta = fieldMeta(fieldKey);
   let normalizedValue = rawValue;
   let flags: string[] = [];
 
-  if (SCORE_FIELDS.has(fieldKey)) {
-    const normalized = normalizeInteger(rawValue);
+  if (
+    meta.kind === "football_score" ||
+    meta.kind === "tennis_games" ||
+    meta.kind === "tennis_tiebreak" ||
+    meta.kind === "tennis_stat"
+  ) {
+    const max =
+      meta.kind === "football_score"
+        ? 30
+        : meta.kind === "tennis_games"
+          ? 7
+          : meta.kind === "tennis_tiebreak"
+            ? 30
+            : 100;
+    const normalized = normalizeInteger(rawValue, max);
     normalizedValue = normalized.normalized;
     flags = normalized.flags;
-  } else if (fieldKey === "result_walkover") {
+  } else if (meta.kind === "walkover") {
     normalizedValue = rawValue === "true" ? "true" : "false";
     flags = [];
-  } else if (fieldKey === "result_walkover_winner") {
+  } else if (meta.kind === "walkover_winner") {
     const value = rawValue?.trim().toLowerCase() ?? "";
     normalizedValue = value === "home" || value === "away" ? value : "";
     if (value && !normalizedValue) {
@@ -121,7 +272,7 @@ function fieldFromRaw(
 
   return {
     fieldKey,
-    label: fieldLabel(fieldKey),
+    label: meta.label,
     page: 1,
     rawValue,
     normalizedValue,
@@ -133,7 +284,11 @@ function fieldFromRaw(
   };
 }
 
-function readAcroformFields(pdf: PDFDocument) {
+function readAcroformFields(
+  pdf: PDFDocument,
+  sport: ScoresheetSport,
+  fieldKeys: readonly string[],
+) {
   const form = pdf.getForm();
   const names = form.getFields().map((field) => field.getName());
   if (!names.some((name) => name.startsWith("result_"))) {
@@ -157,29 +312,32 @@ function readAcroformFields(pdf: PDFDocument) {
 
   let walkoverWinner = "";
   try {
-    walkoverWinner = form.getDropdown("result_walkover_winner").getSelected()[0] ?? "";
+    walkoverWinner =
+      form.getDropdown("result_walkover_winner").getSelected()[0] ?? "";
   } catch {
     walkoverWinner = "";
   }
 
-  const raw: Record<string, string | null> = {
-    result_home_goals: textValue("result_home_goals"),
-    result_away_goals: textValue("result_away_goals"),
-    result_home_penalty: textValue("result_home_penalty"),
-    result_away_penalty: textValue("result_away_penalty"),
-    result_walkover: walkover ? "true" : "false",
-    result_walkover_winner: walkoverWinner,
-    result_notes: textValue("result_notes"),
-  };
+  const raw: Record<string, string | null> = {};
+  for (const key of fieldKeys) {
+    if (key === "result_walkover") {
+      raw[key] = walkover ? "true" : "false";
+    } else if (key === "result_walkover_winner") {
+      raw[key] = walkoverWinner;
+    } else {
+      raw[key] = textValue(key);
+    }
+  }
 
   return {
     raw,
     sheetId: textValue("identity_sheet_id"),
     templateVersion: textValue("identity_template_version"),
+    sport,
   };
 }
 
-function seededFallbackValues(matchNumber: number) {
+function footballSeededValues(matchNumber: number) {
   const homeScore = 1 + (matchNumber % 3);
   const awayScore = matchNumber % 4;
   return {
@@ -191,6 +349,40 @@ function seededFallbackValues(matchNumber: number) {
     result_walkover_winner: "",
     result_notes:
       "Valores representativos da demonstração (OCR local não configurado). Representative demo values (local OCR unavailable).",
+  };
+}
+
+function tennisSeededValues(matchNumber: number) {
+  const patterns = [
+    ["6", "4", "6", "3", "", ""],
+    ["4", "6", "6", "3", "6", "2"],
+    ["7", "6", "6", "4", "", ""],
+    ["6", "2", "3", "6", "7", "5"],
+  ] as const;
+  const [s1h, s1a, s2h, s2a, s3h, s3a] =
+    patterns[matchNumber % patterns.length]!;
+  const tiebreak = s1h === "7" && s1a === "6";
+  return {
+    result_set1_home: s1h,
+    result_set1_away: s1a,
+    result_set1_tiebreak_home: tiebreak ? "7" : "",
+    result_set1_tiebreak_away: tiebreak ? "5" : "",
+    result_set2_home: s2h,
+    result_set2_away: s2a,
+    result_set2_tiebreak_home: "",
+    result_set2_tiebreak_away: "",
+    result_set3_home: s3h,
+    result_set3_away: s3a,
+    result_set3_tiebreak_home: "",
+    result_set3_tiebreak_away: "",
+    result_walkover: "false",
+    result_walkover_winner: "",
+    result_home_aces: String(4 + (matchNumber % 6)),
+    result_away_aces: String(3 + (matchNumber % 5)),
+    result_home_double_faults: String(1 + (matchNumber % 4)),
+    result_away_double_faults: String(2 + (matchNumber % 3)),
+    result_notes:
+      "Valores representativos de tênis (OCR local não configurado). Representative tennis values (local OCR unavailable).",
   };
 }
 
@@ -212,17 +404,15 @@ export async function extractScoresheet(
     ignoreEncryption: true,
     updateMetadata: false,
   });
-  const expectedIdentity = scoresheetIdentityForMatch(input.matchId);
-  const acroform = readAcroformFields(pdf);
+  const sport = input.sport;
+  const fieldKeys = scoresheetFieldKeys(sport);
+  const templateVersion = scoresheetTemplateVersion(sport);
+  const expectedIdentity = scoresheetIdentityForMatch(input.matchId, sport);
+  const acroform = readAcroformFields(pdf, sport, fieldKeys);
 
   if (acroform) {
-    const fields = FOOTBALL_FIELD_KEYS.map((fieldKey) =>
-      fieldFromRaw(
-        fieldKey,
-        acroform.raw[fieldKey] ?? null,
-        100,
-        "acroform",
-      ),
+    const fields = fieldKeys.map((fieldKey) =>
+      fieldFromRaw(fieldKey, acroform.raw[fieldKey] ?? null, 100, "acroform"),
     );
 
     const identityMismatch =
@@ -233,8 +423,7 @@ export async function extractScoresheet(
     return {
       source: "acroform",
       sheetId: acroform.sheetId || expectedIdentity.sheetId,
-      templateVersion:
-        acroform.templateVersion || FOOTBALL_TEMPLATE_VERSION,
+      templateVersion: acroform.templateVersion || templateVersion,
       pageCount: pdf.getPageCount(),
       note: identityMismatch
         ? "A identidade QR do PDF não corresponde a este jogo. Confirme os dados antes de publicar. / The PDF identity does not match this match."
@@ -253,9 +442,12 @@ export async function extractScoresheet(
   const decodedSheetId = extractSheetIdFromFilename(input.originalFilename);
   const sheetId = decodedSheetId ?? expectedIdentity.sheetId;
   const qrDecoded = decodedSheetId === expectedIdentity.sheetId;
-  const seeded = seededFallbackValues(input.matchNumber);
-  const fields = FOOTBALL_FIELD_KEYS.map((fieldKey, index) => {
-    const confidence = [84, 61, 76, 68, 90, 80, 74][index] ?? 70;
+  const seeded =
+    sport === "tennis"
+      ? tennisSeededValues(input.matchNumber)
+      : footballSeededValues(input.matchNumber);
+  const fields = fieldKeys.map((fieldKey, index) => {
+    const confidence = [84, 61, 76, 68, 90, 80, 74, 72, 66, 78][index] ?? 70;
     const field = fieldFromRaw(
       fieldKey,
       seeded[fieldKey as keyof typeof seeded] ?? null,
@@ -267,7 +459,11 @@ export async function extractScoresheet(
     if (!qrDecoded) {
       flags.add("qr_not_decoded");
     }
-    if (SCORE_FIELDS.has(fieldKey)) {
+    if (
+      fieldKey.startsWith("result_set") ||
+      fieldKey.includes("goals") ||
+      fieldKey.includes("penalty")
+    ) {
       flags.add("scan_requires_review");
     }
     return {
@@ -280,7 +476,7 @@ export async function extractScoresheet(
   return {
     source: "seeded_fallback",
     sheetId,
-    templateVersion: FOOTBALL_TEMPLATE_VERSION,
+    templateVersion,
     pageCount: pdf.getPageCount(),
     note: qrDecoded
       ? "Leitura por QR + regiões fixas de demonstração. A extração local de OCR não está disponível; revise cada campo. / QR + fixed-region demo extraction. Local OCR is unavailable; review every field."
@@ -317,3 +513,5 @@ export function fieldFlagLabel(flag: string) {
   };
   return labels[flag] ?? flag;
 }
+
+export { FOOTBALL_FIELD_KEYS, FOOTBALL_TEMPLATE_VERSION, TENNIS_FIELD_KEYS, TENNIS_TEMPLATE_VERSION };

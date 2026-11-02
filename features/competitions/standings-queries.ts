@@ -121,7 +121,11 @@ export async function loadCompetitionStandings(
     return {
       id: group.id,
       name: group.name,
-      standings: calculateTennisStandings(standingsTeams, standingsMatches),
+      standings: calculateTennisStandings(
+        standingsTeams,
+        standingsMatches,
+        competition.drawSeed ?? competition.id,
+      ),
       seededDraws: [],
     };
   });

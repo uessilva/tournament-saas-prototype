@@ -7,6 +7,7 @@ import {
   CalendarIcon,
   CheckIcon,
   ChevronRightIcon,
+  LockIcon,
   MailIcon,
   MapPinIcon,
   RefreshIcon,
@@ -36,12 +37,14 @@ export function AdminDashboard({
   demoAccounts,
   demoMode,
   resetSuccess,
+  openDisputes,
 }: {
   data: AdminEventData;
   user: { name: string | null; email: string | null };
   demoAccounts: DemoAccount[];
   demoMode: boolean;
   resetSuccess: boolean;
+  openDisputes: number;
 }) {
   const { t, formatDate } = useI18n();
   const doneCount = data.checklist.filter((item) => item.state === "done").length;
@@ -104,6 +107,23 @@ export function AdminDashboard({
             >
               {t("admin.reviewQueue")}
               <ChevronRightIcon className="size-3.5" />
+            </Link>
+            <Link
+              href={`/admin/events/${data.event.id}/disputes`}
+              className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 font-bold text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <LockIcon className="size-3.5" />
+                {t("admin.disputes")}
+              </span>
+              <span className="inline-flex items-center gap-2">
+                {openDisputes > 0 ? (
+                  <span className="rounded-full bg-clay px-1.5 py-0.5 text-[9px] font-extrabold text-white">
+                    {openDisputes}
+                  </span>
+                ) : null}
+                <ChevronRightIcon className="size-3.5" />
+              </span>
             </Link>
             <Link
               href={`/events/${data.event.slug}`}
@@ -385,6 +405,41 @@ export function AdminDashboard({
                   className="mt-3 inline-flex w-full items-center justify-between gap-2 rounded-xl bg-ink px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green"
                 >
                   {t("admin.manageAccess")}
+                  <ChevronRightIcon className="size-3.5" />
+                </Link>
+              </section>
+
+              <section
+                id="disputes"
+                className={`surface p-5 ${
+                  openDisputes > 0 ? "border-clay/40 bg-soft-orange/40" : ""
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="eyebrow text-green">{t("admin.disputes")}</p>
+                    <h2 className="display-title mt-2 text-2xl">
+                      {t("admin.disputeCardTitle")}
+                    </h2>
+                  </div>
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-soft-orange text-clay">
+                    <LockIcon className="size-4" />
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-muted">
+                  {t("admin.disputeCardBody")}
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="display-title text-2xl">{openDisputes}</span>
+                  <span className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted">
+                    {t("admin.openDisputes")}
+                  </span>
+                </div>
+                <Link
+                  href={`/admin/events/${data.event.id}/disputes`}
+                  className="mt-3 inline-flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-xs font-extrabold text-ink transition-colors hover:border-green hover:text-green"
+                >
+                  {t("admin.openDisputesAction")}
                   <ChevronRightIcon className="size-3.5" />
                 </Link>
               </section>

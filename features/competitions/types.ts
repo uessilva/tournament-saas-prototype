@@ -5,6 +5,7 @@ import type {
 } from "@/features/competitions/football-standings";
 import type { DrawValidationError } from "@/features/competitions/draw";
 import type {
+  LeaderRow,
   PublicMatch,
   PublicMatchSource,
   Sport,
@@ -164,6 +165,12 @@ export type CompetitionPageData = {
   results: PublicMatch[];
   upcoming: PublicMatch[];
   cancelled: PublicMatch[];
+  leaders: {
+    aces: LeaderRow[];
+    doubleFaults: LeaderRow[];
+    goals: LeaderRow[];
+    assists: LeaderRow[];
+  };
   stats: {
     matchCount: number;
     publishedCount: number;

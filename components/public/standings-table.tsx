@@ -1,6 +1,7 @@
 "use client";
 
 import { useI18n } from "@/lib/i18n/client";
+import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import { groupDisplayName } from "@/features/public/labels";
 import type {
   CompetitionGroup,
@@ -125,6 +126,13 @@ export function StandingsTable({
                         />
                       ) : null}
                       {row.teamName}
+                      {tennis?.tiebreakReason ? (
+                        <span className="ml-1.5 inline-flex rounded-full bg-soft-orange px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.06em] text-clay">
+                          {t(
+                            `standings.tiebreak.${tennis.tiebreakReason}` as DictionaryKey,
+                          )}
+                        </span>
+                      ) : null}
                       {index < qualifiersPerGroup ? (
                         <span className="sr-only">
                           {t("standings.qualifier")}

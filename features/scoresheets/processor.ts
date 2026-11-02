@@ -68,6 +68,7 @@ export async function processScoresheetExtraction(scoresheetId: string) {
       matchId: match.id,
       matchNumber: match.matchNumber,
       originalFilename: sheet.originalFilename,
+      sport: match.competition.sport,
     });
 
     const cropKeys = new Map<string, string>();

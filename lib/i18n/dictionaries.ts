@@ -118,9 +118,13 @@ const ptBR = {
   "competition.knockout": "Mata-mata",
   "competition.partialStandings": "Classificação parcial",
   "competition.standingsNote":
-    "Vitória vale 2 pontos. Desempate: pontos, vitórias, saldo de sets e saldo de games.",
-  "competition.footballStandingsNote":
-    "Vitória vale 3 pontos. Desempate: pontos, confronto direto, saldo geral, gols marcados e sorteio reproduzível.",
+    "Vitória vale 2 pontos. Desempate: pontos, confronto direto quando há empate entre dois, saldo de sets, saldo de games e sorteio semeado.",
+  "competition.seededDrawNote":
+    "Desempate final por sorteio semeado reproduzível. Semente: {seed}.",
+  "competition.leadersTitle": "Lideranças do tênis",
+  "competition.leadersBody":
+    "Aces e duplas faltas acumulados nos resultados publicados desta competição. W.O. não gera estatísticas.",
+  "competition.footballStandingsNote": "Vitória vale 3 pontos. Desempate: pontos, confronto direto, saldo geral, gols marcados e sorteio reproduzível.",
   "competition.oneParticipantTeam": "Equipe individual · 1 participante",
   "competition.singleEntry": "1 participante por equipe",
   "competition.qualifiers": "Classificados por grupo",
@@ -174,6 +178,10 @@ const ptBR = {
   "standings.goalsAgainst": "GC",
   "standings.goalDifference": "SG",
   "standings.points": "Pts",
+  "standings.tiebreak.head_to_head": "Confronto direto",
+  "standings.tiebreak.set_difference": "Saldo de sets",
+  "standings.tiebreak.game_difference": "Saldo de games",
+  "standings.tiebreak.seeded_draw": "Sorteio semeado",
   "leaders.aces": "Aces",
   "leaders.doubleFaults": "Duplas faltas",
   "leaders.goals": "Gols",
@@ -762,6 +770,103 @@ const ptBR = {
   "manageFixtures.emptyBody":
     "Os jogos aparecem aqui depois que o organizador gerar o sorteio da competição.",
 
+  "disputes.manager.title": "Contestações privadas",
+  "disputes.manager.none": "Nenhuma ativa",
+  "disputes.manager.privateHint":
+    "Visível ao organizador e às equipes deste jogo.",
+  "disputes.manager.activeTitle": "Contestação em análise",
+  "disputes.manager.duplicateBlocked":
+    "Uma nova contestação só pode ser aberta depois que o organizador responder.",
+  "disputes.manager.teamLabel": "Equipe contestante",
+  "disputes.manager.explanationLabel": "Explicação da contestação",
+  "disputes.manager.explanationPlaceholder":
+    "Descreva o que precisa ser revisto neste resultado publicado.",
+  "disputes.manager.explanationHint":
+    "Obrigatória. O texto fica privado e não altera o resultado público.",
+  "disputes.manager.openAction": "Abrir contestação",
+  "disputes.manager.opening": "Enviando…",
+  "disputes.manager.openedNotice":
+    "Contestação enviada. O resultado público não foi alterado.",
+  "disputes.manager.publicUnaffected":
+    "Abrir uma contestação não despublica, altera nem sinaliza o resultado público.",
+  "disputes.manager.historyTitle": "Histórico de contestações",
+  "disputes.status.open": "Aberta",
+  "disputes.status.resolved": "Acatada",
+  "disputes.status.dismissed": "Improcedente",
+  "disputes.unknownUser": "Pessoa não identificada",
+  "disputes.responseLabel": "Resposta do organizador",
+  "disputes.correctionLinked": "Correção vinculada: versão {version}",
+  "disputes.error.invalid_input": "Revise os campos destacados.",
+  "disputes.error.unauthorized": "Entre novamente para continuar.",
+  "disputes.error.match_not_found": "Jogo não encontrado.",
+  "disputes.error.requires_published_match":
+    "Só é possível abrir uma contestação em um jogo publicado.",
+  "disputes.error.forbidden":
+    "Apenas o organizador e os gerentes das equipes envolvidas podem acessar esta contestação.",
+  "disputes.error.duplicate_active":
+    "Já existe uma contestação ativa para este jogo. Aguarde a resposta do organizador.",
+  "disputes.error.explanation_too_short":
+    "Descreva a contestação com pelo menos 10 caracteres.",
+  "disputes.error.explanation_too_long":
+    "A explicação deve ter no máximo 4.000 caracteres.",
+  "disputes.error.response_too_short":
+    "Escreva uma resposta com pelo menos 10 caracteres.",
+  "disputes.error.response_too_long":
+    "A resposta deve ter no máximo 4.000 caracteres.",
+  "disputes.error.invalid_correction":
+    "Escolha uma versão de correção posterior, com motivo registrado.",
+  "disputes.error.dispute_not_found": "Contestação não encontrada.",
+  "disputes.error.already_closed":
+    "Esta contestação já foi encerrada. Atualize a página para ver o histórico.",
+  "disputes.error.action_failed": "Não foi possível concluir a ação.",
+
+  "disputes.owner.backToDashboard": "Voltar ao painel do evento",
+  "disputes.owner.eyebrow": "Área privada do organizador",
+  "disputes.owner.title": "Contestações privadas",
+  "disputes.owner.body":
+    "Analise contestações abertas por gerentes das equipes envolvidas. As explicações e respostas ficam restritas a você e às equipes do jogo, e o resultado público só muda por um fluxo de correção separado.",
+  "disputes.owner.openCount": "contestações abertas",
+  "disputes.owner.queueEyebrow": "Fila privada",
+  "disputes.owner.queueTitle": "Aguardando decisão",
+  "disputes.owner.queueEmptyTitle": "Nenhuma contestação aberta",
+  "disputes.owner.queueEmptyBody":
+    "Novas contestações de gerentes das equipes aparecem aqui. O histórico abaixo permanece disponível.",
+  "disputes.owner.historyEyebrow": "Registro",
+  "disputes.owner.historyTitle": "Histórico de contestações",
+  "disputes.owner.historyEmpty":
+    "Nenhuma contestação foi aberta para este evento ainda.",
+  "disputes.owner.openedBy": "Aberta por",
+  "disputes.owner.teamLabel": "Equipe contestante",
+  "disputes.owner.resolutionLabel": "Decisão",
+  "disputes.owner.responseLabel": "Resposta obrigatória",
+  "disputes.owner.responsePlaceholder":
+    "Explique a decisão ao gerente que abriu a contestação.",
+  "disputes.owner.responseHint":
+    "Obrigatória. Visível apenas ao organizador e aos gerentes das equipes envolvidas.",
+  "disputes.owner.correctionLabel": "Correção vinculada (opcional)",
+  "disputes.owner.correctionNone": "Sem correção vinculada",
+  "disputes.owner.correctionOption": "Versão {version} — {reason}",
+  "disputes.owner.correctionHint":
+    "Opcional. Vincule uma correção já registrada; esta ação não cria nem altera resultados.",
+  "disputes.owner.correctionUnavailable":
+    "Nenhuma versão de correção posterior está disponível para este jogo. As correções de resultado são um fluxo separado e, quando existirem, poderão ser vinculadas aqui. Nenhuma correção é criada automaticamente.",
+  "disputes.owner.saveDecision": "Registrar decisão",
+  "disputes.owner.saving": "Salvando…",
+  "disputes.owner.savedNotice":
+    "Decisão registrada. O histórico permanece disponível.",
+  "disputes.owner.activityEyebrow": "Atividade",
+  "disputes.owner.activityTitle": "Atividade recente",
+  "disputes.owner.activityBody":
+    "Abertura, decisão e encerramento registrados na auditoria do evento.",
+  "disputes.owner.activityEmpty": "Nenhuma atividade de contestação ainda.",
+  "disputes.owner.privacyTitle": "Conteúdo privado",
+  "disputes.owner.privacyBody":
+    "Textos de contestação e resposta nunca aparecem nas páginas públicas. Outros gerentes também não conseguem lê-los.",
+  "disputes.owner.viewPublicResults": "Ver resultados públicos",
+  "disputes.activity.dispute.opened": "Contestação aberta",
+  "disputes.activity.dispute.resolved": "Contestação acatada",
+  "disputes.activity.dispute.dismissed": "Contestação julgada improcedente",
+
   "notFound.title": "Página não encontrada",
   "notFound.body": "O endereço pode estar incorreto ou o conteúdo foi removido.",
   "notFound.back": "Voltar à Summer Cup",
@@ -784,6 +889,12 @@ const ptBR = {
   "resultSource.manual": "Entrada manual",
   "resultSource.walkover": "W.O.",
   "admin.reviewQueue": "Revisar resultados",
+  "admin.disputes": "Contestações",
+  "admin.openDisputes": "contestações abertas",
+  "admin.disputeCardTitle": "Contestações privadas",
+  "admin.disputeCardBody":
+    "Questões levantadas por gerentes das equipes. O conteúdo e as respostas ficam restritos ao organizador e às equipes envolvidas.",
+  "admin.openDisputesAction": "Abrir fila de contestações",
 
   "results.eyebrow": "Resultados oficiais",
   "results.title": "Resultados publicados",
@@ -819,9 +930,9 @@ const ptBR = {
   "review.awaitingTitle": "Partidas sem folha ativa",
   "review.awaitingEmpty": "Todas as partidas têm uma folha ativa ou resultado publicado.",
   "review.publishedTitle": "Resultados publicados",
-  "review.noMatchesTitle": "Nenhuma partida de futebol encontrada",
+  "review.noMatchesTitle": "Nenhuma partida encontrada",
   "review.noMatchesBody":
-    "Gere o sorteio do futebol para que as partidas apareçam aqui.",
+    "Gere o sorteio da competição para que as partidas apareçam aqui.",
   "review.openReview": "Revisar folha",
   "review.openMatch": "Abrir partida",
   "review.viewHistory": "Ver histórico",
@@ -849,8 +960,7 @@ const ptBR = {
     "Peça ao gerente para enviar a folha ou registre o resultado manualmente com confirmação explícita.",
   "review.historyEyebrow": "Auditoria",
   "review.historyTitle": "Histórico de envios e versões",
-  "review.historyBody":
-    "Envios anteriores, falhas, edições do revisor e versões publicadas ficam preservados. Motivos de correção aparecem apenas nesta área do organizador.",
+  "review.historyBody": "Envios anteriores, falhas, edições do revisor e versões publicadas ficam preservados. Motivos de correção aparecem apenas nesta área do organizador.",
   "review.scoresheetHistory": "Folhas de jogo",
   "review.resultHistory": "Versões do resultado",
   "review.active": "Ativa",
@@ -912,13 +1022,36 @@ const ptBR = {
   "review.manualWalkoverWinner": "Vencedor do W.O.",
   "review.manualPenaltyHome": "Pênaltis da casa",
   "review.manualPenaltyAway": "Pênaltis do visitante",
+  "review.tennisManualTitle": "Resultado manual de tênis",
+  "review.tennisManualBody":
+    "Informe os sets e tie-breaks. O vencedor é derivado de dois sets ganhos. Aces e duplas faltas alimentam as lideranças públicas; W.O. não gera estatísticas.",
+  "review.tennisSets": "Sets · melhor de três",
+  "review.tennisSet": "Set {number}",
+  "review.tennisTiebreakHome": "TB casa",
+  "review.tennisTiebreakAway": "TB fora",
+  "review.tennisSetsHint":
+    "Use 6–0 a 6–4, 7–5 ou 7–6 com tie-break. O terceiro set é completo, sem match tie-break. Deixe o set 3 vazio em vitórias por 2–0.",
+  "review.tennisHomeAces": "Aces da casa",
+  "review.tennisAwayAces": "Aces do visitante",
+  "review.tennisHomeDoubleFaults": "Duplas faltas da casa",
+  "review.tennisAwayDoubleFaults": "Duplas faltas do visitante",
   "review.manualNotes": "Observações internas",
+  "review.correctionEyebrow": "Correção auditável",
+  "review.correctionTitle": "Corrigir resultado publicado",
+  "review.correctionBody":
+    "A correção exige motivo, cria uma nova versão e recalcula classificação, avanço e lideranças. Correções de vencedor no mata-mata são bloqueadas quando já existe resultado posterior.",
+  "review.correctionReason": "Motivo da correção",
+  "review.correctionConfirmation":
+    "Confirmo a correção e entendo que o resultado público será atualizado.",
+  "review.correctionPublish": "Publicar correção",
   "review.manualConfirmation":
     "Confirmo que conferi o resultado e assumo a publicação manual deste jogo.",
   "review.manualPublish": "Publicar resultado manual",
   "review.notice.published": "Resultado confirmado e publicado.",
   "review.notice.manual_published":
     "Resultado manual confirmado e publicado. A folha ativa foi encerrada.",
+  "review.notice.corrected":
+    "Correção publicada com motivo registrado. Classificação e lideranças foram recalculadas.",
   "review.error.unauthorized": "Entre novamente para continuar.",
   "review.error.forbidden": "Você não tem acesso a esta partida.",
   "review.error.match_not_found": "Partida não encontrada.",
@@ -946,6 +1079,34 @@ const ptBR = {
   "review.error.fix_errors": "Revise os campos destacados.",
   "review.error.action_failed": "Não foi possível concluir a ação.",
   "review.error.result_version_failed": "Não foi possível criar a versão do resultado.",
+  "review.error.wrong_sport": "Este resultado não pertence ao tênis.",
+  "review.error.result_not_published": "Esta partida não tem um resultado publicado para corrigir ou reabrir.",
+  "review.error.downstream_result_exists":
+    "Há um resultado confirmado em uma partida seguinte do mata-mata. Corrija ou reabra as partidas posteriores em ordem inversa antes de alterar este vencedor.",
+  "review.error.tennis_sets_required":
+    "Informe dois ou três sets válidos no melhor de três.",
+  "review.error.third_set_required":
+    "Um set para cada lado exige o terceiro set completo.",
+  "review.error.unnecessary_third_set":
+    "Com 2–0 não há terceiro set. Deixe o set 3 vazio.",
+  "review.error.tennis_winner_undetermined":
+    "Não foi possível determinar o vencedor pelos sets informados.",
+  "review.error.invalid_home_aces": "Informe os aces da casa como inteiro entre 0 e 100.",
+  "review.error.invalid_away_aces": "Informe os aces do visitante como inteiro entre 0 e 100.",
+  "review.error.invalid_home_double_faults": "Informe as duplas faltas da casa como inteiro entre 0 e 100.",
+  "review.error.invalid_away_double_faults": "Informe as duplas faltas do visitante como inteiro entre 0 e 100.",
+  "review.error.set_1_invalid_games": "Set 1: use games entre 0 e 7.",
+  "review.error.set_2_invalid_games": "Set 2: use games entre 0 e 7.",
+  "review.error.set_3_invalid_games": "Set 3: use games entre 0 e 7.",
+  "review.error.set_1_invalid_score": "Set 1: placar inválido. Use 6–0 a 6–4, 7–5 ou 7–6.",
+  "review.error.set_2_invalid_score": "Set 2: placar inválido. Use 6–0 a 6–4, 7–5 ou 7–6.",
+  "review.error.set_3_invalid_score": "Set 3: placar inválido. Use 6–0 a 6–4, 7–5 ou 7–6.",
+  "review.error.set_1_tiebreak_required": "Set 1 em 7–6 exige o placar do tie-break.",
+  "review.error.set_2_tiebreak_required": "Set 2 em 7–6 exige o placar do tie-break.",
+  "review.error.set_3_tiebreak_required": "Set 3 em 7–6 exige o placar do tie-break.",
+  "review.error.set_1_tiebreak_invalid": "Set 1: tie-break deve ter no mínimo 7 pontos e dois de vantagem.",
+  "review.error.set_2_tiebreak_invalid": "Set 2: tie-break deve ter no mínimo 7 pontos e dois de vantagem.",
+  "review.error.set_3_tiebreak_invalid": "Set 3: tie-break deve ter no mínimo 7 pontos e dois de vantagem.",
 
   "manageScoresheet.title": "Folha de jogo",
   "manageScoresheet.none": "Não enviada",
@@ -975,16 +1136,12 @@ const ptBR = {
     "A folha foi salva, mas a extração falhou. O organizador pode repetir ou registrar manualmente.",
   "manageScoresheet.error.demo_disabled": "Atalhos de demonstração desativados.",
   "manageScoresheet.error.action_failed": "Não foi possível enviar a folha.",
-
   "nav.standings": "Classificação",
   "nav.leaders": "Líderes",
-
   "competition.groupStandingsTitle": "Classificação dos grupos",
-
   "standings.eyebrow": "Classificação",
   "standings.title": "Quem está na frente",
-  "standings.body":
-    "Tabelas calculadas apenas com resultados confirmados e publicados. Jogos cancelados ficam fora da conta; W.O. vale 3–0.",
+  "standings.body": "Tabelas calculadas apenas com resultados confirmados e publicados. Jogos cancelados ficam fora da conta; W.O. vale 3–0.",
   "standings.confirmedOnly": "Somente resultados confirmados",
   "standings.filterLabel": "Filtrar classificação por competição",
   "standings.backToEvent": "Voltar ao evento",
@@ -1002,90 +1159,58 @@ const ptBR = {
   "standings.ruleHeadToHeadTennis": "Confronto direto quando há empate entre dois",
   "standings.ruleSetDifference": "Saldo de sets",
   "standings.ruleGameDifference": "Saldo de games",
-  "standings.headToHeadNote":
-    "O confronto direto considera somente os jogos entre as equipes empatadas em pontos.",
-  "standings.tennisNote":
-    "O confronto direto do tênis é usado quando exatamente dois inscritos estão empatados.",
-  "standings.seedNote":
-    "Empates que permanecem após os critérios esportivos são resolvidos pelo sorteio reproduzível da semente {seed}.",
+  "standings.headToHeadNote": "O confronto direto considera somente os jogos entre as equipes empatadas em pontos.",
+  "standings.tennisNote": "O confronto direto do tênis é usado quando exatamente dois inscritos estão empatados.",
+  "standings.seedNote": "Empates que permanecem após os critérios esportivos são resolvidos pelo sorteio reproduzível da semente {seed}.",
   "standings.seededDrawUsed": "Sorteio reproduzível aplicado entre: {teams}.",
   "standings.emptyTitle": "Nenhuma classificação disponível",
-  "standings.emptyBody":
-    "As tabelas aparecem depois que o organizador gerar os grupos e publicar os primeiros resultados.",
+  "standings.emptyBody": "As tabelas aparecem depois que o organizador gerar os grupos e publicar os primeiros resultados.",
   "standings.noGroupsTitle": "Grupos ainda não definidos",
-  "standings.noGroupsBody":
-    "O sorteio desta competição foi gerado, mas não há grupos persistidos para exibir.",
+  "standings.noGroupsBody": "O sorteio desta competição foi gerado, mas não há grupos persistidos para exibir.",
   "standings.pendingTitle": "Aguardando o sorteio",
-  "standings.pendingBody":
-    "A classificação aparece depois que o organizador gerar os grupos desta competição.",
+  "standings.pendingBody": "A classificação aparece depois que o organizador gerar os grupos desta competição.",
   "standings.viewFull": "Ver classificação completa",
   "standings.qualifier": "Classificado para a próxima fase",
-
   "leaders.eyebrow": "Destaques individuais",
   "leaders.title": "Líderes da Summer Cup",
-  "leaders.body":
-    "Gols e assistências do futebol, aces e duplas faltas do tênis. Somente versões confirmadas e atuais entram na contagem.",
+  "leaders.body": "Gols e assistências do futebol, aces e duplas faltas do tênis. Somente versões confirmadas e atuais entram na contagem.",
   "leaders.filterLabel": "Filtrar líderes por competição",
   "leaders.backToEvent": "Voltar ao evento",
   "leaders.footballEyebrow": "Futebol Sub-12",
   "leaders.footballTitle": "Artilharia e assistências",
-  "leaders.footballBody":
-    "Cada gol e assistência é registrado pelo organizador na versão publicada do resultado.",
+  "leaders.footballBody": "Cada gol e assistência é registrado pelo organizador na versão publicada do resultado.",
   "leaders.goalsBody": "Jogadores com mais gols nos resultados atuais.",
   "leaders.assistsBody": "Jogadores com mais assistências nos resultados atuais.",
   "leaders.tennisEyebrow": "Tênis Open",
   "leaders.tennisTitle": "Aces e duplas faltas",
-  "leaders.tennisBody":
-    "Estatísticas individuais registradas nas partidas de tênis publicadas.",
+  "leaders.tennisBody": "Estatísticas individuais registradas nas partidas de tênis publicadas.",
   "leaders.acesBody": "Tenistas com mais aces nos resultados atuais.",
-  "leaders.doubleFaultsBody":
-    "Tenistas com mais duplas faltas nos resultados atuais.",
+  "leaders.doubleFaultsBody": "Tenistas com mais duplas faltas nos resultados atuais.",
   "leaders.empty": "Ainda não há estatísticas suficientes.",
-  "leaders.walkoverNote":
-    "W.O. não gera gols, assistências, aces ou duplas faltas.",
+  "leaders.walkoverNote": "W.O. não gera gols, assistências, aces ou duplas faltas.",
   "leaders.viewResults": "Ver resultados",
   "leaders.viewStandings": "Ver classificação",
-
   "review.statsTitle": "Gols e assistências dos participantes (opcional)",
-  "review.statsBody":
-    "Informe apenas quem marcou ou deu assistência. Os números ficam ligados a esta versão do resultado.",
+  "review.statsBody": "Informe apenas quem marcou ou deu assistência. Os números ficam ligados a esta versão do resultado.",
   "review.statsGoals": "Gols",
   "review.statsAssists": "Assistências",
   "review.statsGoalsShort": "G",
   "review.statsAssistsShort": "A",
-  "review.statsWalkoverNote":
-    "W.O. ignora todas as estatísticas individuais, mesmo que valores sejam preenchidos.",
-  "review.correctionEyebrow": "Correção publicada",
-  "review.correctionTitle": "Corrigir resultado",
-  "review.correctionBody":
-    "Cria uma nova versão confirmada, exige um motivo e recalcula classificação, líderes e avanço na mesma transação. As versões anteriores permanecem no histórico.",
-  "review.correctionReason": "Motivo da correção",
-  "review.correctionReasonHint":
-    "O motivo fica visível apenas ao organizador, no histórico e na auditoria; nunca aparece nas páginas públicas.",
-  "review.correctionConfirmation":
-    "Confirmo a correção e entendo que a versão anterior será preservada, mas deixará de valer.",
-  "review.correctionPublish": "Publicar correção",
+  "review.statsWalkoverNote": "W.O. ignora todas as estatísticas individuais, mesmo que valores sejam preenchidos.",
+  "review.correctionReasonHint": "O motivo fica visível apenas ao organizador, no histórico e na auditoria; nunca aparece nas páginas públicas.",
   "review.reopenEyebrow": "Reparo em ordem inversa",
   "review.reopenTitle": "Reabrir resultado publicado",
-  "review.reopenBody":
-    "Retira a versão atual da publicação e devolve a partida para aguardando resultado, preservando todo o histórico. Use para corrigir uma partida anterior quando uma rodada seguinte já foi publicada.",
+  "review.reopenBody": "Retira a versão atual da publicação e devolve a partida para aguardando resultado, preservando todo o histórico. Use para corrigir uma partida anterior quando uma rodada seguinte já foi publicada.",
   "review.reopenReason": "Motivo da reabertura",
-  "review.reopenGuardHint":
-    "A reabertura é bloqueada se uma partida posterior ainda tiver resultado confirmado. Reabra primeiro as partidas mais avançadas da chave, na ordem inversa.",
+  "review.reopenGuardHint": "A reabertura é bloqueada se uma partida posterior ainda tiver resultado confirmado. Reabra primeiro as partidas mais avançadas da chave, na ordem inversa.",
   "review.reopenAction": "Reabrir resultado",
   "review.reopening": "Reabrindo…",
-  "review.notice.corrected": "Correção publicada. Classificação, líderes e avanço foram recalculados.",
   "review.notice.reopened": "Resultado reaberto. A partida voltou para aguardando resultado.",
-  "review.error.downstream_result_exists":
-    "Existe um resultado confirmado em uma partida posterior. Reabra ou corrija as partidas seguintes na ordem inversa antes desta.",
-  "review.error.result_not_published": "Esta partida não tem um resultado publicado para reabrir.",
   "review.error.reason_required": "Informe um motivo com pelo menos 3 caracteres.",
   "review.error.confirmation_required": "Marque a confirmação explícita para continuar.",
-
   "compAdmin.standingsEyebrow": "Prévia",
   "compAdmin.standingsTitle": "Classificação dos grupos",
-  "compAdmin.standingsBody":
-    "A mesma tabela que o público vê, calculada a partir das versões confirmadas atuais. Use os resultados publicados para conferir o avanço antes de uma correção.",
+  "compAdmin.standingsBody": "A mesma tabela que o público vê, calculada a partir das versões confirmadas atuais. Use os resultados publicados para conferir o avanço antes de uma correção.",
 } as const;
 
 export type Dictionary = Record<keyof typeof ptBR, string>;
@@ -1204,7 +1329,12 @@ const en: Dictionary = {
   "competition.knockout": "Knockout",
   "competition.partialStandings": "Provisional standings",
   "competition.standingsNote":
-    "A win is worth 2 points. Tie-break: points, wins, set difference and game difference.",
+    "A win is worth 2 points. Tie-break: points, head-to-head when exactly two are level, set difference, game difference and a seeded draw.",
+  "competition.seededDrawNote":
+    "The final tie-break is a reproducible seeded draw. Seed: {seed}.",
+  "competition.leadersTitle": "Tennis leaders",
+  "competition.leadersBody":
+    "Aces and double faults accumulated from this competition's published results. Walkovers create no statistics.",
   "competition.footballStandingsNote":
     "A win is worth 3 points. Tie-break: points, head-to-head, overall goal difference, goals scored and a reproducible draw.",
   "competition.oneParticipantTeam": "Individual entrant · 1 participant",
@@ -1260,6 +1390,10 @@ const en: Dictionary = {
   "standings.goalsAgainst": "GA",
   "standings.goalDifference": "GD",
   "standings.points": "Pts",
+  "standings.tiebreak.head_to_head": "Head-to-head",
+  "standings.tiebreak.set_difference": "Set difference",
+  "standings.tiebreak.game_difference": "Game difference",
+  "standings.tiebreak.seeded_draw": "Seeded draw",
   "leaders.aces": "Aces",
   "leaders.doubleFaults": "Double faults",
   "leaders.goals": "Goals",
@@ -1844,6 +1978,103 @@ const en: Dictionary = {
   "manageFixtures.emptyBody":
     "Fixtures appear here after the organiser generates the competition draw.",
 
+  "disputes.manager.title": "Private disputes",
+  "disputes.manager.none": "None active",
+  "disputes.manager.privateHint":
+    "Visible to the organiser and the teams in this match.",
+  "disputes.manager.activeTitle": "Dispute under review",
+  "disputes.manager.duplicateBlocked":
+    "A new dispute can only be opened after the organiser responds.",
+  "disputes.manager.teamLabel": "Disputing team",
+  "disputes.manager.explanationLabel": "Dispute explanation",
+  "disputes.manager.explanationPlaceholder":
+    "Describe what needs to be reviewed in this published result.",
+  "disputes.manager.explanationHint":
+    "Required. The text stays private and does not change the public result.",
+  "disputes.manager.openAction": "Open dispute",
+  "disputes.manager.opening": "Sending…",
+  "disputes.manager.openedNotice":
+    "Dispute sent. The public result was not changed.",
+  "disputes.manager.publicUnaffected":
+    "Opening a dispute does not unpublish, change or flag the public result.",
+  "disputes.manager.historyTitle": "Dispute history",
+  "disputes.status.open": "Open",
+  "disputes.status.resolved": "Upheld",
+  "disputes.status.dismissed": "Dismissed",
+  "disputes.unknownUser": "Unidentified person",
+  "disputes.responseLabel": "Organiser response",
+  "disputes.correctionLinked": "Linked correction: version {version}",
+  "disputes.error.invalid_input": "Review the highlighted fields.",
+  "disputes.error.unauthorized": "Sign in again to continue.",
+  "disputes.error.match_not_found": "Match not found.",
+  "disputes.error.requires_published_match":
+    "A dispute can only be opened on a published match.",
+  "disputes.error.forbidden":
+    "Only the organiser and the managers of the involved teams can access this dispute.",
+  "disputes.error.duplicate_active":
+    "This match already has an active dispute. Wait for the organiser to respond.",
+  "disputes.error.explanation_too_short":
+    "Describe the dispute with at least 10 characters.",
+  "disputes.error.explanation_too_long":
+    "The explanation must be 4,000 characters or fewer.",
+  "disputes.error.response_too_short":
+    "Write a response with at least 10 characters.",
+  "disputes.error.response_too_long":
+    "The response must be 4,000 characters or fewer.",
+  "disputes.error.invalid_correction":
+    "Choose a later correction version with a recorded reason.",
+  "disputes.error.dispute_not_found": "Dispute not found.",
+  "disputes.error.already_closed":
+    "This dispute is already closed. Refresh the page to see its history.",
+  "disputes.error.action_failed": "The action could not be completed.",
+
+  "disputes.owner.backToDashboard": "Back to the event dashboard",
+  "disputes.owner.eyebrow": "Private organiser area",
+  "disputes.owner.title": "Private disputes",
+  "disputes.owner.body":
+    "Review disputes opened by managers of the involved teams. Explanations and responses stay restricted to you and the teams in the match, and the public result only changes through a separate correction flow.",
+  "disputes.owner.openCount": "open disputes",
+  "disputes.owner.queueEyebrow": "Private queue",
+  "disputes.owner.queueTitle": "Awaiting a decision",
+  "disputes.owner.queueEmptyTitle": "No open disputes",
+  "disputes.owner.queueEmptyBody":
+    "New disputes from team managers appear here. The history below remains available.",
+  "disputes.owner.historyEyebrow": "Record",
+  "disputes.owner.historyTitle": "Dispute history",
+  "disputes.owner.historyEmpty":
+    "No disputes have been opened for this event yet.",
+  "disputes.owner.openedBy": "Opened by",
+  "disputes.owner.teamLabel": "Disputing team",
+  "disputes.owner.resolutionLabel": "Decision",
+  "disputes.owner.responseLabel": "Required response",
+  "disputes.owner.responsePlaceholder":
+    "Explain the decision to the manager who opened the dispute.",
+  "disputes.owner.responseHint":
+    "Required. Visible only to the organiser and the managers of the involved teams.",
+  "disputes.owner.correctionLabel": "Linked correction (optional)",
+  "disputes.owner.correctionNone": "No linked correction",
+  "disputes.owner.correctionOption": "Version {version} — {reason}",
+  "disputes.owner.correctionHint":
+    "Optional. Link an existing recorded correction; this action does not create or change results.",
+  "disputes.owner.correctionUnavailable":
+    "No later correction version is available for this match. Result corrections are a separate flow and, when they exist, can be linked here. No correction is created automatically.",
+  "disputes.owner.saveDecision": "Record decision",
+  "disputes.owner.saving": "Saving…",
+  "disputes.owner.savedNotice":
+    "Decision recorded. The history remains available.",
+  "disputes.owner.activityEyebrow": "Activity",
+  "disputes.owner.activityTitle": "Recent activity",
+  "disputes.owner.activityBody":
+    "Opening, decision and closure recorded in the event audit trail.",
+  "disputes.owner.activityEmpty": "No dispute activity yet.",
+  "disputes.owner.privacyTitle": "Private content",
+  "disputes.owner.privacyBody":
+    "Dispute and response text never appears on public pages. Other managers cannot read it either.",
+  "disputes.owner.viewPublicResults": "View public results",
+  "disputes.activity.dispute.opened": "Dispute opened",
+  "disputes.activity.dispute.resolved": "Dispute upheld",
+  "disputes.activity.dispute.dismissed": "Dispute dismissed",
+
   "notFound.title": "Page not found",
   "notFound.body": "The address may be incorrect or the content was removed.",
   "notFound.back": "Back to the Summer Cup",
@@ -1866,6 +2097,12 @@ const en: Dictionary = {
   "resultSource.manual": "Manual entry",
   "resultSource.walkover": "Walkover",
   "admin.reviewQueue": "Review results",
+  "admin.disputes": "Disputes",
+  "admin.openDisputes": "open disputes",
+  "admin.disputeCardTitle": "Private disputes",
+  "admin.disputeCardBody":
+    "Issues raised by team managers. Content and responses are restricted to the organiser and the involved teams.",
+  "admin.openDisputesAction": "Open dispute queue",
 
   "results.eyebrow": "Official results",
   "results.title": "Published results",
@@ -1901,9 +2138,9 @@ const en: Dictionary = {
   "review.awaitingTitle": "Matches without an active sheet",
   "review.awaitingEmpty": "Every match has an active sheet or a published result.",
   "review.publishedTitle": "Published results",
-  "review.noMatchesTitle": "No football matches found",
+  "review.noMatchesTitle": "No matches found",
   "review.noMatchesBody":
-    "Generate the football draw so the matches appear here.",
+    "Generate the competition draw so its matches appear here.",
   "review.openReview": "Review sheet",
   "review.openMatch": "Open match",
   "review.viewHistory": "View history",
@@ -1994,13 +2231,36 @@ const en: Dictionary = {
   "review.manualWalkoverWinner": "Walkover winner",
   "review.manualPenaltyHome": "Home penalties",
   "review.manualPenaltyAway": "Away penalties",
+  "review.tennisManualTitle": "Manual tennis result",
+  "review.tennisManualBody":
+    "Enter the sets and tie-breaks. The winner is derived from two set wins. Aces and double faults feed the public leaders; a walkover creates no statistics.",
+  "review.tennisSets": "Sets · best of three",
+  "review.tennisSet": "Set {number}",
+  "review.tennisTiebreakHome": "TB home",
+  "review.tennisTiebreakAway": "TB away",
+  "review.tennisSetsHint":
+    "Use 6–0 to 6–4, 7–5 or 7–6 with a tie-break. The third set is a full set, never a match tie-break. Leave set 3 empty for a 2–0 win.",
+  "review.tennisHomeAces": "Home aces",
+  "review.tennisAwayAces": "Away aces",
+  "review.tennisHomeDoubleFaults": "Home double faults",
+  "review.tennisAwayDoubleFaults": "Away double faults",
   "review.manualNotes": "Internal notes",
+  "review.correctionEyebrow": "Auditable correction",
+  "review.correctionTitle": "Correct a published result",
+  "review.correctionBody":
+    "A correction requires a reason, creates a new version and recalculates standings, advancement and leaders. A changed knockout winner is blocked when a later result is already published.",
+  "review.correctionReason": "Correction reason",
+  "review.correctionConfirmation":
+    "I confirm this correction and understand the public result will update.",
+  "review.correctionPublish": "Publish correction",
   "review.manualConfirmation":
     "I confirm I checked the result and take responsibility for publishing this match manually.",
   "review.manualPublish": "Publish manual result",
   "review.notice.published": "Result confirmed and published.",
   "review.notice.manual_published":
     "Manual result confirmed and published. The active sheet was closed.",
+  "review.notice.corrected":
+    "Correction published with a recorded reason. Standings and leaders were recalculated.",
   "review.error.unauthorized": "Sign in again to continue.",
   "review.error.forbidden": "You do not have access to this match.",
   "review.error.match_not_found": "Match not found.",
@@ -2028,6 +2288,34 @@ const en: Dictionary = {
   "review.error.fix_errors": "Review the highlighted fields.",
   "review.error.action_failed": "The action could not be completed.",
   "review.error.result_version_failed": "The result version could not be created.",
+  "review.error.wrong_sport": "This result does not belong to tennis.",
+  "review.error.result_not_published": "This match has no published result to correct or reopen.",
+  "review.error.downstream_result_exists":
+    "A later knockout match already has a confirmed result. Correct or reopen later matches in reverse order before changing this winner.",
+  "review.error.tennis_sets_required":
+    "Enter two or three valid sets for a best-of-three match.",
+  "review.error.third_set_required":
+    "One set each requires the full third set.",
+  "review.error.unnecessary_third_set":
+    "At 2–0 there is no third set. Leave set 3 empty.",
+  "review.error.tennis_winner_undetermined":
+    "The winner could not be derived from the sets entered.",
+  "review.error.invalid_home_aces": "Enter home aces as an integer from 0 to 100.",
+  "review.error.invalid_away_aces": "Enter away aces as an integer from 0 to 100.",
+  "review.error.invalid_home_double_faults": "Enter home double faults as an integer from 0 to 100.",
+  "review.error.invalid_away_double_faults": "Enter away double faults as an integer from 0 to 100.",
+  "review.error.set_1_invalid_games": "Set 1: use games from 0 to 7.",
+  "review.error.set_2_invalid_games": "Set 2: use games from 0 to 7.",
+  "review.error.set_3_invalid_games": "Set 3: use games from 0 to 7.",
+  "review.error.set_1_invalid_score": "Set 1: invalid score. Use 6–0 to 6–4, 7–5 or 7–6.",
+  "review.error.set_2_invalid_score": "Set 2: invalid score. Use 6–0 to 6–4, 7–5 or 7–6.",
+  "review.error.set_3_invalid_score": "Set 3: invalid score. Use 6–0 to 6–4, 7–5 or 7–6.",
+  "review.error.set_1_tiebreak_required": "A 7–6 set 1 requires the tie-break score.",
+  "review.error.set_2_tiebreak_required": "A 7–6 set 2 requires the tie-break score.",
+  "review.error.set_3_tiebreak_required": "A 7–6 set 3 requires the tie-break score.",
+  "review.error.set_1_tiebreak_invalid": "Set 1: the tie-break needs at least 7 points and a two-point lead.",
+  "review.error.set_2_tiebreak_invalid": "Set 2: the tie-break needs at least 7 points and a two-point lead.",
+  "review.error.set_3_tiebreak_invalid": "Set 3: the tie-break needs at least 7 points and a two-point lead.",
 
   "manageScoresheet.title": "Scoresheet",
   "manageScoresheet.none": "Not uploaded",
@@ -2056,16 +2344,12 @@ const en: Dictionary = {
     "The sheet was stored, but extraction failed. The organiser can retry or enter the result manually.",
   "manageScoresheet.error.demo_disabled": "Demo shortcuts are disabled.",
   "manageScoresheet.error.action_failed": "The sheet could not be uploaded.",
-
   "nav.standings": "Standings",
   "nav.leaders": "Leaders",
-
   "competition.groupStandingsTitle": "Group standings",
-
   "standings.eyebrow": "Standings",
   "standings.title": "Who is ahead",
-  "standings.body":
-    "Tables calculated only from confirmed, published results. Cancelled matches are excluded; a walkover counts as 3–0.",
+  "standings.body": "Tables calculated only from confirmed, published results. Cancelled matches are excluded; a walkover counts as 3–0.",
   "standings.confirmedOnly": "Confirmed results only",
   "standings.filterLabel": "Filter standings by competition",
   "standings.backToEvent": "Back to event",
@@ -2083,90 +2367,58 @@ const en: Dictionary = {
   "standings.ruleHeadToHeadTennis": "Head-to-head when exactly two are tied",
   "standings.ruleSetDifference": "Set difference",
   "standings.ruleGameDifference": "Game difference",
-  "standings.headToHeadNote":
-    "Head-to-head only considers matches played between the teams tied on points.",
-  "standings.tennisNote":
-    "Tennis head-to-head applies when exactly two entrants are tied.",
-  "standings.seedNote":
-    "Ties that remain after the sporting criteria are resolved by the reproducible draw seed {seed}.",
+  "standings.headToHeadNote": "Head-to-head only considers matches played between the teams tied on points.",
+  "standings.tennisNote": "Tennis head-to-head applies when exactly two entrants are tied.",
+  "standings.seedNote": "Ties that remain after the sporting criteria are resolved by the reproducible draw seed {seed}.",
   "standings.seededDrawUsed": "Reproducible draw applied between: {teams}.",
   "standings.emptyTitle": "No standings available",
-  "standings.emptyBody":
-    "Tables appear after the organiser generates groups and publishes the first results.",
+  "standings.emptyBody": "Tables appear after the organiser generates groups and publishes the first results.",
   "standings.noGroupsTitle": "Groups not defined yet",
-  "standings.noGroupsBody":
-    "This competition's draw was generated, but no persisted groups were found.",
+  "standings.noGroupsBody": "This competition's draw was generated, but no persisted groups were found.",
   "standings.pendingTitle": "Waiting for the draw",
-  "standings.pendingBody":
-    "Standings appear after the organiser generates this competition's groups.",
+  "standings.pendingBody": "Standings appear after the organiser generates this competition's groups.",
   "standings.viewFull": "View full standings",
   "standings.qualifier": "Qualified for the next stage",
-
   "leaders.eyebrow": "Individual highlights",
   "leaders.title": "Summer Cup leaders",
-  "leaders.body":
-    "Football goals and assists, tennis aces and double faults. Only current confirmed versions count.",
+  "leaders.body": "Football goals and assists, tennis aces and double faults. Only current confirmed versions count.",
   "leaders.filterLabel": "Filter leaders by competition",
   "leaders.backToEvent": "Back to event",
   "leaders.footballEyebrow": "Under-12 Football",
   "leaders.footballTitle": "Goals and assists",
-  "leaders.footballBody":
-    "Every goal and assist is entered by the organiser on the published result version.",
+  "leaders.footballBody": "Every goal and assist is entered by the organiser on the published result version.",
   "leaders.goalsBody": "Players with the most goals in current results.",
   "leaders.assistsBody": "Players with the most assists in current results.",
   "leaders.tennisEyebrow": "Tennis Open",
   "leaders.tennisTitle": "Aces and double faults",
-  "leaders.tennisBody":
-    "Individual statistics recorded on published tennis matches.",
+  "leaders.tennisBody": "Individual statistics recorded on published tennis matches.",
   "leaders.acesBody": "Players with the most aces in current results.",
-  "leaders.doubleFaultsBody":
-    "Players with the most double faults in current results.",
+  "leaders.doubleFaultsBody": "Players with the most double faults in current results.",
   "leaders.empty": "Not enough statistics yet.",
-  "leaders.walkoverNote":
-    "Walkovers create no goals, assists, aces or double faults.",
+  "leaders.walkoverNote": "Walkovers create no goals, assists, aces or double faults.",
   "leaders.viewResults": "View results",
   "leaders.viewStandings": "View standings",
-
   "review.statsTitle": "Participant goals and assists (optional)",
-  "review.statsBody":
-    "Enter only players who scored or assisted. The numbers belong to this result version.",
+  "review.statsBody": "Enter only players who scored or assisted. The numbers belong to this result version.",
   "review.statsGoals": "Goals",
   "review.statsAssists": "Assists",
   "review.statsGoalsShort": "G",
   "review.statsAssistsShort": "A",
-  "review.statsWalkoverNote":
-    "A walkover ignores all individual statistics even if values are entered.",
-  "review.correctionEyebrow": "Published correction",
-  "review.correctionTitle": "Correct result",
-  "review.correctionBody":
-    "Creates a new confirmed version, requires a reason and recalculates standings, leaders and advancement in one transaction. Previous versions stay in history.",
-  "review.correctionReason": "Correction reason",
-  "review.correctionReasonHint":
-    "The reason is visible only to the organiser in history and audit; it never appears on public pages.",
-  "review.correctionConfirmation":
-    "I confirm this correction and understand the previous version is retained but no longer current.",
-  "review.correctionPublish": "Publish correction",
+  "review.statsWalkoverNote": "A walkover ignores all individual statistics even if values are entered.",
+  "review.correctionReasonHint": "The reason is visible only to the organiser in history and audit; it never appears on public pages.",
   "review.reopenEyebrow": "Reverse-order repair",
   "review.reopenTitle": "Reopen published result",
-  "review.reopenBody":
-    "Retracts the current version from publication and returns the match to awaiting result while preserving history. Use it to repair an earlier match after a later round was published.",
+  "review.reopenBody": "Retracts the current version from publication and returns the match to awaiting result while preserving history. Use it to repair an earlier match after a later round was published.",
   "review.reopenReason": "Reopening reason",
-  "review.reopenGuardHint":
-    "Reopening is blocked while a later match still has a confirmed result. Reopen the furthest matches in the bracket first, in reverse order.",
+  "review.reopenGuardHint": "Reopening is blocked while a later match still has a confirmed result. Reopen the furthest matches in the bracket first, in reverse order.",
   "review.reopenAction": "Reopen result",
   "review.reopening": "Reopening…",
-  "review.notice.corrected": "Correction published. Standings, leaders and advancement were recalculated.",
   "review.notice.reopened": "Result reopened. The match returned to awaiting result.",
-  "review.error.downstream_result_exists":
-    "A later match already has a confirmed result. Reopen or correct the following matches in reverse order first.",
-  "review.error.result_not_published": "This match has no published result to reopen.",
   "review.error.reason_required": "Enter a reason with at least 3 characters.",
   "review.error.confirmation_required": "Tick the explicit confirmation to continue.",
-
   "compAdmin.standingsEyebrow": "Preview",
   "compAdmin.standingsTitle": "Group standings",
-  "compAdmin.standingsBody":
-    "The same table the public sees, calculated from current confirmed versions. Use published results to check advancement before a correction.",
+  "compAdmin.standingsBody": "The same table the public sees, calculated from current confirmed versions. Use published results to check advancement before a correction.",
 };
 
 export const dictionaries: Record<Locale, Dictionary> = {

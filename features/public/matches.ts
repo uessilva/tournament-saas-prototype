@@ -57,6 +57,7 @@ export type PublicMatchRow = {
   durationOverrideMinutes: number | null;
   defaultDurationMinutes: number;
   status: string;
+  cancelledAt: Date | null;
   venueId: string | null;
   venueName: string | null;
   homeTeamId: string | null;
@@ -268,7 +269,7 @@ export function mapPublicMatch(row: PublicMatchRow): PublicMatch {
       row.sport === "tennis"
         ? (row.tennisWalkover ?? false)
         : (row.footballWalkover ?? false),
-    isCancelled: row.status === "cancelled",
+    isCancelled: row.status === "cancelled" || row.cancelledAt != null,
     sets: row.tennisSets ?? null,
   };
 }
@@ -295,6 +296,7 @@ export function publicMatchQuery() {
       durationOverrideMinutes: matches.durationMinutes,
       defaultDurationMinutes: competitions.defaultMatchDurationMinutes,
       status: matches.status,
+      cancelledAt: matches.cancelledAt,
       venueId: venues.id,
       venueName: venues.name,
       homeTeamId: homeTeam.id,

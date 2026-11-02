@@ -10,6 +10,7 @@ import {
   ClockIcon,
 } from "@/components/icons";
 import { MatchRow } from "@/components/public/match-row";
+import { ManagerDisputeActions } from "@/components/manage/manager-dispute-actions";
 import { ManagerScoresheetActions } from "@/components/manage/manager-scoresheet-actions";
 import { useI18n } from "@/lib/i18n/client";
 import { formatTimeZoneLabel } from "@/lib/timezone";
@@ -98,14 +99,23 @@ export function ManagerFixturesView({
                     eventSlug={eventSlug}
                     showCompetition
                   />
-                  {match.sport === "football" ? (
-                    <ManagerScoresheetActions
-                      matchId={match.id}
-                      matchStatus={match.status}
-                      sheets={data.scoresheetsByMatch[match.id] ?? []}
-                      timezone={timezone}
-                    />
-                  ) : null}
+                  <ManagerScoresheetActions
+                    matchId={match.id}
+                    matchStatus={match.status}
+                    sheets={data.scoresheetsByMatch[match.id] ?? []}
+                    timezone={timezone}
+                  />
+                  <ManagerDisputeActions
+                    matchId={match.id}
+                    matchStatus={match.status}
+                    timezone={timezone}
+                    disputes={data.disputesByMatch[match.id] ?? []}
+                    managedTeams={data.teams.filter(
+                      (team) =>
+                        team.id === match.homeTeamId ||
+                        team.id === match.awayTeamId,
+                    )}
+                  />
                 </div>
               ))}
             </div>

@@ -6,7 +6,11 @@ import {
   matches,
   teamManagers,
 } from "@/lib/db/schema";
-import { buildFootballScoresheetPdf, FOOTBALL_TEMPLATE_VERSION } from "@/features/scoresheets/template";
+import {
+  buildFootballScoresheetPdf,
+  buildTennisScoresheetPdf,
+  scoresheetTemplateVersion,
+} from "@/features/scoresheets/template";
 import { bytesToArrayBuffer } from "@/lib/bytes";
 
 export const dynamic = "force-dynamic";
@@ -69,8 +73,7 @@ export async function GET(
   if (
     match.isBye ||
     match.status === "cancelled" ||
-    match.status === "published" ||
-    match.competition.sport !== "football"
+    match.status === "published"
   ) {
     return new Response("This match does not accept a scoresheet.", {
       status: 409,
@@ -83,7 +86,7 @@ export async function GET(
     return new Response("Match entrants are not ready.", { status: 409 });
   }
 
-  const pdf = await buildFootballScoresheetPdf({
+  const templateInput = {
     matchId: match.id,
     matchNumber: match.matchNumber,
     eventName: event.name,
@@ -93,9 +96,15 @@ export async function GET(
     venueName: match.venue?.name ?? null,
     startsAt: match.startsAt,
     timezone: event.timezone,
-  });
+  };
+  const pdf =
+    match.competition.sport === "tennis"
+      ? await buildTennisScoresheetPdf(templateInput)
+      : await buildFootballScoresheetPdf(templateInput);
 
-  const filename = `scoresheet-match-${match.matchNumber}-${FOOTBALL_TEMPLATE_VERSION}.pdf`;
+  const filename = `scoresheet-match-${match.matchNumber}-${scoresheetTemplateVersion(
+    match.competition.sport,
+  )}.pdf`;
   return new Response(new Blob([bytesToArrayBuffer(pdf)], { type: "application/pdf" }), {
     headers: {
       "Content-Type": "application/pdf",
