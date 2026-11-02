@@ -42,6 +42,19 @@ async function ping() {
   return { ok: true };
 }
 
+async function processScoresheetExtract(payload: JobPayload) {
+  const scoresheetId =
+    typeof payload.scoresheetId === "string" ? payload.scoresheetId : "";
+  if (!scoresheetId) {
+    throw new Error("scoresheet.extract requires a scoresheetId.");
+  }
+
+  const { processScoresheetExtraction } = await import(
+    "../../features/scoresheets/processor"
+  );
+  return processScoresheetExtraction(scoresheetId);
+}
+
 export async function processJob(job: ProcessableJob) {
   switch (job.type) {
     case "email.send":
@@ -49,9 +62,7 @@ export async function processJob(job: ProcessableJob) {
     case "demo.ping":
       return ping();
     case "scoresheet.extract":
-      throw new Error(
-        "Scoresheet extraction adapter is not connected yet. Use the synchronous seeded fallback in the review flow.",
-      );
+      return processScoresheetExtract(job.payload);
     default:
       throw new Error(`Unknown job type: ${job.type}`);
   }

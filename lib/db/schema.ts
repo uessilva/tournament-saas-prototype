@@ -149,6 +149,10 @@ export const scoresheetStatusEnum = pgEnum("scoresheet_status", [
   "extraction_failed",
   "rejected",
 ]);
+export const scoresheetExtractionSourceEnum = pgEnum(
+  "scoresheet_extraction_source",
+  ["acroform", "qr_ocr", "seeded_fallback"],
+);
 export const invitationKindEnum = pgEnum("invitation_kind", ["email", "link"]);
 export const accessEventTypeEnum = pgEnum("access_event_type", [
   "invitation_created",
@@ -705,9 +709,12 @@ export const scoresheets = pgTable(
     originalFilename: text("original_filename").notNull(),
     mimeType: text("mime_type").notNull(),
     sizeBytes: integer("size_bytes").notNull(),
+    previewStorageKey: text("preview_storage_key"),
     templateVersion: text("template_version"),
     qrSheetId: text("qr_sheet_id"),
     pageCount: integer("page_count"),
+    extractionSource: scoresheetExtractionSourceEnum("extraction_source"),
+    extractionNote: text("extraction_note"),
     status: scoresheetStatusEnum("status").notNull().default("uploaded"),
     isActive: boolean("is_active").notNull().default(true),
     processingStartedAt: timestamp("processing_started_at", {
@@ -715,10 +722,19 @@ export const scoresheets = pgTable(
     }),
     processedAt: timestamp("processed_at", { withTimezone: true }),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedByUserId: uuid("reviewed_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
     confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+    confirmedByUserId: uuid("confirmed_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
     failureReason: text("failure_reason"),
     rejectionReason: text("rejection_reason"),
     createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
   },
@@ -752,7 +768,16 @@ export const extractedFields = pgTable(
       width: number;
       height: number;
     }>(),
+    validationFlags: jsonb("validation_flags")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    source: text("source"),
     needsReview: boolean("needs_review").notNull().default(false),
+    reviewedByUserId: uuid("reviewed_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
