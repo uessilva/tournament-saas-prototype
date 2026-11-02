@@ -1,4 +1,5 @@
 import { asc, eq } from "drizzle-orm";
+import { z } from "zod";
 
 import { db } from "@/lib/db/client";
 import {
@@ -9,11 +10,16 @@ import {
   teams,
   users,
 } from "@/lib/db/schema";
+import { getRegistrationStatus } from "@/features/competitions/registration";
 import type { TeamRosterData } from "@/features/teams/types";
 
 export async function getTeamRoster(
   teamId: string,
 ): Promise<TeamRosterData | null> {
+  if (!z.string().uuid().safeParse(teamId).success) {
+    return null;
+  }
+
   const [team] = await db
     .select({
       id: teams.id,
@@ -24,6 +30,9 @@ export async function getTeamRoster(
       competitionSlug: competitions.slug,
       sport: competitions.sport,
       registrationState: competitions.registrationState,
+      registrationDeadline: competitions.registrationDeadline,
+      drawGeneratedAt: competitions.drawGeneratedAt,
+      status: competitions.status,
       rosterMin: competitions.rosterMin,
       rosterMax: competitions.rosterMax,
       birthDateFrom: competitions.birthDateFrom,
@@ -31,6 +40,7 @@ export async function getTeamRoster(
       eventId: events.id,
       eventName: events.name,
       eventSlug: events.slug,
+      eventTimezone: events.timezone,
     })
     .from(teams)
     .innerJoin(competitions, eq(teams.competitionId, competitions.id))
@@ -63,6 +73,8 @@ export async function getTeamRoster(
     .where(eq(teamManagers.teamId, teamId))
     .orderBy(asc(users.name));
 
+  const registration = getRegistrationStatus(team);
+
   const count = roster.length;
   const withinSize =
     (team.rosterMin == null || count >= team.rosterMin) &&
@@ -89,6 +101,10 @@ export async function getTeamRoster(
       slug: team.competitionSlug,
       sport: team.sport,
       registrationState: team.registrationState,
+      registrationOpen: registration.open,
+      registrationClosedByDeadline: registration.closedByDeadline,
+      registrationDeadline: team.registrationDeadline?.toISOString() ?? null,
+      drawGeneratedAt: team.drawGeneratedAt?.toISOString() ?? null,
       rosterMin: team.rosterMin,
       rosterMax: team.rosterMax,
       birthDateFrom: team.birthDateFrom,
@@ -98,6 +114,7 @@ export async function getTeamRoster(
       id: team.eventId,
       name: team.eventName,
       slug: team.eventSlug,
+      timezone: team.eventTimezone,
     },
     managers: managerRows
       .map((manager) => manager.name ?? manager.email)

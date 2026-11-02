@@ -7,9 +7,10 @@ import {
   ArrowLeftIcon,
   ArrowUpRightIcon,
   CheckIcon,
-  ShirtIcon,
+  ClockIcon,
   UsersIcon,
 } from "@/components/icons";
+import { RosterEditor } from "@/components/manage/roster-editor";
 import {
   RegistrationBadge,
   SportTag,
@@ -24,8 +25,8 @@ export function TeamRosterView({
   data: TeamRosterData;
   user: { name: string | null; email: string | null };
 }) {
-  const { t, formatDate } = useI18n();
-  const registrationOpen = data.competition.registrationState === "open";
+  const { t, formatDate, formatDateTime } = useI18n();
+  const registrationOpen = data.competition.registrationOpen;
   const rosterLimit =
     data.competition.rosterMin != null && data.competition.rosterMax != null
       ? t("competition.rosterLimitValue")
@@ -79,7 +80,9 @@ export function TeamRosterView({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <SportTag sport={data.competition.sport} />
-              <RegistrationBadge state={data.competition.registrationState} />
+              <RegistrationBadge
+                state={registrationOpen ? "open" : "closed"}
+              />
             </div>
             <h1 className="display-title mt-3 text-4xl sm:text-5xl">
               {data.team.name}
@@ -152,94 +155,43 @@ export function TeamRosterView({
                 : "bg-cream text-muted"
             }`}
           >
-            {registrationOpen
-              ? t("manage.registrationOpenNotice")
-              : t("manage.registrationClosedNotice")}
-          </div>
-        </section>
-
-        <section className="surface mt-5 overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-4">
-            <div>
-              <p className="eyebrow text-green">{t("manage.rosterTitle")}</p>
-              <h2 className="display-title mt-1 text-2xl">
-                {t("manage.playerCount").replace(
-                  "{count}",
-                  String(data.participants.length),
-                )}
-              </h2>
-            </div>
-            <p className="text-xs font-medium text-muted">
-              {data.managers.length
-                ? `${t("competition.manager")}: ${data.managers.join(", ")}`
-                : null}
+            <p>
+              {registrationOpen
+                ? t("manage.registrationOpenNotice")
+                : data.competition.registrationClosedByDeadline
+                  ? t("manage.registrationDeadlineNotice")
+                  : t("manage.registrationClosedNotice")}
             </p>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-left text-sm">
-              <caption className="sr-only">
-                {data.team.name} — {t("manage.rosterTitle")}
-              </caption>
-              <thead>
-                <tr className="border-b border-line bg-paper/60 text-[10px] uppercase tracking-[0.1em] text-muted">
-                  <th className="px-5 py-3 font-extrabold">
-                    {t("manage.shirt")}
-                  </th>
-                  <th className="px-5 py-3 font-extrabold">
-                    {t("competition.players")}
-                  </th>
-                  <th className="px-5 py-3 font-extrabold">
-                    {t("manage.position")}
-                  </th>
-                  <th className="px-5 py-3 font-extrabold">
-                    {t("manage.birthDate")}
-                  </th>
-                  <th className="px-5 py-3 font-extrabold">
-                    {t("manage.captain")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.participants.map((participant) => (
-                  <tr
-                    key={participant.id}
-                    className="border-b border-line/70 last:border-b-0"
-                  >
-                    <td className="px-5 py-3">
-                      <span className="inline-flex items-center gap-1.5 font-extrabold text-muted">
-                        <ShirtIcon className="size-3.5" />
-                        {participant.shirtNumber ?? "—"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 font-bold">
-                      {participant.firstName} {participant.lastName}
-                    </td>
-                    <td className="px-5 py-3 text-muted">
-                      {participant.position ?? "—"}
-                    </td>
-                    <td className="px-5 py-3 text-muted">
-                      {formatDate(participant.dateOfBirth, "UTC", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td className="px-5 py-3">
-                      {participant.isCaptain ? (
-                        <span className="rounded-full bg-lime px-2 py-0.5 text-[10px] font-extrabold text-ink">
-                          {t("manage.captain")}
-                        </span>
-                      ) : (
-                        <span className="text-muted">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {data.competition.registrationDeadline && registrationOpen ? (
+              <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold">
+                <ClockIcon className="size-3.5" />
+                {t("manage.registrationDeadline")
+                  .replace(
+                    "{date}",
+                    formatDateTime(
+                      data.competition.registrationDeadline,
+                      data.event.timezone,
+                    ),
+                  )
+                  .replace("{timezone}", data.event.timezone)}
+              </p>
+            ) : null}
+            {data.managers.length ? (
+              <p className="mt-2 text-xs font-bold">
+                {t("competition.manager")}: {data.managers.join(", ")}
+              </p>
+            ) : null}
           </div>
         </section>
+
+        <RosterEditor
+          teamId={data.team.id}
+          participants={data.participants}
+          canEdit={registrationOpen}
+          sport={data.competition.sport}
+          rosterMin={data.competition.rosterMin}
+          rosterMax={data.competition.rosterMax}
+        />
       </main>
     </div>
   );

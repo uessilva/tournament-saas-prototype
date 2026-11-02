@@ -8,7 +8,7 @@ This is throwaway demonstration code. It is not production hardening, and there 
 
 Summer Cup 2026 is seeded with:
 
-- **Under-12 Football** — 8 teams, 96 participants, open registration, 6 accepted Team Managers, 2 pending email invitations, and one reusable Team-scoped share link. The draw is intentionally not generated so the guided football path stays demonstrable.
+- **Under-12 Football** — 8 teams, 96 participants, open registration, 6 accepted Team Managers, 2 pending email invitations, and one reusable Team-scoped share link. The draw is intentionally not generated so the guided football path stays demonstrable. Owners can invite or remove managers, manage reusable links, and inspect the full access history.
 - **Tennis Open** — 8 individual entrants, each represented by a one-Participant Team. Two groups, 12 round-robin fixtures, 8 published results with best-of-three set scores, and aces/double-fault leaders.
 - **Venues** — Campo Principal, Campo 2, Quadra Central and Quadra 2.
 - **Event** — `America/Sao_Paulo`, Parque Esportivo do Sol, São Paulo. Seeded dates are relative to the reset time so the event always feels current.
@@ -61,6 +61,9 @@ The seeded account switcher and protected reset controls are **development-only*
 | `http://localhost:3000/events/summer-cup-2026/competitions/tennis-open` | Tennis competition overview with provisional standings |
 | `http://localhost:3000/signin` | Magic-link sign-in and seeded account switcher |
 | `http://localhost:3000/admin` | Protected Owner administration |
+| `http://localhost:3000/admin/events/[eventId]/teams` | Owner Teams, managers, invitations, links and access history |
+| `http://localhost:3000/admin/events/[eventId]/competitions/[competitionId]` | Owner competition rules, entrants and registration controls |
+| `http://localhost:3000/invitations/[token]` | Email-invitation or reusable-link acceptance |
 | `http://localhost:3000/manage` | Protected Team Manager area |
 | `http://localhost:8025` | Mailpit inbox |
 
@@ -96,6 +99,7 @@ In `pnpm dev`, sign in as Alex Moreira and open `/admin`. The demo panel provide
 - Account switching between the Owner and seeded Team Managers.
 - A protected **Reset demo** action that only the Event Owner of that event can trigger.
 - A public-hub shortcut and the current event checklist.
+- On **Teams and access**, demo-only shortcuts to pending invitations and Mailpit. Creating or replacing an invitation shows the raw link once because only its hash is stored.
 
 The reset action recreates the same deterministic event and user IDs, so the current Owner session survives the reset. CLI reset also keeps the schema and only replaces data.
 
@@ -233,23 +237,32 @@ Before a demo:
    tennis results, upcoming fixtures and leaders load without authentication.
 3. Switch to English and reload; confirm the choice persists.
 4. Sign in as Alex Moreira through `/signin` (demo switcher or Mailpit).
-5. Confirm `/admin/events/[eventId]` loads and a Manager cannot open it.
-6. Sign in as a Manager and confirm `/manage` and `/manage/teams/[teamId]`
-   only show assigned teams.
-7. Run the Owner demo reset action; confirm the success state and seeded data.
-8. Start `pnpm worker`, enqueue or observe a job, and confirm it is marked
-   completed without logging payload contents.
-9. Check the main screens at mobile width with keyboard focus and visible
-   focus rings.
+5. Open **Teams and access**, create an email invitation for a seeded manager
+   email, then replace a pending invitation to reveal a raw link once.
+6. Open the invitation link (or the Mailpit message), sign in as the invited
+   email, and confirm the destination survives sign-in and the acceptance is
+   idempotent. Check that a different email sees a safe mismatch state.
+7. As a Manager, add, edit and remove a participant while registration is open;
+   confirm birth-range, squad-size, duplicate-participant and tennis singles
+   errors are clear.
+8. As the Owner, close registration from the competition admin page and confirm
+   roster edits are blocked. Reopen only before generation; test an Event-time-zone
+   deadline, the extend action and the expired/revoked invitation states.
+9. Confirm `/admin/events/[eventId]` loads and a Manager cannot open it or a team
+   they do not manage.
+10. Run the Owner demo reset action; confirm the success state and seeded data.
+11. Start `pnpm worker`, enqueue or observe a job, and confirm it is marked
+    completed without logging payload contents.
+12. Check the main screens at mobile width with keyboard focus and visible
+    focus rings.
 
 ## Current scope and next tickets
 
-This ticket is the runnable foundation. Later tickets add invitation acceptance,
-roster editing, registration closure, seeded draw generation and swapping,
-scheduling/conflict validation, Scoresheet PDF generation/upload/extraction,
-Owner review and publication, corrections, disputes, and full lifecycle controls.
-The schema, feature folders, read models and guards are shaped so those screens
-can be added without a wholesale rewrite.
+This ticket adds delegation and registration. Later tickets add seeded draw
+generation and swapping, scheduling/conflict validation, Scoresheet PDF
+generation/upload/extraction, Owner review and publication, corrections,
+disputes, and full lifecycle controls. The schema, feature folders, read models
+and guards are shaped so those screens can be added without a wholesale rewrite.
 
 Public hosting is intentionally out of scope until the localhost demo is
 accepted.
@@ -272,7 +285,9 @@ accepted.
 - This is local-only demonstration software: plain SMTP, local files, permissive
   demo data, and no production hardening.
 - `pnpm start` intentionally hides demo controls; use `pnpm dev`.
-- The Manager roster screen is read-only in this ticket.
+- Seeded pending email invitations only store token hashes, so their raw links
+  cannot be recovered. Replace one in **Teams and access** to obtain a fresh,
+  copyable link for the demo.
 - The public competition football page intentionally shows “waiting for the
   draw” until the tournament-generation ticket runs.
 - If Docker is unavailable, PostgreSQL and Mailpit can be run externally and

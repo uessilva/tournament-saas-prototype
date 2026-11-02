@@ -14,6 +14,54 @@ export type CompetitionGroup = {
   standings: TennisStandingRow[];
 };
 
+export type AdminCompetitionEntrant = {
+  id: string;
+  name: string;
+  shortName: string | null;
+  participantCount: number;
+  managerNames: string[];
+  rosterStatus: "ok" | "empty" | "below_min" | "above_max" | "birth_range";
+};
+
+export type AdminCompetitionData = {
+  event: {
+    id: string;
+    name: string;
+    slug: string;
+    timezone: string;
+  };
+  competition: {
+    id: string;
+    name: string;
+    slug: string;
+    sport: Sport;
+    format: string;
+    description: string | null;
+    eligibilityNotes: string | null;
+    birthDateFrom: string | null;
+    birthDateTo: string | null;
+    rosterMin: number | null;
+    rosterMax: number | null;
+    registrationState: string;
+    registrationOpen: boolean;
+    registrationClosedByDeadline: boolean;
+    deadlinePassed: boolean;
+    registrationDeadline: string | null;
+    registrationDeadlineInput: string | null;
+    qualifiersPerGroup: number;
+    defaultMatchDurationMinutes: number;
+    drawSeed: string | null;
+    drawGeneratedAt: string | null;
+    status: string;
+  };
+  entrants: AdminCompetitionEntrant[];
+  counts: {
+    entrants: number;
+    participants: number;
+    eligibleEntrants: number;
+  };
+};
+
 export type CompetitionPageData = {
   event: {
     id: string;

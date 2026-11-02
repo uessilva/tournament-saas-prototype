@@ -85,6 +85,13 @@ export function AdminDashboard({
               {t("nav.competitions")}
             </a>
             <Link
+              href={`/admin/events/${data.event.id}/teams`}
+              className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 font-bold text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              {t("admin.teamsAccess")}
+              <ChevronRightIcon className="size-3.5" />
+            </Link>
+            <Link
               href={`/events/${data.event.slug}`}
               className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 font-bold text-white/70 transition-colors hover:bg-white/5 hover:text-white"
             >
@@ -316,13 +323,22 @@ export function AdminDashboard({
                           </div>
                         </div>
                       </div>
-                      <Link
-                        href={`/events/${data.event.slug}/competitions/${competition.slug}`}
-                        className="mt-4 inline-flex items-center gap-1 text-xs font-extrabold text-green hover:underline"
-                      >
-                        {t("admin.viewPublicPage")}
-                        <ChevronRightIcon className="size-3.5" />
-                      </Link>
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <Link
+                          href={`/admin/events/${data.event.id}/competitions/${competition.id}`}
+                          className="inline-flex items-center gap-1 text-xs font-extrabold text-ink hover:text-green"
+                        >
+                          {t("admin.manageCompetition")}
+                          <ChevronRightIcon className="size-3.5" />
+                        </Link>
+                        <Link
+                          href={`/events/${data.event.slug}/competitions/${competition.slug}`}
+                          className="inline-flex items-center gap-1 text-xs font-extrabold text-green hover:underline"
+                        >
+                          {t("admin.viewPublicPage")}
+                          <ChevronRightIcon className="size-3.5" />
+                        </Link>
+                      </div>
                     </article>
                   ))}
                 </div>
@@ -341,6 +357,13 @@ export function AdminDashboard({
                     .replace("{accepted}", String(data.managers.accepted))
                     .replace("{total}", String(data.managers.total))}
                 </div>
+                <Link
+                  href={`/admin/events/${data.event.id}/teams`}
+                  className="mt-3 inline-flex w-full items-center justify-between gap-2 rounded-xl bg-ink px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green"
+                >
+                  {t("admin.manageAccess")}
+                  <ChevronRightIcon className="size-3.5" />
+                </Link>
               </section>
 
               {demoMode ? (

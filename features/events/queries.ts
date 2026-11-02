@@ -1,4 +1,5 @@
 import { and, asc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
+import { z } from "zod";
 
 import { db } from "@/lib/db/client";
 import {
@@ -11,6 +12,7 @@ import {
   teams,
   venues,
 } from "@/lib/db/schema";
+import { getRegistrationStatus } from "@/features/competitions/registration";
 import type {
   AdminCompetition,
   AdminEventData,
@@ -20,6 +22,10 @@ import type {
 export async function getAdminEventData(
   eventId: string,
 ): Promise<AdminEventData | null> {
+  if (!z.string().uuid().safeParse(eventId).success) {
+    return null;
+  }
+
   const [event] = await db
     .select()
     .from(events)
@@ -39,6 +45,7 @@ export async function getAdminEventData(
       format: competitions.format,
       status: competitions.status,
       registrationState: competitions.registrationState,
+      registrationDeadline: competitions.registrationDeadline,
       drawGeneratedAt: competitions.drawGeneratedAt,
       sortOrder: competitions.sortOrder,
       teamCount: sql<number>`count(distinct ${teams.id})::int`,
@@ -59,25 +66,32 @@ export async function getAdminEventData(
       competitions.format,
       competitions.status,
       competitions.registrationState,
+      competitions.registrationDeadline,
       competitions.drawGeneratedAt,
       competitions.sortOrder,
     )
     .orderBy(asc(competitions.sortOrder), asc(competitions.name));
 
-  const competitionData: AdminCompetition[] = competitionRows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    sport: row.sport,
-    format: row.format,
-    status: row.status,
-    registrationState: row.registrationState,
-    teamCount: row.teamCount,
-    participantCount: row.participantCount,
-    matchCount: row.matchCount,
-    publishedCount: row.publishedCount,
-    sortOrder: row.sortOrder,
-  }));
+  const competitionData: AdminCompetition[] = competitionRows.map((row) => {
+    const registration = getRegistrationStatus(row);
+    return {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      sport: row.sport,
+      format: row.format,
+      status:
+        row.status === "registration_open" && !registration.open
+          ? "registration_closed"
+          : row.status,
+      registrationState: registration.open ? "open" : "closed",
+      teamCount: row.teamCount,
+      participantCount: row.participantCount,
+      matchCount: row.matchCount,
+      publishedCount: row.publishedCount,
+      sortOrder: row.sortOrder,
+    };
+  });
 
   const football = competitionRows.find(
     (competition) => competition.sport === "football",

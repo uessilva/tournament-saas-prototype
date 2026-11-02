@@ -1,0 +1,643 @@
+"use client";
+
+import Link from "next/link";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+
+import { AppTopBar } from "@/components/app-top-bar";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ArrowUpRightIcon,
+  CalendarIcon,
+  CheckIcon,
+  ClockIcon,
+  LockIcon,
+  MailIcon,
+  UsersIcon,
+} from "@/components/icons";
+import {
+  CompetitionStatusBadge,
+  RegistrationBadge,
+  SportTag,
+} from "@/components/public/badges";
+import { useI18n } from "@/lib/i18n/client";
+import type { DictionaryKey } from "@/lib/i18n/dictionaries";
+import type { DemoAccount } from "@/lib/auth/guards";
+import { switchDemoAccount } from "@/features/auth/actions";
+import {
+  deadlineAction,
+  registrationStateAction,
+  type CompetitionAdminActionState,
+} from "@/features/competitions/admin-actions";
+import type { AdminCompetitionData } from "@/features/competitions/types";
+
+const EMPTY_STATE: CompetitionAdminActionState = { status: "idle" };
+
+function SubmitButton({
+  label,
+  pendingLabel,
+  tone = "primary",
+  disabled,
+}: {
+  label: string;
+  pendingLabel: string;
+  tone?: "primary" | "dark" | "quiet" | "danger";
+  disabled?: boolean;
+}) {
+  const { pending } = useFormStatus();
+  const className =
+    tone === "dark"
+      ? "inline-flex items-center justify-center gap-1.5 rounded-xl bg-ink px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green disabled:cursor-not-allowed disabled:opacity-60"
+      : tone === "quiet"
+        ? "inline-flex items-center justify-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-[11px] font-extrabold text-muted transition-colors hover:border-green hover:text-green disabled:cursor-not-allowed disabled:opacity-60"
+        : tone === "danger"
+          ? "inline-flex items-center justify-center gap-1.5 rounded-xl bg-clay px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+          : "inline-flex items-center justify-center gap-1.5 rounded-xl bg-green px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green-deep disabled:cursor-not-allowed disabled:opacity-60";
+
+  return (
+    <button
+      type="submit"
+      disabled={pending || disabled}
+      className={className}
+    >
+      {pending ? pendingLabel : label}
+      {pending ? null : <ArrowRightIcon className="size-3.5" />}
+    </button>
+  );
+}
+
+function ActionFeedback({ state }: { state: CompetitionAdminActionState }) {
+  const { t } = useI18n();
+  if (state.status === "idle") {
+    return null;
+  }
+
+  if (state.status === "error") {
+    const keyByCode: Record<string, DictionaryKey> = {
+      reopen_after_generation: "compAdmin.reopenAfterGeneration",
+      deadline_passed: "compAdmin.deadlinePassedHint",
+      action_failed: "compAdmin.actionFailed",
+    };
+    return (
+      <p role="alert" className="mt-2 text-xs font-bold text-red-700">
+        {t(keyByCode[state.code ?? ""] ?? "compAdmin.actionFailed")}
+      </p>
+    );
+  }
+
+  const keyByCode: Record<string, DictionaryKey> = {
+    registration_closed: "compAdmin.registrationClosedNotice",
+    registration_opened: "compAdmin.registrationOpenedNotice",
+    deadline_saved: "compAdmin.deadlineSaved",
+    deadline_extended: "compAdmin.deadlineExtended",
+    deadline_cleared: "compAdmin.deadlineCleared",
+  };
+
+  return (
+    <p
+      role="status"
+      className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-soft-green px-2.5 py-1.5 text-[11px] font-extrabold text-green"
+    >
+      <CheckIcon className="size-3.5" />
+      {t(keyByCode[state.code ?? ""] ?? "compAdmin.actionFailed")}
+    </p>
+  );
+}
+
+function RegistrationStateCard({ data }: { data: AdminCompetitionData }) {
+  const { t } = useI18n();
+  const [state, action] = useActionState(
+    registrationStateAction,
+    EMPTY_STATE,
+  );
+  const competition = data.competition;
+  const generated = Boolean(competition.drawGeneratedAt);
+  const reopenDisabled = generated || competition.deadlinePassed;
+
+  return (
+    <section className="surface p-5 sm:p-6">
+      <p className="eyebrow text-green">{t("compAdmin.registrationEyebrow")}</p>
+      <h2 className="display-title mt-2 text-2xl">
+        {t("compAdmin.registrationTitle")}
+      </h2>
+      <p className="mt-1.5 text-xs leading-5 text-muted">
+        {t("compAdmin.registrationBody")}
+      </p>
+
+      <div
+        className={`mt-4 rounded-xl p-4 ${
+          competition.registrationOpen
+            ? "bg-soft-green"
+            : "bg-cream"
+        }`}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <RegistrationBadge
+            state={competition.registrationOpen ? "open" : "closed"}
+          />
+          <span className="text-[11px] font-bold text-muted">
+            {competition.registrationOpen
+              ? t("compAdmin.stateOpen")
+              : competition.registrationClosedByDeadline
+                ? t("compAdmin.stateClosedByDeadline")
+                : t("compAdmin.stateClosed")}
+          </span>
+        </div>
+        <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs font-bold text-muted">
+          <ClockIcon className="size-3.5" />
+          {t("compAdmin.deadline")}:{" "}
+          {competition.registrationDeadline
+            ? new Intl.DateTimeFormat(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short",
+                timeZone: data.event.timezone,
+              }).format(new Date(competition.registrationDeadline))
+            : t("compAdmin.noDeadline")}
+          <span className="text-line">·</span>
+          {data.event.timezone}
+        </p>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <form action={action}>
+          <input type="hidden" name="eventId" value={data.event.id} />
+          <input type="hidden" name="competitionId" value={competition.id} />
+          <input type="hidden" name="intent" value="close" />
+          <SubmitButton
+            label={t("compAdmin.closeRegistration")}
+            pendingLabel={t("common.loading")}
+            tone="danger"
+            disabled={!competition.registrationOpen}
+          />
+        </form>
+        <form action={action}>
+          <input type="hidden" name="eventId" value={data.event.id} />
+          <input type="hidden" name="competitionId" value={competition.id} />
+          <input type="hidden" name="intent" value="open" />
+          <SubmitButton
+            label={t("compAdmin.reopenRegistration")}
+            pendingLabel={t("common.loading")}
+            tone="dark"
+            disabled={competition.registrationOpen || reopenDisabled}
+          />
+        </form>
+      </div>
+      {generated ? (
+        <p className="mt-2 inline-flex items-start gap-1.5 rounded-lg bg-soft-orange px-2.5 py-1.5 text-[11px] font-bold text-clay">
+          <LockIcon className="mt-0.5 size-3.5 shrink-0" />
+          {t("compAdmin.reopenAfterGeneration")}
+        </p>
+      ) : competition.deadlinePassed && !competition.registrationOpen ? (
+        <p className="mt-2 text-[11px] font-bold text-clay">
+          {t("compAdmin.deadlinePassedHint")}
+        </p>
+      ) : null}
+      <ActionFeedback state={state} />
+    </section>
+  );
+}
+
+function DeadlineEditor({ data }: { data: AdminCompetitionData }) {
+  const { t } = useI18n();
+  const [state, action] = useActionState(deadlineAction, EMPTY_STATE);
+
+  return (
+    <section id="deadline" className="surface p-5 sm:p-6">
+      <div className="flex items-start gap-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-soft-green text-green">
+          <CalendarIcon className="size-4" />
+        </span>
+        <div>
+          <h2 className="display-title text-2xl">
+            {t("compAdmin.deadlineTitle")}
+          </h2>
+          <p className="mt-1 text-xs leading-5 text-muted">
+            {t("compAdmin.deadlineBody").replace(
+              "{timezone}",
+              data.event.timezone,
+            )}
+          </p>
+        </div>
+      </div>
+
+      <form
+        key={state.status === "success" ? state.code : "deadline-form"}
+        action={action}
+        className="mt-4 space-y-3"
+      >
+        <input type="hidden" name="eventId" value={data.event.id} />
+        <input type="hidden" name="competitionId" value={data.competition.id} />
+        <input type="hidden" name="intent" value="save" />
+        <div>
+          <label
+            htmlFor="registration-deadline"
+            className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted"
+          >
+            {t("compAdmin.deadlineLabel").replace(
+              "{timezone}",
+              data.event.timezone,
+            )}
+          </label>
+          <input
+            id="registration-deadline"
+            name="deadline"
+            type="datetime-local"
+            defaultValue={data.competition.registrationDeadlineInput ?? ""}
+            className="mt-1.5 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold focus:border-green focus:bg-white focus:outline-none"
+          />
+          {state.fieldErrors?.deadline ? (
+            <p role="alert" className="mt-1 text-xs font-bold text-red-700">
+              {t("compAdmin.deadlineInvalid")}
+            </p>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <SubmitButton
+            label={t("compAdmin.saveDeadline")}
+            pendingLabel={t("common.loading")}
+            tone="dark"
+          />
+          <span className="text-[11px] font-semibold text-muted">
+            {t("compAdmin.deadlineHint")}
+          </span>
+        </div>
+      </form>
+
+      <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-4">
+        <form action={action}>
+          <input type="hidden" name="eventId" value={data.event.id} />
+          <input type="hidden" name="competitionId" value={data.competition.id} />
+          <input type="hidden" name="intent" value="extend" />
+          <SubmitButton
+            label={t("compAdmin.extendSevenDays")}
+            pendingLabel={t("common.loading")}
+            tone="quiet"
+          />
+        </form>
+        <form action={action}>
+          <input type="hidden" name="eventId" value={data.event.id} />
+          <input type="hidden" name="competitionId" value={data.competition.id} />
+          <input type="hidden" name="intent" value="clear" />
+          <SubmitButton
+            label={t("compAdmin.clearDeadline")}
+            pendingLabel={t("common.loading")}
+            tone="quiet"
+          />
+        </form>
+      </div>
+      <ActionFeedback state={state} />
+    </section>
+  );
+}
+
+function statusKey(status: string): DictionaryKey {
+  switch (status) {
+    case "ok":
+      return "compAdmin.statusOk";
+    case "empty":
+      return "compAdmin.statusEmpty";
+    case "below_min":
+      return "compAdmin.statusBelowMin";
+    case "above_max":
+      return "compAdmin.statusAboveMax";
+    case "birth_range":
+      return "compAdmin.statusBirthRange";
+    default:
+      return "compAdmin.statusIssue";
+  }
+}
+
+export function CompetitionAdminView({
+  data,
+  user,
+  demoAccounts,
+  demoMode,
+}: {
+  data: AdminCompetitionData;
+  user: { name: string | null; email: string | null };
+  demoAccounts: DemoAccount[];
+  demoMode: boolean;
+}) {
+  const { t, formatDate } = useI18n();
+  const competition = data.competition;
+  const formatLabel = t(`format.${competition.format}` as DictionaryKey);
+  const birthRange =
+    competition.birthDateFrom || competition.birthDateTo
+      ? t("competition.birthRange")
+          .replace(
+            "{from}",
+            competition.birthDateFrom
+              ? formatDate(competition.birthDateFrom, "UTC", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })
+              : "—",
+          )
+          .replace(
+            "{to}",
+            competition.birthDateTo
+              ? formatDate(competition.birthDateTo, "UTC", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })
+              : "—",
+          )
+      : t("compAdmin.noBirthRange");
+
+  return (
+    <div className="min-h-screen bg-[#f2f1ea]">
+      <AppTopBar
+        user={user}
+        publicHref={`/events/${data.event.slug}/competitions/${competition.slug}`}
+        secondaryHref={`/admin/events/${data.event.id}`}
+        secondaryLabel={t("compAdmin.backToEvent")}
+      />
+
+      <main id="main-content" className="page-shell py-6 sm:py-8">
+        <Link
+          href={`/admin/events/${data.event.id}`}
+          className="inline-flex items-center gap-1.5 text-xs font-extrabold text-muted hover:text-green"
+        >
+          <ArrowLeftIcon className="size-3.5" />
+          {t("compAdmin.backToEvent")}
+        </Link>
+
+        <header className="mt-4 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <SportTag sport={competition.sport} />
+              <CompetitionStatusBadge
+                status={competition.status}
+                registrationState={
+                  competition.registrationOpen ? "open" : "closed"
+                }
+              />
+              <RegistrationBadge
+                state={competition.registrationOpen ? "open" : "closed"}
+              />
+            </div>
+            <h1 className="display-title mt-3 text-4xl sm:text-5xl">
+              {competition.name}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+              {competition.description ?? t("compAdmin.body")}
+            </p>
+            <p className="mt-1 text-xs font-bold text-muted">
+              {data.event.name} · {formatLabel}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/admin/events/${data.event.id}/teams`}
+              className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2.5 text-xs font-extrabold text-ink hover:border-green hover:text-green"
+            >
+              <UsersIcon className="size-3.5" />
+              {t("compAdmin.manageTeams")}
+            </Link>
+            <Link
+              href={`/events/${data.event.slug}/competitions/${competition.slug}`}
+              className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2.5 text-xs font-extrabold text-ink hover:border-green hover:text-green"
+            >
+              {t("admin.viewPublicPage")}
+              <ArrowUpRightIcon className="size-3.5" />
+            </Link>
+          </div>
+        </header>
+
+        <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            [t("compAdmin.statEntrants"), data.counts.entrants],
+            [t("compAdmin.statParticipants"), data.counts.participants],
+            [t("compAdmin.statEligible"), data.counts.eligibleEntrants],
+            [
+              t("compAdmin.statRegistration"),
+              competition.registrationOpen
+                ? t("compAdmin.openShort")
+                : t("compAdmin.closedShort"),
+            ],
+          ].map(([label, value]) => (
+            <div key={String(label)} className="surface p-4">
+              <div className="display-title text-3xl">{value}</div>
+              <div className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted">
+                {label}
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <div className="mt-6 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-5">
+            <RegistrationStateCard data={data} />
+
+            <section className="surface p-5 sm:p-6">
+              <p className="eyebrow text-green">{t("compAdmin.rulesEyebrow")}</p>
+              <h2 className="display-title mt-2 text-3xl">
+                {t("compAdmin.rulesTitle")}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                {competition.eligibilityNotes ?? t("compAdmin.rulesBody")}
+              </p>
+
+              <dl className="mt-5 grid gap-3 border-t border-line pt-4 text-sm sm:grid-cols-2">
+                {[
+                  [t("competition.format"), formatLabel],
+                  [
+                    t("competition.rosterLimits"),
+                    competition.sport === "tennis"
+                      ? t("competition.singleEntry")
+                      : competition.rosterMin != null &&
+                          competition.rosterMax != null
+                        ? t("competition.rosterLimitValue")
+                            .replace("{min}", String(competition.rosterMin))
+                            .replace("{max}", String(competition.rosterMax))
+                        : "—",
+                  ],
+                  [t("competition.birthRangeLabel"), birthRange],
+                  [
+                    t("competition.qualifiers"),
+                    t("competition.qualifiersValue").replace(
+                      "{count}",
+                      String(competition.qualifiersPerGroup),
+                    ),
+                  ],
+                  [
+                    t("competition.defaultDuration"),
+                    `${competition.defaultMatchDurationMinutes} ${t("common.minutes")}`,
+                  ],
+                  [
+                    t("competition.drawSeed"),
+                    competition.drawSeed ?? t("compAdmin.notSet"),
+                  ],
+                ].map(([label, value]) => (
+                  <div key={String(label)}>
+                    <dt className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted">
+                      {label}
+                    </dt>
+                    <dd className="mt-0.5 font-bold">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+
+            <section className="surface p-5 sm:p-6">
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <div>
+                  <p className="eyebrow text-green">{t("compAdmin.entrantsEyebrow")}</p>
+                  <h2 className="display-title mt-2 text-3xl">
+                    {t("compAdmin.entrantsTitle")}
+                  </h2>
+                </div>
+                <span className="text-xs font-extrabold text-muted">
+                  {t("compAdmin.eligibleCount").replace(
+                    "{eligible}",
+                    String(data.counts.eligibleEntrants),
+                  ).replace("{total}", String(data.counts.entrants))}
+                </span>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                {t("compAdmin.entrantsBody")}
+              </p>
+
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[620px] text-left text-xs">
+                  <caption className="sr-only">
+                    {competition.name} — {t("compAdmin.entrantsTitle")}
+                  </caption>
+                  <thead>
+                    <tr className="border-b border-line bg-paper/60 text-[9px] uppercase tracking-[0.1em] text-muted">
+                      <th className="px-3 py-2.5 font-extrabold">
+                        {t("compAdmin.entrant")}
+                      </th>
+                      <th className="px-3 py-2.5 font-extrabold">
+                        {t("compAdmin.roster")}
+                      </th>
+                      <th className="px-3 py-2.5 font-extrabold">
+                        {t("compAdmin.managers")}
+                      </th>
+                      <th className="px-3 py-2.5 font-extrabold">
+                        {t("compAdmin.eligibility")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.entrants.map((entrant) => (
+                      <tr key={entrant.id} className="border-b border-line/70 last:border-b-0">
+                        <td className="px-3 py-2.5 font-extrabold">{entrant.name}</td>
+                        <td className="px-3 py-2.5 text-muted">
+                          {entrant.participantCount}
+                          {competition.rosterMin != null &&
+                          competition.rosterMax != null
+                            ? ` / ${competition.rosterMin}–${competition.rosterMax}`
+                            : ""}
+                        </td>
+                        <td className="px-3 py-2.5 text-muted">
+                          {entrant.managerNames.length
+                            ? entrant.managerNames.join(", ")
+                            : t("compAdmin.noManagers")}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.08em] ${
+                              entrant.rosterStatus === "ok"
+                                ? "bg-soft-green text-green"
+                                : "bg-soft-orange text-clay"
+                            }`}
+                          >
+                            {t(statusKey(entrant.rosterStatus))}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {!data.entrants.length ? (
+                <p className="mt-4 rounded-xl bg-cream p-4 text-sm font-semibold text-muted">
+                  {t("compAdmin.noEntrants")}
+                </p>
+              ) : null}
+            </section>
+          </div>
+
+          <div className="space-y-5">
+            <DeadlineEditor data={data} />
+
+            {demoMode ? (
+              <section className="rounded-[1.25rem] bg-ink p-5 text-white">
+                <p className="eyebrow text-lime">{t("compAdmin.demoTitle")}</p>
+                <p className="mt-2 text-[11px] leading-5 text-white/60">
+                  {t("compAdmin.demoBody")}
+                </p>
+                <form action={switchDemoAccount} className="mt-4">
+                  <input
+                    type="hidden"
+                    name="callbackUrl"
+                    value={`/admin/events/${data.event.id}/competitions/${competition.id}`}
+                  />
+                  <label
+                    htmlFor="competition-demo-account"
+                    className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-white/50"
+                  >
+                    {t("admin.switchAccount")}
+                  </label>
+                  <select
+                    id="competition-demo-account"
+                    name="email"
+                    defaultValue={
+                      demoAccounts.find((account) => account.email === user.email)
+                        ?.email ??
+                      demoAccounts[0]?.email ??
+                      ""
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm font-bold text-white outline-none focus:border-lime"
+                  >
+                    {demoAccounts.map((account) => (
+                      <option key={account.id} value={account.email} className="text-ink">
+                        {account.name} ·{" "}
+                        {account.role === "owner" ? t("auth.owner") : account.detail}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="submit"
+                    className="mt-2 w-full rounded-xl bg-lime px-3 py-2 text-xs font-extrabold text-ink hover:bg-white"
+                  >
+                    {t("admin.switchAccountAction")}
+                  </button>
+                </form>
+                <a
+                  href="http://localhost:8025"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-extrabold text-lime hover:underline"
+                >
+                  <MailIcon className="size-3.5" />
+                  {t("compAdmin.mailpit")}
+                </a>
+              </section>
+            ) : null}
+
+            <section className="surface p-5">
+              <p className="eyebrow text-green">{t("compAdmin.lifecycleEyebrow")}</p>
+              <h2 className="display-title mt-2 text-2xl">
+                {t("compAdmin.lifecycleTitle")}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                {t("compAdmin.lifecycleBody")}
+              </p>
+              <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-muted">
+                <LockIcon className="size-3" />
+                {competition.drawGeneratedAt
+                  ? t("compAdmin.generated")
+                  : t("compAdmin.notGenerated")}
+              </p>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
