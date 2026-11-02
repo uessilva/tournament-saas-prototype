@@ -61,7 +61,7 @@ const ptBR = {
   "home.latestTitle": "Últimos resultados",
   "home.latestBody": "Resultados confirmados e publicados pelo organizador.",
   "home.nextUpTitle": "Próximos jogos",
-  "home.nextUpBody": "Horários no fuso do evento, América/São Paulo.",
+  "home.nextUpBody": "Horários exibidos no fuso do evento.",
   "home.leadersEyebrow": "Destaques",
   "home.leadersTitle": "Lideranças",
   "home.leadersBody":
@@ -279,6 +279,7 @@ const ptBR = {
   "admin.accountMenu": "Conta",
   "admin.language": "Idioma",
   "admin.teamsAccess": "Equipes e acessos",
+  "admin.schedule": "Agenda dos jogos",
   "admin.manageCompetition": "Gerenciar competição",
   "admin.manageAccess": "Gerenciar equipes e acessos",
 
@@ -648,7 +649,8 @@ const ptBR = {
   "draw.qualifiersBadge": "{count} classificam",
   "draw.nextStepTitle": "Próximo passo",
   "draw.nextStepBody":
-    "A geração criou os jogos sem horário. O agendamento e o registro de resultados entram nas próximas etapas; os jogos já aparecem no hub público e na área do gerente.",
+    "A geração criou os jogos sem horário. Abra a agenda para atribuir horários, locais e durações; os jogos já aparecem no hub público e na área do gerente.",
+  "draw.openSchedule": "Abrir agenda dos jogos",
   "draw.saved": "Configuração salva.",
   "draw.generated": "Torneio gerado a partir da semente salva.",
   "draw.seedRegenerated": "Nova semente gerada. O sorteio foi redistribuído.",
@@ -668,6 +670,85 @@ const ptBR = {
   "draw.errorFormat":
     "A geração está disponível apenas para o formato grupos + mata-mata.",
   "draw.errorFailed": "Não foi possível concluir a ação do sorteio.",
+
+  "schedule.eyebrow": "Agendamento",
+  "schedule.title": "Agenda dos jogos",
+  "schedule.body":
+    "Atribua horários, locais e durações aos jogos já gerados. Partidas sem horário ou com agendamento parcial continuam válidas e visíveis.",
+  "schedule.backToEvent": "Voltar ao painel do evento",
+  "schedule.publicFixtures": "Ver jogos públicos",
+  "schedule.statMatches": "Jogos",
+  "schedule.statScheduled": "Agendados",
+  "schedule.statUnscheduled": "Sem horário",
+  "schedule.statVenues": "Locais",
+  "schedule.venuesEyebrow": "Locais",
+  "schedule.venuesTitle": "Locais do evento",
+  "schedule.venuesBody":
+    "Crie nomes reutilizáveis para campos e quadras. Um local pertence apenas a este evento.",
+  "schedule.venueName": "Nome do local",
+  "schedule.venuePlaceholder": "Ex.: Campo 3",
+  "schedule.createVenue": "Adicionar local",
+  "schedule.venueCreated": "Local adicionado. Já pode ser atribuído aos jogos.",
+  "schedule.venueExists": "Já existe um local com este nome neste evento.",
+  "schedule.venueNameInvalid":
+    "Informe um nome de local entre 2 e 60 caracteres.",
+  "schedule.venueListTitle": "Locais disponíveis",
+  "schedule.noVenues": "Nenhum local criado ainda. Adicione o primeiro acima.",
+  "schedule.venueUsage": "{count} jogos",
+  "schedule.matchesEyebrow": "Partidas",
+  "schedule.matchesTitle": "Jogos gerados",
+  "schedule.matchesBody":
+    "Inclui jogos sem horário e com agendamento parcial. Os conflitos de equipe e de local são verificados ao salvar.",
+  "schedule.noMatchesTitle": "Nenhum jogo gerado",
+  "schedule.noMatchesBody":
+    "Gere o sorteio de uma competição para que os jogos apareçam aqui.",
+  "schedule.matchNumber": "Jogo {number}",
+  "schedule.startLabel": "Data e hora ({timezone})",
+  "schedule.startHint": "Deixe em branco para manter o jogo sem horário.",
+  "schedule.venueLabel": "Local",
+  "schedule.venueNone": "Sem local",
+  "schedule.durationLabel": "Duração (min)",
+  "schedule.durationPlaceholder": "Padrão: {minutes}",
+  "schedule.durationHint":
+    "Em branco usa a duração padrão da competição ({minutes} min).",
+  "schedule.save": "Salvar agendamento",
+  "schedule.saving": "Salvando…",
+  "schedule.clearTime": "Limpar horário",
+  "schedule.saved": "Agendamento salvo.",
+  "schedule.cleared":
+    "Horário removido. O jogo continua visível sem horário.",
+  "schedule.scheduledBadge": "Agendado",
+  "schedule.unscheduledBadge": "Sem horário",
+  "schedule.competitionDefaults":
+    "{scheduled}/{total} agendados · padrão {minutes} min",
+  "schedule.errorInvalidStart": "Informe uma data e hora válidas.",
+  "schedule.errorInvalidVenue": "Escolha um local deste evento.",
+  "schedule.errorInvalidDuration":
+    "Informe uma duração entre 1 e 600 minutos.",
+  "schedule.errorTeamOverlap":
+    "Conflito com outro jogo de uma das equipes.",
+  "schedule.errorVenueOverlap": "Este local já está ocupado neste horário.",
+  "schedule.conflictsTitle": "Conflitos de agendamento",
+  "schedule.conflictTeam":
+    "A equipe {team} já joga a partida {match} ({competition}), das {start} às {end}.",
+  "schedule.conflictVenue":
+    "O local {venue} já está ocupado pela partida {match} ({competition}), das {start} às {end}.",
+  "schedule.conflictHelp":
+    "Ajuste o horário, a duração ou o local. Não é possível ignorar um conflito.",
+  "schedule.actionFailed": "Não foi possível salvar o agendamento.",
+  "schedule.fixErrors": "Revise os campos destacados.",
+  "schedule.viewPublicFixtures": "Ver no hub público",
+  "schedule.timezoneEyebrow": "Fuso horário",
+  "schedule.timezoneTitle": "Fuso do evento",
+  "schedule.timezoneBody":
+    "O fuso é usado nos agendamentos e na exibição pública. Ao alterar, cada jogo mantém a mesma data e hora locais — os instantes armazenados são convertidos com regras IANA.",
+  "schedule.timezoneLabel": "Fuso IANA",
+  "schedule.timezoneCurrent": "Fuso atual",
+  "schedule.timezoneSave": "Alterar fuso",
+  "schedule.timezoneSaved":
+    "Fuso atualizado. Os horários locais dos jogos foram preservados.",
+  "schedule.timezoneUnchanged": "Este já é o fuso do evento.",
+  "schedule.timezoneInvalid": "Escolha um fuso IANA válido.",
 
   "manage.viewFixtures": "Ver meus jogos",
 
@@ -955,7 +1036,7 @@ const en: Dictionary = {
   "home.latestTitle": "Latest results",
   "home.latestBody": "Results confirmed and published by the organiser.",
   "home.nextUpTitle": "Next up",
-  "home.nextUpBody": "Times shown in the event time zone, America/São Paulo.",
+  "home.nextUpBody": "Times shown in the event time zone.",
   "home.leadersEyebrow": "Highlights",
   "home.leadersTitle": "Leaders",
   "home.leadersBody":
@@ -1171,6 +1252,7 @@ const en: Dictionary = {
   "admin.accountMenu": "Account",
   "admin.language": "Language",
   "admin.teamsAccess": "Teams and access",
+  "admin.schedule": "Match schedule",
   "admin.manageCompetition": "Manage competition",
   "admin.manageAccess": "Manage teams and access",
 
@@ -1540,7 +1622,8 @@ const en: Dictionary = {
   "draw.qualifiersBadge": "{count} qualify",
   "draw.nextStepTitle": "Next step",
   "draw.nextStepBody":
-    "Generation created the fixtures without times. Scheduling and result entry arrive in later tickets; the fixtures are already visible on the public hub and in the manager area.",
+    "Generation created the fixtures without times. Open the schedule to assign times, venues and durations; the fixtures are already visible on the public hub and in the manager area.",
+  "draw.openSchedule": "Open match schedule",
   "draw.saved": "Configuration saved.",
   "draw.generated": "Tournament generated from the stored seed.",
   "draw.seedRegenerated": "New seed generated. The draw was redistributed.",
@@ -1561,6 +1644,82 @@ const en: Dictionary = {
   "draw.errorFormat":
     "Generation is available only for the groups + knockout format.",
   "draw.errorFailed": "The draw action could not be completed.",
+
+  "schedule.eyebrow": "Scheduling",
+  "schedule.title": "Match schedule",
+  "schedule.body":
+    "Assign times, venues and durations to generated matches. Unscheduled and partially scheduled matches stay valid and visible.",
+  "schedule.backToEvent": "Back to the event dashboard",
+  "schedule.publicFixtures": "View public fixtures",
+  "schedule.statMatches": "Matches",
+  "schedule.statScheduled": "Scheduled",
+  "schedule.statUnscheduled": "Without a time",
+  "schedule.statVenues": "Venues",
+  "schedule.venuesEyebrow": "Venues",
+  "schedule.venuesTitle": "Event venues",
+  "schedule.venuesBody":
+    "Create reusable labels for pitches and courts. A venue belongs to this event only.",
+  "schedule.venueName": "Venue name",
+  "schedule.venuePlaceholder": "e.g. Pitch 3",
+  "schedule.createVenue": "Add venue",
+  "schedule.venueCreated": "Venue added. It can now be assigned to matches.",
+  "schedule.venueExists": "A venue with this name already exists in this event.",
+  "schedule.venueNameInvalid": "Enter a venue name between 2 and 60 characters.",
+  "schedule.venueListTitle": "Available venues",
+  "schedule.noVenues": "No venues yet. Add the first one above.",
+  "schedule.venueUsage": "{count} matches",
+  "schedule.matchesEyebrow": "Matches",
+  "schedule.matchesTitle": "Generated matches",
+  "schedule.matchesBody":
+    "Includes matches without a time and partially scheduled matches. Team and venue conflicts are checked when you save.",
+  "schedule.noMatchesTitle": "No matches generated",
+  "schedule.noMatchesBody":
+    "Generate a competition draw so its matches appear here.",
+  "schedule.matchNumber": "Match {number}",
+  "schedule.startLabel": "Date and time ({timezone})",
+  "schedule.startHint": "Leave blank to keep the match unscheduled.",
+  "schedule.venueLabel": "Venue",
+  "schedule.venueNone": "No venue",
+  "schedule.durationLabel": "Duration (min)",
+  "schedule.durationPlaceholder": "Default: {minutes}",
+  "schedule.durationHint":
+    "Leave blank to use the competition default ({minutes} min).",
+  "schedule.save": "Save schedule",
+  "schedule.saving": "Saving…",
+  "schedule.clearTime": "Clear time",
+  "schedule.saved": "Schedule saved.",
+  "schedule.cleared": "Time cleared. The match stays visible without a time.",
+  "schedule.scheduledBadge": "Scheduled",
+  "schedule.unscheduledBadge": "No time",
+  "schedule.competitionDefaults":
+    "{scheduled}/{total} scheduled · {minutes} min default",
+  "schedule.errorInvalidStart": "Enter a valid date and time.",
+  "schedule.errorInvalidVenue": "Choose a venue from this event.",
+  "schedule.errorInvalidDuration": "Enter a duration between 1 and 600 minutes.",
+  "schedule.errorTeamOverlap":
+    "This time conflicts with another match for one of the teams.",
+  "schedule.errorVenueOverlap": "This venue is already in use at this time.",
+  "schedule.conflictsTitle": "Scheduling conflicts",
+  "schedule.conflictTeam":
+    "Team {team} already plays match {match} ({competition}) from {start} to {end}.",
+  "schedule.conflictVenue":
+    "Venue {venue} is already in use by match {match} ({competition}) from {start} to {end}.",
+  "schedule.conflictHelp":
+    "Adjust the time, duration or venue. Conflicts cannot be overridden.",
+  "schedule.actionFailed": "The schedule could not be saved.",
+  "schedule.fixErrors": "Review the highlighted fields.",
+  "schedule.viewPublicFixtures": "View on the public hub",
+  "schedule.timezoneEyebrow": "Time zone",
+  "schedule.timezoneTitle": "Event time zone",
+  "schedule.timezoneBody":
+    "The time zone drives scheduling and public display. Changing it keeps every match's local date and time, converting stored instants with IANA rules.",
+  "schedule.timezoneLabel": "IANA time zone",
+  "schedule.timezoneCurrent": "Current time zone",
+  "schedule.timezoneSave": "Change time zone",
+  "schedule.timezoneSaved":
+    "Time zone updated. Match local times were preserved.",
+  "schedule.timezoneUnchanged": "This is already the event time zone.",
+  "schedule.timezoneInvalid": "Choose a valid IANA time zone.",
 
   "manage.viewFixtures": "View my fixtures",
 

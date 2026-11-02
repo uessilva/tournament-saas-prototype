@@ -86,6 +86,94 @@ export function utcToZonedDateTimeInput(date: Date, timeZone: string) {
   return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}T${pad(parts.hour)}:${pad(parts.minute)}`;
 }
 
+const FALLBACK_TIME_ZONES = [
+  "America/Sao_Paulo",
+  "America/Argentina/Buenos_Aires",
+  "America/Bogota",
+  "America/Chicago",
+  "America/Los_Angeles",
+  "America/Mexico_City",
+  "America/New_York",
+  "America/Santiago",
+  "Africa/Cairo",
+  "Africa/Johannesburg",
+  "Asia/Bangkok",
+  "Asia/Dubai",
+  "Asia/Kolkata",
+  "Asia/Seoul",
+  "Asia/Shanghai",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Australia/Perth",
+  "Australia/Sydney",
+  "Europe/Berlin",
+  "Europe/Lisbon",
+  "Europe/London",
+  "Europe/Madrid",
+  "Europe/Paris",
+  "Europe/Rome",
+  "Pacific/Auckland",
+  "UTC",
+] as const;
+
+export function isValidTimeZone(timeZone: string) {
+  if (!timeZone.trim()) {
+    return false;
+  }
+
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Every IANA time zone the runtime understands. Falls back to a short
+ * practical list if the runtime does not expose `Intl.supportedValuesOf`.
+ */
+export function getSupportedTimeZones() {
+  const supportedValuesOf = (
+    Intl as unknown as {
+      supportedValuesOf?: (key: string) => string[];
+    }
+  ).supportedValuesOf;
+
+  const values = supportedValuesOf?.("timeZone") ?? [...FALLBACK_TIME_ZONES];
+  return [...new Set([...values, "UTC"])].sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Moves an instant from one Event time zone to another while keeping the same
+ * local wall-clock date, hour and minute. Two offset passes handle DST edges.
+ */
+export function convertInstantToTimeZone(
+  date: Date,
+  fromTimeZone: string,
+  toTimeZone: string,
+) {
+  const parts = partsInTimeZone(date, fromTimeZone);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  const localValue = `${parts.year}-${pad(parts.month)}-${pad(parts.day)}T${pad(parts.hour)}:${pad(parts.minute)}:${pad(parts.second)}`;
+  return zonedDateTimeToUtc(localValue, toTimeZone);
+}
+
+/** Human label such as `America/Sao_Paulo (GMT-3)`. */
+export function formatTimeZoneLabel(timeZone: string, at: Date = new Date()) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      timeZoneName: "shortOffset",
+    }).formatToParts(at);
+    const offset =
+      parts.find((part) => part.type === "timeZoneName")?.value ?? "UTC";
+    return `${timeZone} (${offset})`;
+  } catch {
+    return timeZone;
+  }
+}
+
 export function formatDateInTimeZone(
   date: Date,
   timeZone: string,

@@ -29,7 +29,11 @@ export type PublicMatch = {
   knockoutRoundCount: number;
   isBye: boolean;
   startsAt: string | null;
+  /** Effective duration: the per-Match override or the Competition default. */
+  durationMinutes: number | null;
+  durationOverrideMinutes: number | null;
   status: string;
+  venueId: string | null;
   venueName: string | null;
   homeTeamId: string | null;
   homeTeamName: string | null;
@@ -107,6 +111,7 @@ export type FixturesPageData = {
     name: string;
     slug: string;
     timezone: string;
+    startsAt: string;
     locationLabel: string | null;
   };
   competitions: Array<{
