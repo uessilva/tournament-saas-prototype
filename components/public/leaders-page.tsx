@@ -38,9 +38,11 @@ function LeaderList({
                 <span className="block truncate text-sm font-extrabold">
                   {row.name}
                 </span>
-                <span className="block truncate text-[11px] font-semibold text-muted">
-                  {row.teamName}
-                </span>
+                {row.teamName !== row.name ? (
+                  <span className="block truncate text-[11px] font-semibold text-muted">
+                    {row.teamName}
+                  </span>
+                ) : null}
               </span>
               <span className="score-numeral text-lg font-semibold">
                 {row.total}
@@ -67,12 +69,17 @@ export function LeadersPage({
   signedIn: boolean;
   currentPath: string;
 }) {
-  const { t } = useI18n();
+  const { t, seedText } = useI18n();
   const competitions = data.competitions.map((competition) => ({
-    name: competition.name,
+    name: seedText(competition.name) ?? competition.name,
     slug: competition.slug,
     sport: competition.sport,
   }));
+  const activeSport = data.competitions.find(
+    (competition) => competition.slug === data.activeCompetitionSlug,
+  )?.sport;
+  const showFootball = !activeSport || activeSport === "football";
+  const showTennis = !activeSport || activeSport === "tennis";
 
   return (
     <div className="min-h-screen">
@@ -133,66 +140,70 @@ export function LeadersPage({
               ) : (
                 <TennisIcon className="size-3" />
               )}
-              {competition.name}
+              {seedText(competition.name)}
             </Link>
           ))}
         </nav>
 
-        <section className="mt-8">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="eyebrow text-green">{t("leaders.footballEyebrow")}</p>
-              <h2 className="display-title mt-1 text-3xl">
-                {t("leaders.footballTitle")}
-              </h2>
+        {showFootball ? (
+          <section className="mt-8">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="eyebrow text-green">{t("leaders.footballEyebrow")}</p>
+                <h2 className="display-title mt-1 text-3xl">
+                  {t("leaders.footballTitle")}
+                </h2>
+              </div>
+              <p className="max-w-md text-xs leading-5 text-muted">
+                {t("leaders.footballBody")}
+              </p>
             </div>
-            <p className="max-w-md text-xs leading-5 text-muted">
-              {t("leaders.footballBody")}
-            </p>
-          </div>
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <LeaderList
-              title={t("leaders.goals")}
-              description={t("leaders.goalsBody")}
-              rows={data.leaders.goals}
-              emptyLabel={t("leaders.walkoverNote")}
-            />
-            <LeaderList
-              title={t("leaders.assists")}
-              description={t("leaders.assistsBody")}
-              rows={data.leaders.assists}
-              emptyLabel={t("leaders.walkoverNote")}
-            />
-          </div>
-        </section>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <LeaderList
+                title={t("leaders.goals")}
+                description={t("leaders.goalsBody")}
+                rows={data.leaders.goals}
+                emptyLabel={t("leaders.walkoverNote")}
+              />
+              <LeaderList
+                title={t("leaders.assists")}
+                description={t("leaders.assistsBody")}
+                rows={data.leaders.assists}
+                emptyLabel={t("leaders.walkoverNote")}
+              />
+            </div>
+          </section>
+        ) : null}
 
-        <section className="mt-10">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="eyebrow text-clay">{t("leaders.tennisEyebrow")}</p>
-              <h2 className="display-title mt-1 text-3xl">
-                {t("leaders.tennisTitle")}
-              </h2>
+        {showTennis ? (
+          <section className="mt-10">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="eyebrow text-clay">{t("leaders.tennisEyebrow")}</p>
+                <h2 className="display-title mt-1 text-3xl">
+                  {t("leaders.tennisTitle")}
+                </h2>
+              </div>
+              <p className="max-w-md text-xs leading-5 text-muted">
+                {t("leaders.tennisBody")}
+              </p>
             </div>
-            <p className="max-w-md text-xs leading-5 text-muted">
-              {t("leaders.tennisBody")}
-            </p>
-          </div>
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <LeaderList
-              title={t("leaders.aces")}
-              description={t("leaders.acesBody")}
-              rows={data.leaders.aces}
-              emptyLabel={t("leaders.walkoverNote")}
-            />
-            <LeaderList
-              title={t("leaders.doubleFaults")}
-              description={t("leaders.doubleFaultsBody")}
-              rows={data.leaders.doubleFaults}
-              emptyLabel={t("leaders.walkoverNote")}
-            />
-          </div>
-        </section>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <LeaderList
+                title={t("leaders.aces")}
+                description={t("leaders.acesBody")}
+                rows={data.leaders.aces}
+                emptyLabel={t("leaders.walkoverNote")}
+              />
+              <LeaderList
+                title={t("leaders.doubleFaults")}
+                description={t("leaders.doubleFaultsBody")}
+                rows={data.leaders.doubleFaults}
+                emptyLabel={t("leaders.walkoverNote")}
+              />
+            </div>
+          </section>
+        ) : null}
 
         <div className="mt-8 flex flex-wrap gap-2">
           <Link

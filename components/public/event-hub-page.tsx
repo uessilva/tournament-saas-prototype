@@ -20,7 +20,7 @@ import {
 import { MatchRow } from "@/components/public/match-row";
 import { useI18n } from "@/lib/i18n/client";
 import { formatTimeZoneLabel } from "@/lib/timezone";
-import { matchSideName } from "@/features/public/labels";
+import { matchRoundLabel, matchSideName } from "@/features/public/labels";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type {
   CompetitionSummary,
@@ -82,9 +82,11 @@ function LeaderCard({
                 <span className="block truncate text-sm font-bold">
                   {row.name}
                 </span>
-                <span className="block truncate text-[11px] font-medium text-muted">
-                  {row.teamName}
-                </span>
+                {row.teamName !== row.name ? (
+                  <span className="block truncate text-[11px] font-medium text-muted">
+                    {row.teamName}
+                  </span>
+                ) : null}
               </span>
               <span className="score-numeral text-xl font-semibold">
                 {row.total}
@@ -114,8 +116,9 @@ function CompetitionCard({
   eventSlug: string;
   timezone: string;
 }) {
-  const { t, formatDateTime } = useI18n();
+  const { t, formatDateTime, seedText } = useI18n();
   const isFootball = competition.sport === "football";
+  const competitionName = seedText(competition.name) ?? competition.name;
   const latestHome = latest
     ? matchSideName(
         latest.homeTeamName,
@@ -165,9 +168,9 @@ function CompetitionCard({
         />
       </div>
 
-      <h3 className="display-title mt-5 text-3xl">{competition.name}</h3>
+      <h3 className="display-title mt-5 text-3xl">{competitionName}</h3>
       <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-6 text-muted">
-        {competition.description}
+        {seedText(competition.description)}
       </p>
 
       {competition.status === "cancelled" ? (
@@ -194,7 +197,11 @@ function CompetitionCard({
           )}
         </span>
         <span className="rounded-full bg-cream px-2.5 py-1">
-          {t("competition.matchCount").replace(
+          {t(
+            competition.matchCount === 1
+              ? "competition.matchCountOne"
+              : "competition.matchCount",
+          ).replace(
             "{count}",
             String(competition.matchCount),
           )}
@@ -226,7 +233,7 @@ function CompetitionCard({
               {next.startsAt
                 ? formatDateTime(next.startsAt, timezone)
                 : t("match.tbd")}
-              {next.venueName ? ` · ${next.venueName}` : ""}
+              {next.venueName ? ` · ${seedText(next.venueName)}` : ""}
             </p>
           </>
         ) : isFootball && competition.registrationState === "open" ? (
@@ -286,7 +293,7 @@ export function EventHubPage({
   signedIn: boolean;
   currentPath: string;
 }) {
-  const { t, formatDate } = useI18n();
+  const { t, formatDate, seedText } = useI18n();
   const latest = data.recentResults[0];
   const latestHome = latest
     ? matchSideName(
@@ -305,7 +312,7 @@ export function EventHubPage({
       )
     : null;
   const competitions = data.competitions.map((competition) => ({
-    name: competition.name,
+    name: seedText(competition.name) ?? competition.name,
     slug: competition.slug,
     sport: competition.sport,
   }));
@@ -331,7 +338,7 @@ export function EventHubPage({
                   {data.event.name}
                 </h1>
                 <p className="mt-5 max-w-2xl text-base leading-7 text-white/85 sm:text-lg">
-                  {data.event.tagline ?? t("home.heroFallback")}
+                  {seedText(data.event.tagline) ?? t("home.heroFallback")}
                 </p>
 
                 <div className="mt-7 flex flex-wrap gap-2 text-xs font-bold text-white/90">
@@ -391,8 +398,8 @@ export function EventHubPage({
                         </span>
                       </div>
                       <p className="mt-3 text-xs font-semibold text-green-deep/80">
-                        {latest.competitionName}
-                        {latest.roundLabel ? ` · ${latest.roundLabel}` : ""}
+                        {seedText(latest.competitionName)}
+                        {` · ${matchRoundLabel(latest, t)}`}
                       </p>
                       <p className="mt-1 text-xs font-medium text-green-deep/70">
                         {latest.scoreDetail}
@@ -554,7 +561,7 @@ export function EventHubPage({
                 {t("home.aboutTitle")}
               </h2>
               <p className="mt-5 max-w-2xl text-base leading-7 text-muted">
-                {data.event.description ?? t("home.aboutBody")}
+                {seedText(data.event.description) ?? t("home.aboutBody")}
               </p>
               <div className="mt-8 grid gap-5 sm:grid-cols-2">
                 <div className="rounded-2xl bg-soft-green p-5">
@@ -564,7 +571,7 @@ export function EventHubPage({
                   </h3>
                   <p className="mt-1.5 text-sm leading-6 text-muted">
                     {data.competitions
-                      .map((competition) => competition.name)
+                      .map((competition) => seedText(competition.name))
                       .join(" · ")}
                   </p>
                 </div>
@@ -620,7 +627,9 @@ export function EventHubPage({
                     {t("competition.venues")}
                   </span>
                   <span className="mt-1 block font-bold">
-                    {data.venues.map((venue) => venue.name).join(" · ")}
+                    {data.venues
+                      .map((venue) => seedText(venue.name))
+                      .join(" · ")}
                   </span>
                 </p>
               </div>

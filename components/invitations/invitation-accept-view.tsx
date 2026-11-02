@@ -88,7 +88,7 @@ export function InvitationAcceptView({
   returnPath: string;
   emptyState?: "no_pending";
 }) {
-  const { t, formatDateTime } = useI18n();
+  const { t, formatDateTime, seedText } = useI18n();
   const emailMismatch =
     Boolean(data?.email) &&
     Boolean(user?.email) &&
@@ -175,7 +175,7 @@ export function InvitationAcceptView({
               <span className="font-extrabold">{team.name}</span>
               <span className="flex items-center gap-2 text-[11px] font-bold text-muted">
                 <SportTag sport={team.sport} />
-                {team.competitionName}
+                {seedText(team.competitionName)}
               </span>
             </div>
           ))}

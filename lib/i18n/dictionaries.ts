@@ -148,6 +148,7 @@ const ptBR = {
   "competition.entrantCount": "{count} inscritos",
   "competition.teamCount": "{count} equipes",
   "competition.matchCount": "{count} jogos",
+  "competition.matchCountOne": "1 jogo",
   "competition.publishedCount": "{count} publicados",
   "competition.backToEvent": "Voltar ao evento",
   "competition.football": "Futebol",
@@ -200,6 +201,7 @@ const ptBR = {
   "leaders.assists": "Assistências",
   "leaders.leader": "Líder",
   "table.empty": "Sem dados suficientes.",
+  "table.scrollHint": "Deslize para ver todas as colunas.",
 
   "auth.signInEyebrow": "Área reservada",
   "auth.signInTitle": "Entre no Summer Cup.",
@@ -293,8 +295,17 @@ const ptBR = {
   "admin.demoBadge": "Ambiente de demonstração",
   "admin.openPublicCompetition": "Abrir competição pública",
   "admin.nextStepTitle": "Próximo passo da demonstração",
-  "admin.nextStepBody":
-    "O caminho guiado continua nas próximas etapas do protótipo. O estado atual já está persistido no banco e visível no hub público.",
+  "admin.nextStepManagersBody":
+    "Convide os gerentes pendentes ou substitua um convite para obter um novo link. Depois, feche as inscrições do futebol e gere o sorteio.",
+  "admin.nextStepRegistrationBody":
+    "As inscrições do futebol estão abertas. Confira os elencos, feche as inscrições e gere o sorteio na página da competição.",
+  "admin.nextStepDrawBody":
+    "As inscrições estão fechadas. Gere o sorteio reproduzível, agende uma partida e prepare a folha de jogo.",
+  "admin.nextStepResultsBody":
+    "O sorteio está publicado. Agende os jogos, receba a folha de jogo e publique o resultado na fila de revisão.",
+  "admin.nextStepCompleteBody":
+    "A demonstração está pronta. Confira o resultado, a classificação e os líderes no hub público.",
+  "admin.mobileNav": "Navegação da administração",
   "admin.manageTeams": "Ir para minhas equipes",
   "admin.accountMenu": "Conta",
   "admin.language": "Idioma",
@@ -718,6 +729,7 @@ const ptBR = {
   "fixtures.filterLabel": "Filtrar por competição",
   "fixtures.allCompetitions": "Todas",
   "fixtures.matchCount": "{count} jogos",
+  "fixtures.matchCountOne": "1 jogo",
   "fixtures.unscheduled": "Ainda sem horário",
   "fixtures.emptyTitle": "Nenhum jogo gerado ainda",
   "fixtures.emptyBody":
@@ -895,6 +907,7 @@ const ptBR = {
     "Jogos das equipes que você gerencia, com horários no fuso do evento. Partidas sem horário continuam visíveis.",
   "manageFixtures.fixturesTitle": "Jogos das minhas equipes",
   "manageFixtures.matchCount": "{count} jogos",
+  "manageFixtures.matchCountOne": "1 jogo",
   "manageFixtures.emptyTitle": "Nenhum jogo gerado para suas equipes",
   "manageFixtures.emptyBody":
     "Os jogos aparecem aqui depois que o organizador gerar o sorteio da competição.",
@@ -963,7 +976,7 @@ const ptBR = {
   "disputes.owner.historyEyebrow": "Registro",
   "disputes.owner.historyTitle": "Histórico de contestações",
   "disputes.owner.historyEmpty":
-    "Nenhuma contestação foi aberta para este evento ainda.",
+    "Nenhuma contestação encerrada ainda.",
   "disputes.owner.openedBy": "Aberta por",
   "disputes.owner.teamLabel": "Equipe contestante",
   "disputes.owner.resolutionLabel": "Decisão",
@@ -1497,6 +1510,7 @@ const en: Dictionary = {
   "competition.entrantCount": "{count} entrants",
   "competition.teamCount": "{count} teams",
   "competition.matchCount": "{count} matches",
+  "competition.matchCountOne": "1 match",
   "competition.publishedCount": "{count} published",
   "competition.backToEvent": "Back to the event",
   "competition.football": "Football",
@@ -1549,6 +1563,7 @@ const en: Dictionary = {
   "leaders.assists": "Assists",
   "leaders.leader": "Leader",
   "table.empty": "Not enough data yet.",
+  "table.scrollHint": "Scroll to see all columns.",
 
   "auth.signInEyebrow": "Restricted area",
   "auth.signInTitle": "Sign in to the Summer Cup.",
@@ -1640,8 +1655,17 @@ const en: Dictionary = {
   "admin.demoBadge": "Demo environment",
   "admin.openPublicCompetition": "Open public competition",
   "admin.nextStepTitle": "Next demo step",
-  "admin.nextStepBody":
-    "The guided path continues in the next prototype stages. The current state is already persisted in the database and visible on the public hub.",
+  "admin.nextStepManagersBody":
+    "Invite the pending managers or replace an invitation to reveal a fresh link. Then close football registration and generate the draw.",
+  "admin.nextStepRegistrationBody":
+    "Football registration is open. Check the squads, close registration and generate the draw on the competition page.",
+  "admin.nextStepDrawBody":
+    "Registration is closed. Generate the reproducible draw, schedule a match and prepare the Scoresheet.",
+  "admin.nextStepResultsBody":
+    "The draw is published. Schedule matches, receive a Scoresheet and publish the result from the review queue.",
+  "admin.nextStepCompleteBody":
+    "The demo is ready. Check the result, standings and leaders on the public hub.",
+  "admin.mobileNav": "Administration navigation",
   "admin.manageTeams": "Go to my teams",
   "admin.accountMenu": "Account",
   "admin.language": "Language",
@@ -2065,6 +2089,7 @@ const en: Dictionary = {
   "fixtures.filterLabel": "Filter by competition",
   "fixtures.allCompetitions": "All",
   "fixtures.matchCount": "{count} matches",
+  "fixtures.matchCountOne": "1 match",
   "fixtures.unscheduled": "Not scheduled yet",
   "fixtures.emptyTitle": "No fixtures generated yet",
   "fixtures.emptyBody":
@@ -2240,6 +2265,7 @@ const en: Dictionary = {
     "Fixtures for the teams you manage, with times in the event time zone. Matches without a time stay visible.",
   "manageFixtures.fixturesTitle": "My teams' fixtures",
   "manageFixtures.matchCount": "{count} matches",
+  "manageFixtures.matchCountOne": "1 match",
   "manageFixtures.emptyTitle": "No fixtures generated for your teams yet",
   "manageFixtures.emptyBody":
     "Fixtures appear here after the organiser generates the competition draw.",
@@ -2308,7 +2334,7 @@ const en: Dictionary = {
   "disputes.owner.historyEyebrow": "Record",
   "disputes.owner.historyTitle": "Dispute history",
   "disputes.owner.historyEmpty":
-    "No disputes have been opened for this event yet.",
+    "No closed disputes yet.",
   "disputes.owner.openedBy": "Opened by",
   "disputes.owner.teamLabel": "Disputing team",
   "disputes.owner.resolutionLabel": "Decision",

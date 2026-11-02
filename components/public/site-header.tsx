@@ -27,7 +27,7 @@ export function SiteHeader({
   activeCompetitionSlug?: string;
   currentPath: string;
 }) {
-  const { t } = useI18n();
+  const { t, seedText } = useI18n();
   const basePath = `/events/${eventSlug}`;
 
   return (
@@ -100,7 +100,7 @@ export function SiteHeader({
                   : "text-muted hover:bg-cream hover:text-ink"
               }`}
             >
-              {competition.name}
+              {seedText(competition.name)}
             </Link>
           ))}
           <Link

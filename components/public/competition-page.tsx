@@ -13,7 +13,6 @@ import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 import {
   CompetitionStatusBadge,
-  RegistrationBadge,
   SportTag,
 } from "@/components/public/badges";
 import { MatchRow } from "@/components/public/match-row";
@@ -40,8 +39,9 @@ export function CompetitionPage({
   signedIn: boolean;
   currentPath: string;
 }) {
-  const { t, formatDate, formatDateTime } = useI18n();
+  const { t, formatDate, formatDateTime, seedText } = useI18n();
   const competition = data.competition;
+  const competitionName = seedText(competition.name) ?? competition.name;
   const isTennis = competition.sport === "tennis";
   const isGroups = competition.format === "groups_knockout";
   const isRoundRobin = competition.format === "round_robin";
@@ -54,7 +54,7 @@ export function CompetitionPage({
       ? "closed"
       : competition.registrationState;
   const competitions = data.event.competitions.map((sibling) => ({
-    name: sibling.name,
+    name: seedText(sibling.name) ?? sibling.name,
     slug: sibling.slug,
     sport: sibling.sport,
   }));
@@ -105,13 +105,12 @@ export function CompetitionPage({
                   status={competition.status}
                   registrationState={registrationState}
                 />
-                <RegistrationBadge state={registrationState} />
               </div>
               <h1 className="display-title mt-5 text-5xl sm:text-6xl">
-                {competition.name}
+                {competitionName}
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
-                {competition.description}
+                {seedText(competition.description)}
               </p>
 
               <div className="mt-6 flex flex-wrap gap-2 text-xs font-bold text-ink">
@@ -526,7 +525,7 @@ export function CompetitionPage({
                 {t("competition.eligibility")}
               </h2>
               <p className="mt-3 text-sm leading-6 text-muted">
-                {competition.eligibilityNotes}
+                {seedText(competition.eligibilityNotes)}
               </p>
               <dl className="mt-5 space-y-3 border-t border-line pt-4 text-sm">
                 <div>
@@ -575,7 +574,7 @@ export function CompetitionPage({
                     {t("competition.venues")}
                   </dt>
                   <dd className="mt-0.5 font-bold">
-                    {data.venues.map((venue) => venue.name).join(" · ")}
+                    {data.venues.map((venue) => seedText(venue.name)).join(" · ")}
                   </dd>
                 </div>
               </dl>

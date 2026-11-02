@@ -23,7 +23,7 @@ export function MatchRow({
   showCompetition?: boolean;
   eventSlug: string;
 }) {
-  const { t, formatDateTime, formatTime } = useI18n();
+  const { t, formatDateTime, formatTime, seedText } = useI18n();
   const published = match.status === "published";
   const homeWon =
     match.homeTeamId != null && match.winnerTeamId === match.homeTeamId;
@@ -63,7 +63,7 @@ export function MatchRow({
             href={`/events/${eventSlug}/competitions/${match.competitionSlug}`}
             className="text-green hover:underline"
           >
-            {match.competitionName}
+            {seedText(match.competitionName)}
           </Link>
         ) : (
           <SportTag sport={match.sport} />
@@ -85,7 +85,7 @@ export function MatchRow({
         {match.venueName ? (
           <span className="inline-flex items-center gap-1">
             <MapPinIcon className="size-3.5" />
-            {match.venueName}
+            {seedText(match.venueName)}
           </span>
         ) : null}
         {match.isCancelled ? <MatchStatusBadge status="cancelled" /> : null}

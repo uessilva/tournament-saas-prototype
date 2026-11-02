@@ -26,7 +26,7 @@ export function TeamRosterView({
   data: TeamRosterData;
   user: { name: string | null; email: string | null };
 }) {
-  const { t, formatDate, formatDateTime } = useI18n();
+  const { t, formatDate, formatDateTime, seedText } = useI18n();
   const competitionCancelled = data.competition.cancelled;
   const registrationOpen =
     data.competition.registrationOpen && !competitionCancelled;
@@ -94,7 +94,7 @@ export function TeamRosterView({
               {data.team.name}
             </h1>
             <p className="mt-2 text-sm font-bold text-muted">
-              {data.competition.name} · {data.event.name}
+              {seedText(data.competition.name)} · {data.event.name}
             </p>
             <p className="mt-1 text-xs font-medium text-muted">
               {t("manage.rosterBody")}

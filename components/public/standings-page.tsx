@@ -72,9 +72,9 @@ export function StandingsPage({
   signedIn: boolean;
   currentPath: string;
 }) {
-  const { t } = useI18n();
+  const { t, seedText } = useI18n();
   const competitions = data.competitions.map((competition) => ({
-    name: competition.name,
+    name: seedText(competition.name) ?? competition.name,
     slug: competition.slug,
     sport: competition.sport,
   }));
@@ -144,7 +144,7 @@ export function StandingsPage({
               ) : (
                 <TennisIcon className="size-3" />
               )}
-              {competition.name}
+              {seedText(competition.name)}
             </Link>
           ))}
         </nav>
@@ -174,7 +174,7 @@ export function StandingsPage({
                       ) : null}
                     </div>
                     <h2 className="display-title mt-2 text-3xl">
-                      {competition.name}
+                      {seedText(competition.name)}
                     </h2>
                   </div>
                   <Link

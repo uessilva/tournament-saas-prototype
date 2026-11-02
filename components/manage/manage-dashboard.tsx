@@ -26,7 +26,7 @@ export function ManageDashboard({
   inviteAccepted?: boolean;
   inviteCount?: number;
 }) {
-  const { t } = useI18n();
+  const { t, seedText } = useI18n();
 
   return (
     <div className="min-h-screen bg-[#f2f1ea]">
@@ -83,7 +83,7 @@ export function ManageDashboard({
                 </div>
                 <h2 className="display-title mt-4 text-3xl">{team.teamName}</h2>
                 <p className="mt-1 text-xs font-bold text-muted">
-                  {team.competitionName} · {team.eventName}
+                  {seedText(team.competitionName)} · {team.eventName}
                 </p>
 
                 <div className="mt-4 flex items-center gap-3 text-[11px] font-bold text-muted">

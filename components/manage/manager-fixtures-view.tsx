@@ -23,7 +23,7 @@ export function ManagerFixturesView({
   data: ManagerFixturesData;
   user: { name: string | null; email: string | null };
 }) {
-  const { t } = useI18n();
+  const { t, seedText } = useI18n();
   const primaryTeam = data.teams[0];
   const eventSlug = primaryTeam?.eventSlug ?? "";
   const timezone = primaryTeam?.eventTimezone ?? "America/Sao_Paulo";
@@ -64,7 +64,7 @@ export function ManagerFixturesView({
           {data.teams.map((team) => (
             <article key={team.id} className="surface p-4">
               <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted">
-                {team.competitionName}
+                {seedText(team.competitionName)}
               </p>
               <h2 className="display-title mt-1 text-2xl">{team.name}</h2>
               {team.competitionStatus === "cancelled" ? (
@@ -93,10 +93,11 @@ export function ManagerFixturesView({
             </h2>
             <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted">
               <CalendarIcon className="size-3.5" />
-              {t("manageFixtures.matchCount").replace(
-                "{count}",
-                String(data.fixtures.length),
-              )}
+              {t(
+                data.fixtures.length === 1
+                  ? "manageFixtures.matchCountOne"
+                  : "manageFixtures.matchCount",
+              ).replace("{count}", String(data.fixtures.length))}
             </span>
           </div>
 

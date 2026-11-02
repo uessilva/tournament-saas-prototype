@@ -72,10 +72,10 @@ function TeamCheckboxes({
   idPrefix: string;
   error?: string;
 }) {
-  const { t } = useI18n();
+  const { t, seedText } = useI18n();
 
   return (
-    <fieldset>
+    <fieldset aria-describedby={error ? `${idPrefix}-error` : undefined}>
       <legend className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted">
         {legend}
       </legend>
@@ -95,7 +95,7 @@ function TeamCheckboxes({
             <span className="min-w-0 flex-1">
               <span className="block truncate">{team.name}</span>
               <span className="block text-[10px] font-semibold text-muted">
-                {team.competitionName}
+                {seedText(team.competitionName)}
               </span>
             </span>
             <SportTag sport={team.sport} />
@@ -103,7 +103,11 @@ function TeamCheckboxes({
         ))}
       </div>
       {error ? (
-        <p role="alert" className="mt-1.5 text-xs font-bold text-red-700">
+        <p
+          id={`${idPrefix}-error`}
+          role="alert"
+          className="mt-1.5 text-xs font-bold text-red-700"
+        >
           {t("teamsAdmin.teamRequired")}
         </p>
       ) : (
@@ -387,7 +391,7 @@ export function EventTeamsView({
   notice?: string;
   error?: string;
 }) {
-  const { t, formatDateTime } = useI18n();
+  const { t, formatDateTime, seedText } = useI18n();
   const [emailState, emailAction] = useActionState(
     createEmailInvitationAction,
     EMPTY_STATE,
@@ -411,7 +415,7 @@ export function EventTeamsView({
 
   const pendingByTeam = new Set<string>();
   for (const invitation of data.invitations) {
-    if (invitation.status === "pending" || invitation.status === "active") {
+    if (invitation.status === "pending") {
       for (const team of invitation.teams) {
         pendingByTeam.add(team.id);
       }
@@ -545,7 +549,7 @@ export function EventTeamsView({
                     <div>
                       <h3 className="text-sm font-extrabold">{team.name}</h3>
                       <p className="mt-0.5 text-[11px] font-semibold text-muted">
-                        {team.competitionName} ·{" "}
+                        {seedText(team.competitionName)} ·{" "}
                         {t("teamsAdmin.rosterCount").replace(
                           "{count}",
                           String(team.participantCount),
@@ -615,10 +619,19 @@ export function EventTeamsView({
                     autoComplete="off"
                     placeholder={t("teamsAdmin.emailPlaceholder")}
                     aria-invalid={Boolean(emailState.fieldErrors?.email)}
+                    aria-describedby={
+                      emailState.fieldErrors?.email
+                        ? "invitation-email-error"
+                        : undefined
+                    }
                     className="mt-1.5 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold focus:border-green focus:bg-white focus:outline-none"
                   />
                   {emailState.fieldErrors?.email ? (
-                    <p role="alert" className="mt-1 text-xs font-bold text-red-700">
+                    <p
+                      id="invitation-email-error"
+                      role="alert"
+                      className="mt-1 text-xs font-bold text-red-700"
+                    >
                       {t("teamsAdmin.emailInvalid")}
                     </p>
                   ) : null}
@@ -837,17 +850,22 @@ export function EventTeamsView({
             {t("teamsAdmin.historyBody")}
           </p>
 
-          <div className="mt-4 overflow-x-auto">
+          <div
+            className="mt-4 overflow-x-auto"
+            role="region"
+            aria-label={t("teamsAdmin.historyTitle")}
+            tabIndex={0}
+          >
             <table className="w-full min-w-[760px] text-left text-xs">
               <caption className="sr-only">{t("teamsAdmin.historyTitle")}</caption>
               <thead>
                 <tr className="border-b border-line bg-paper/60 text-[9px] uppercase tracking-[0.1em] text-muted">
-                  <th className="px-3 py-2.5 font-extrabold">{t("teamsAdmin.when")}</th>
-                  <th className="px-3 py-2.5 font-extrabold">{t("teamsAdmin.event")}</th>
-                  <th className="px-3 py-2.5 font-extrabold">{t("teamsAdmin.actor")}</th>
-                  <th className="px-3 py-2.5 font-extrabold">{t("teamsAdmin.subject")}</th>
-                  <th className="px-3 py-2.5 font-extrabold">{t("teamsAdmin.teams")}</th>
-                  <th className="px-3 py-2.5 font-extrabold">{t("teamsAdmin.invitation")}</th>
+                  <th scope="col" className="px-3 py-2.5 font-extrabold">{t("teamsAdmin.when")}</th>
+                  <th scope="col" className="px-3 py-2.5 font-extrabold">{t("teamsAdmin.event")}</th>
+                  <th scope="col" className="px-3 py-2.5 font-extrabold">{t("teamsAdmin.actor")}</th>
+                  <th scope="col" className="px-3 py-2.5 font-extrabold">{t("teamsAdmin.subject")}</th>
+                  <th scope="col" className="px-3 py-2.5 font-extrabold">{t("teamsAdmin.teams")}</th>
+                  <th scope="col" className="px-3 py-2.5 font-extrabold">{t("teamsAdmin.invitation")}</th>
                 </tr>
               </thead>
               <tbody>

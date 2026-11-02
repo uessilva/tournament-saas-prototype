@@ -50,7 +50,13 @@ function errorKey(state: RosterActionState): DictionaryKey | null {
   }
 }
 
-function FormFeedback({ state }: { state: RosterActionState }) {
+function FormFeedback({
+  state,
+  id,
+}: {
+  state: RosterActionState;
+  id?: string;
+}) {
   const { t } = useI18n();
   if (state.status === "idle") {
     return null;
@@ -65,6 +71,7 @@ function FormFeedback({ state }: { state: RosterActionState }) {
           : "manage.participantRemoved";
     return (
       <p
+        id={id}
         role="status"
         className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-soft-green px-2.5 py-1.5 text-[11px] font-extrabold text-green"
       >
@@ -76,7 +83,7 @@ function FormFeedback({ state }: { state: RosterActionState }) {
 
   const key = errorKey(state);
   return (
-    <p role="alert" className="mt-2 text-xs font-bold text-red-700">
+    <p id={id} role="alert" className="mt-2 text-xs font-bold text-red-700">
       {key ? t(key) : t("manage.actionFailed")}
     </p>
   );
@@ -110,10 +117,14 @@ function ParticipantFields({
   participant,
   idPrefix,
   compact = false,
+  invalid = false,
+  describedBy,
 }: {
   participant?: RosterParticipant;
   idPrefix: string;
   compact?: boolean;
+  invalid?: boolean;
+  describedBy?: string;
 }) {
   const { t } = useI18n();
   const inputClass =
@@ -134,6 +145,8 @@ function ParticipantFields({
           required
           maxLength={80}
           defaultValue={participant?.firstName ?? ""}
+          aria-invalid={invalid || undefined}
+          aria-describedby={describedBy}
           className={inputClass}
         />
       </div>
@@ -150,6 +163,8 @@ function ParticipantFields({
           required
           maxLength={80}
           defaultValue={participant?.lastName ?? ""}
+          aria-invalid={invalid || undefined}
+          aria-describedby={describedBy}
           className={inputClass}
         />
       </div>
@@ -166,6 +181,8 @@ function ParticipantFields({
           type="date"
           required
           defaultValue={participant?.dateOfBirth ?? ""}
+          aria-invalid={invalid || undefined}
+          aria-describedby={describedBy}
           className={inputClass}
         />
       </div>
@@ -183,6 +200,8 @@ function ParticipantFields({
           min={1}
           max={99}
           defaultValue={participant?.shirtNumber ?? ""}
+          aria-invalid={invalid || undefined}
+          aria-describedby={describedBy}
           className={inputClass}
         />
       </div>
@@ -198,6 +217,8 @@ function ParticipantFields({
           name="position"
           maxLength={40}
           defaultValue={participant?.position ?? ""}
+          aria-invalid={invalid || undefined}
+          aria-describedby={describedBy}
           className={inputClass}
         />
       </div>
@@ -252,6 +273,12 @@ function ParticipantRow({
                 participant={participant}
                 idPrefix={`edit-${participant.id}`}
                 compact
+                invalid={updateState.status === "error"}
+                describedBy={
+                  updateState.status === "error"
+                    ? `edit-${participant.id}-error`
+                    : undefined
+                }
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -267,7 +294,10 @@ function ParticipantRow({
                 {t("manage.cancel")}
               </button>
             </div>
-            <FormFeedback state={updateState} />
+            <FormFeedback
+              state={updateState}
+              id={`edit-${participant.id}-error`}
+            />
           </form>
         </td>
       </tr>
@@ -409,18 +439,23 @@ export function RosterEditor({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div
+        className="overflow-x-auto"
+        role="region"
+        aria-label={t("manage.rosterTitle")}
+        tabIndex={0}
+      >
         <table className="w-full min-w-[660px] text-left text-sm">
           <caption className="sr-only">{t("manage.rosterTitle")}</caption>
           <thead>
             <tr className="border-b border-line bg-paper/60 text-[10px] uppercase tracking-[0.1em] text-muted">
-              <th className="px-4 py-3 font-extrabold">{t("manage.shirt")}</th>
-              <th className="px-4 py-3 font-extrabold">
+              <th scope="col" className="px-4 py-3 font-extrabold">{t("manage.shirt")}</th>
+              <th scope="col" className="px-4 py-3 font-extrabold">
                 {t("competition.players")}
               </th>
-              <th className="px-4 py-3 font-extrabold">{t("manage.position")}</th>
-              <th className="px-4 py-3 font-extrabold">{t("manage.birthDate")}</th>
-              <th className="px-4 py-3 font-extrabold">{t("common.actions")}</th>
+              <th scope="col" className="px-4 py-3 font-extrabold">{t("manage.position")}</th>
+              <th scope="col" className="px-4 py-3 font-extrabold">{t("manage.birthDate")}</th>
+              <th scope="col" className="px-4 py-3 font-extrabold">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -466,7 +501,15 @@ export function RosterEditor({
           >
             <input type="hidden" name="teamId" value={teamId} />
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              <ParticipantFields idPrefix="add-participant" />
+              <ParticipantFields
+                idPrefix="add-participant"
+                invalid={addState.status === "error"}
+                describedBy={
+                  addState.status === "error"
+                    ? "roster-add-error"
+                    : undefined
+                }
+              />
             </div>
             {sport === "tennis" && participants.length >= 1 ? (
               <p className="rounded-lg bg-soft-orange px-3 py-2 text-[11px] font-bold text-clay">
@@ -486,7 +529,7 @@ export function RosterEditor({
                 </span>
               ) : null}
             </div>
-            <FormFeedback state={addState} />
+            <FormFeedback state={addState} id="roster-add-error" />
           </form>
         </div>
       ) : (

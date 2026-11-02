@@ -319,7 +319,7 @@ export async function resetDemoData(): Promise<DemoResetSummary> {
   const now = new Date();
   const eventStart = atUtc(now, -1, 12, 0);
   const eventEnd = atUtc(now, 6, 23, 0);
-  const registrationDeadline = addDays(now, 4);
+  const registrationDeadline = atUtc(now, 4, 21, 0);
 
   return db.transaction(async (tx) => {
     await tx.execute(

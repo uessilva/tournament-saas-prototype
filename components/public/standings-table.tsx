@@ -43,12 +43,19 @@ export function StandingsTable({
     isFootball && group.seededDraws.some((draw) => draw.teamIds.length > 1);
 
   return (
-    <div>
+    <div className="min-w-0">
       <h3 className="text-sm font-extrabold">
         {groupDisplayName(group.name, t)}
       </h3>
-      <div className="mt-2 overflow-x-auto">
-        <table className="w-full min-w-[620px] text-left text-sm">
+      <div
+        className="mt-2 overflow-x-auto"
+        role="region"
+        aria-label={`${groupDisplayName(group.name, t)} — ${t("competition.standings")}`}
+        tabIndex={0}
+      >
+        <table
+          className={`w-full ${isFootball ? "min-w-[520px]" : "min-w-[440px]"} text-left text-sm`}
+        >
           {showCaption ? (
             <caption className="sr-only">
               {groupDisplayName(group.name, t)} — {t("competition.standings")}
@@ -183,6 +190,9 @@ export function StandingsTable({
           </tbody>
         </table>
       </div>
+      <p className="mt-1 text-[10px] font-medium text-muted sm:hidden">
+        {t("table.scrollHint")}
+      </p>
       {hasSeededDraw ? (
         <p className="mt-2 rounded-lg bg-soft-orange px-2.5 py-1.5 text-[11px] font-semibold text-clay">
           {t("standings.seededDrawUsed").replace(
