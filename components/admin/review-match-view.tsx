@@ -24,8 +24,10 @@ import type {
 } from "@/features/scoresheets/queries";
 import {
   confirmScoresheetAction,
+  correctFootballResultAction,
   correctTennisResultAction,
   manualResultAction,
+  reopenFootballResultAction,
   rejectScoresheetAction,
   retryExtractionAction,
   saveReviewAction,
@@ -204,6 +206,106 @@ function ReviewFieldInputs({
   );
 }
 
+function StatisticsFields({
+  participants,
+  prefix,
+  disabled = false,
+}: {
+  participants: ReviewMatchDetail["participants"];
+  prefix: string;
+  disabled?: boolean;
+}) {
+  const { t } = useI18n();
+  const home = participants.filter((participant) => participant.teamName);
+  const byTeam = new Map<string, ReviewMatchDetail["participants"]>();
+  for (const participant of home) {
+    const list = byTeam.get(participant.teamName) ?? [];
+    list.push(participant);
+    byTeam.set(participant.teamName, list);
+  }
+
+  if (!participants.length) {
+    return null;
+  }
+
+  return (
+    <details className="mt-4 rounded-xl border border-line bg-paper/60 p-3">
+      <summary className="cursor-pointer text-xs font-extrabold text-ink focus-ring">
+        {t("review.statsTitle")}
+      </summary>
+      <p className="mt-1 text-[10px] font-medium text-muted">
+        {t("review.statsBody")}
+      </p>
+      <div className="mt-3 grid gap-4 lg:grid-cols-2">
+        {[...byTeam.entries()].map(([teamName, roster]) => (
+          <div key={teamName}>
+            <h3 className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted">
+              {teamName}
+            </h3>
+            <div className="mt-1.5 space-y-1.5">
+              {roster.map((participant) => (
+                <div
+                  key={participant.id}
+                  className="grid grid-cols-[1fr_54px_54px] items-center gap-1.5"
+                >
+                  <label
+                    htmlFor={`${prefix}-goals-${participant.id}`}
+                    className="truncate text-[11px] font-semibold"
+                  >
+                    {participant.shirtNumber != null ? (
+                      <span className="mr-1 text-muted">
+                        #{participant.shirtNumber}
+                      </span>
+                    ) : null}
+                    {participant.name}
+                  </label>
+                  <span>
+                    <span className="sr-only">
+                      {t("review.statsGoals")} — {participant.name}
+                    </span>
+                    <input
+                      id={`${prefix}-goals-${participant.id}`}
+                      name={`stat_goals_${participant.id}`}
+                      type="number"
+                      min={0}
+                      max={30}
+                      defaultValue={participant.goals || ""}
+                      disabled={disabled}
+                      aria-label={`${t("review.statsGoals")} — ${participant.name}`}
+                      className="w-full rounded-md border border-line bg-white px-1.5 py-1 text-center font-mono text-xs font-bold outline-none focus:border-green disabled:bg-cream"
+                      placeholder={t("review.statsGoalsShort")}
+                    />
+                  </span>
+                  <span>
+                    <span className="sr-only">
+                      {t("review.statsAssists")} — {participant.name}
+                    </span>
+                    <input
+                      id={`${prefix}-assists-${participant.id}`}
+                      name={`stat_assists_${participant.id}`}
+                      type="number"
+                      min={0}
+                      max={30}
+                      defaultValue={participant.assists || ""}
+                      disabled={disabled}
+                      aria-label={`${t("review.statsAssists")} — ${participant.name}`}
+                      className="w-full rounded-md border border-line bg-white px-1.5 py-1 text-center font-mono text-xs font-bold outline-none focus:border-green disabled:bg-cream"
+                      placeholder={t("review.statsAssistsShort")}
+                    />
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-[10px] font-semibold text-clay">
+        {t("review.statsWalkoverNote")}
+      </p>
+    </details>
+  );
+}
+
 function ErrorNotice({ code }: { code?: string }) {
   const { t } = useI18n();
   if (!code) return null;
@@ -349,6 +451,13 @@ function ScoresheetReviewForms({
             prefix={`confirm-${sheet.id}`}
             scoresheetId={sheet.id}
           />
+          {data.competition.sport === "football" ? (
+            <StatisticsFields
+              participants={data.participants}
+              prefix={`confirm-${sheet.id}`}
+              disabled={published}
+            />
+          ) : null}
         </div>
         {confirmState.status === "error" ? (
           <ErrorNotice code={confirmState.code} />
@@ -580,6 +689,12 @@ function ManualEntryForm({
         />
       </div>
 
+      <StatisticsFields
+        participants={data.participants}
+        prefix={`manual-${data.match.id}`}
+        disabled={walkover}
+      />
+
       <label className="mt-4 flex items-start gap-2 rounded-xl border border-clay/30 bg-soft-orange p-3 text-xs font-bold text-clay">
         <input
           type="checkbox"
@@ -599,6 +714,248 @@ function ManualEntryForm({
           pendingLabel={t("review.publishing")}
           tone="dark"
           disabled={published}
+        />
+      </div>
+    </form>
+  );
+}
+
+function CorrectionForm({
+  data,
+  current,
+}: {
+  data: ReviewMatchDetail;
+  current: ReviewMatchDetail["resultVersions"][number];
+}) {
+  const { t } = useI18n();
+  const [state, action] = useActionState(correctFootballResultAction, EMPTY);
+  const [walkover, setWalkover] = useState(current.isWalkover);
+  const walkoverWinner =
+    current.isWalkover && current.homeScore != null && current.awayScore != null
+      ? current.homeScore > current.awayScore
+        ? "home"
+        : "away"
+      : "";
+
+  return (
+    <form action={action} className="surface p-4 sm:p-5">
+      <input type="hidden" name="eventId" value={data.event.id} />
+      <input type="hidden" name="matchId" value={data.match.id} />
+      <p className="eyebrow text-clay">{t("review.correctionEyebrow")}</p>
+      <h2 className="display-title mt-1 text-2xl">
+        {t("review.correctionTitle")}
+      </h2>
+      <p className="mt-1 text-xs leading-5 text-muted">
+        {t("review.correctionBody")}
+      </p>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor={`correction-home-${data.match.id}`}
+            className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted"
+          >
+            {data.match.homeTeamName ?? t("review.homeSide")}
+          </label>
+          <input
+            id={`correction-home-${data.match.id}`}
+            name="homeScore"
+            type="number"
+            min={0}
+            max={30}
+            required
+            defaultValue={current.homeScore ?? 0}
+            disabled={walkover}
+            className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 font-mono text-lg font-bold outline-none focus:border-green disabled:bg-cream"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor={`correction-away-${data.match.id}`}
+            className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted"
+          >
+            {data.match.awayTeamName ?? t("review.awaySide")}
+          </label>
+          <input
+            id={`correction-away-${data.match.id}`}
+            name="awayScore"
+            type="number"
+            min={0}
+            max={30}
+            required
+            defaultValue={current.awayScore ?? 0}
+            disabled={walkover}
+            className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 font-mono text-lg font-bold outline-none focus:border-green disabled:bg-cream"
+          />
+        </div>
+      </div>
+
+      <label className="mt-3 flex items-center gap-2 text-xs font-bold">
+        <input
+          type="checkbox"
+          name="isWalkover"
+          value="true"
+          checked={walkover}
+          onChange={(event) => setWalkover(event.target.checked)}
+          className="size-4 accent-clay"
+        />
+        {t("review.manualWalkover")}
+      </label>
+
+      {walkover ? (
+        <div className="mt-3">
+          <label
+            htmlFor={`correction-winner-${data.match.id}`}
+            className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted"
+          >
+            {t("review.manualWalkoverWinner")}
+          </label>
+          <select
+            id={`correction-winner-${data.match.id}`}
+            name="walkoverWinner"
+            required
+            defaultValue={walkoverWinner}
+            className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm font-bold outline-none focus:border-green"
+          >
+            <option value="">{t("review.noWinner")}</option>
+            <option value="home">
+              {data.match.homeTeamName ?? t("review.homeSide")}
+            </option>
+            <option value="away">
+              {data.match.awayTeamName ?? t("review.awaySide")}
+            </option>
+          </select>
+        </div>
+      ) : null}
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor={`correction-pen-home-${data.match.id}`}
+            className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted"
+          >
+            {t("review.manualPenaltyHome")}
+          </label>
+          <input
+            id={`correction-pen-home-${data.match.id}`}
+            name="penaltyHome"
+            type="number"
+            min={0}
+            max={30}
+            defaultValue={current.penaltyHome ?? ""}
+            disabled={walkover}
+            className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 font-mono text-sm font-bold outline-none focus:border-green disabled:bg-cream"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor={`correction-pen-away-${data.match.id}`}
+            className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted"
+          >
+            {t("review.manualPenaltyAway")}
+          </label>
+          <input
+            id={`correction-pen-away-${data.match.id}`}
+            name="penaltyAway"
+            type="number"
+            min={0}
+            max={30}
+            defaultValue={current.penaltyAway ?? ""}
+            disabled={walkover}
+            className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 font-mono text-sm font-bold outline-none focus:border-green disabled:bg-cream"
+          />
+        </div>
+      </div>
+
+      <StatisticsFields
+        participants={data.participants}
+        prefix={`correction-${data.match.id}`}
+        disabled={walkover}
+      />
+
+      <div className="mt-4">
+        <label
+          htmlFor={`correction-reason-${data.match.id}`}
+          className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted"
+        >
+          {t("review.correctionReason")}
+        </label>
+        <textarea
+          id={`correction-reason-${data.match.id}`}
+          name="reason"
+          required
+          minLength={3}
+          rows={2}
+          className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-green"
+        />
+        <p className="mt-1 text-[10px] font-medium text-muted">
+          {t("review.correctionReasonHint")}
+        </p>
+      </div>
+
+      <label className="mt-4 flex items-start gap-2 rounded-xl border border-clay/30 bg-soft-orange p-3 text-xs font-bold text-clay">
+        <input
+          type="checkbox"
+          name="explicitConfirmation"
+          value="true"
+          required
+          className="mt-0.5 size-4 shrink-0 accent-clay"
+        />
+        {t("review.correctionConfirmation")}
+      </label>
+
+      {state.status === "error" ? <ErrorNotice code={state.code} /> : null}
+      <div className="mt-3">
+        <SubmitButton
+          label={t("review.correctionPublish")}
+          pendingLabel={t("review.publishing")}
+          tone="danger"
+        />
+      </div>
+    </form>
+  );
+}
+
+function ReopenForm({ data }: { data: ReviewMatchDetail }) {
+  const { t } = useI18n();
+  const [state, action] = useActionState(reopenFootballResultAction, EMPTY);
+
+  return (
+    <form action={action} className="surface p-4 sm:p-5">
+      <input type="hidden" name="eventId" value={data.event.id} />
+      <input type="hidden" name="matchId" value={data.match.id} />
+      <p className="eyebrow text-clay">{t("review.reopenEyebrow")}</p>
+      <h2 className="display-title mt-1 text-2xl">
+        {t("review.reopenTitle")}
+      </h2>
+      <p className="mt-1 text-xs leading-5 text-muted">
+        {t("review.reopenBody")}
+      </p>
+      <div className="mt-4">
+        <label
+          htmlFor={`reopen-reason-${data.match.id}`}
+          className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted"
+        >
+          {t("review.reopenReason")}
+        </label>
+        <textarea
+          id={`reopen-reason-${data.match.id}`}
+          name="reason"
+          required
+          minLength={3}
+          rows={2}
+          className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-green"
+        />
+      </div>
+      <p className="mt-3 rounded-xl bg-soft-orange p-3 text-[11px] font-semibold text-clay">
+        {t("review.reopenGuardHint")}
+      </p>
+      {state.status === "error" ? <ErrorNotice code={state.code} /> : null}
+      <div className="mt-3">
+        <SubmitButton
+          label={t("review.reopenAction")}
+          pendingLabel={t("review.reopening")}
+          tone="danger"
         />
       </div>
     </form>
@@ -1037,6 +1394,13 @@ export function ReviewMatchView({
               </p>
             ) : null}
           </section>
+        ) : null}
+
+        {published && currentResult && !isTennis && !competitionCancelled ? (
+          <div className="mt-5 grid gap-5 xl:grid-cols-2">
+            <CorrectionForm data={data} current={currentResult} />
+            <ReopenForm data={data} />
+          </div>
         ) : null}
 
         <div className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">

@@ -92,10 +92,24 @@ export function ResultsPage({
               {t("results.body")}
             </p>
           </div>
-          <p className="inline-flex items-center gap-1.5 rounded-full bg-soft-green px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-green">
-            <TrophyIcon className="size-3.5" />
-            {t("results.publishedOnly")}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={`/events/${data.event.slug}/standings`}
+              className="rounded-full border border-line bg-white px-3 py-1.5 text-[10px] font-extrabold text-ink transition-colors hover:border-green hover:text-green"
+            >
+              {t("standings.viewFull")}
+            </Link>
+            <Link
+              href={`/events/${data.event.slug}/leaders`}
+              className="rounded-full border border-line bg-white px-3 py-1.5 text-[10px] font-extrabold text-ink transition-colors hover:border-green hover:text-green"
+            >
+              {t("nav.leaders")}
+            </Link>
+            <p className="inline-flex items-center gap-1.5 rounded-full bg-soft-green px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-green">
+              <TrophyIcon className="size-3.5" />
+              {t("results.publishedOnly")}
+            </p>
+          </div>
         </div>
 
         <nav

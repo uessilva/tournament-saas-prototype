@@ -1,4 +1,8 @@
 import type { TennisStandingRow } from "@/features/competitions/tennis-standings";
+import type {
+  FootballStandingRow,
+  SeededStandingDraw,
+} from "@/features/competitions/football-standings";
 import type { DrawValidationError } from "@/features/competitions/draw";
 import type {
   LeaderRow,
@@ -6,6 +10,10 @@ import type {
   PublicMatchSource,
   Sport,
 } from "@/features/public/types";
+
+export type CompetitionStandingRow =
+  | FootballStandingRow
+  | TennisStandingRow;
 
 export type CompetitionEntrant = {
   id: string;
@@ -17,7 +25,8 @@ export type CompetitionEntrant = {
 export type CompetitionGroup = {
   id: string;
   name: string;
-  standings: TennisStandingRow[];
+  standings: CompetitionStandingRow[];
+  seededDraws: SeededStandingDraw[];
 };
 
 export type AdminCompetitionEntrant = {
@@ -112,6 +121,7 @@ export type AdminCompetitionData = {
   };
   entrants: AdminCompetitionEntrant[];
   draw: AdminDrawData;
+  standings: CompetitionGroup[];
   counts: {
     entrants: number;
     participants: number;
