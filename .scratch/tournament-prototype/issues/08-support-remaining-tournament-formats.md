@@ -4,13 +4,13 @@
 
 **Blocked by:** 03 — Generate the Football tournament and publish fixtures; 07 — Complete the Tennis Open journey.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] An Owner can select single round-robin, single-elimination, or groups + knockout for Football and tennis.
-- [ ] Single round-robin generates each entrant pairing once and feeds the appropriate sport's standings.
-- [ ] Single-elimination generates a next-power-of-two bracket with automatic Byes and seeded otherwise-random positions.
-- [ ] Every format requires valid entrants and at least two entrants per Competition.
-- [ ] Seeded preview, regeneration, and manual entrant swaps work consistently until any Match has a confirmed result.
-- [ ] Football and tennis published results advance knockout entrants correctly in every supported format.
-- [ ] Existing scheduling, Scoresheet review, corrections, cancellation, and public pages work without format-specific duplicate workflows.
-- [ ] The guided Summer Cup seed continues to use Football groups + knockout and remains resettable.
+- [x] An Owner can select single round-robin, single-elimination, or groups + knockout for Football and tennis.
+- [x] Single round-robin generates each entrant pairing once and feeds the appropriate sport's standings.
+- [x] Single-elimination generates a next-power-of-two bracket with automatic Byes and seeded otherwise-random positions.
+- [x] Every format requires valid entrants and at least two entrants per Competition.
+- [x] Seeded preview, regeneration, and manual entrant swaps work consistently until any Match has a confirmed result.
+- [x] Football and tennis published results advance knockout entrants correctly in every supported format.
+- [x] Existing scheduling, Scoresheet review, corrections, cancellation, and public pages work without format-specific duplicate workflows.
+- [x] The guided Summer Cup seed continues to use Football groups + knockout and remains resettable.

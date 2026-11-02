@@ -4,14 +4,14 @@
 
 **Blocked by:** 05 — Review a Football Scoresheet and publish its result.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] A Manager of an involved Team can open a dispute on a published Match with a required explanation.
-- [ ] Only one active dispute is allowed per Match.
-- [ ] Opening a dispute does not unpublish, alter, or flag the public result.
-- [ ] The Owner can resolve or dismiss an active dispute with a required response.
-- [ ] Resolving an upheld dispute can link to a separate reasoned result-correction version without automatically creating one.
-- [ ] Explanations and responses remain visible only to the Owner and Managers of the Teams involved.
-- [ ] Other Managers and public visitors cannot access dispute content or labels.
-- [ ] Dispute history remains available to authorized Users after resolution or dismissal.
-- [ ] Authorization is enforced on dispute reads and mutations, not merely by hiding navigation.
+- [x] A Manager of an involved Team can open a dispute on a published Match with a required explanation.
+- [x] Only one active dispute is allowed per Match.
+- [x] Opening a dispute does not unpublish, alter, or flag the public result.
+- [x] The Owner can resolve or dismiss an active dispute with a required response.
+- [x] Resolving an upheld dispute can link to a separate reasoned result-correction version without automatically creating one.
+- [x] Explanations and responses remain visible only to the Owner and Managers of the Teams involved.
+- [x] Other Managers and public visitors cannot access dispute content or labels.
+- [x] Dispute history remains available to authorized Users after resolution or dismissal.
+- [x] Authorization is enforced on dispute reads and mutations, not merely by hiding navigation.

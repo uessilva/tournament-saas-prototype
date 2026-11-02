@@ -4,12 +4,12 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The documented local setup starts Next.js, PostgreSQL, Mailpit, and the local job worker or synchronous fallback.
-- [ ] Drizzle migrations and a repeatable one-command seed/reset create Summer Cup 2026 with fictitious people and contact details.
-- [ ] Under-12 Football and Tennis Open exist as seeded Competitions with realistic starting data.
-- [ ] Auth.js email magic links work through Mailpit, and a development-only account switcher selects seeded Owner and Team Manager accounts.
-- [ ] Owner administration requires authentication and demo reset controls are protected.
-- [ ] A public visitor can open the Summer Cup Event hub and navigate to a basic Competition overview without signing in.
-- [ ] The Event hub establishes the approved Event-hub navigation and initial Summer Cup visual direction without dead controls on its implemented path.
+- [x] The documented local setup starts Next.js, PostgreSQL, Mailpit, and the local job worker or synchronous fallback.
+- [x] Drizzle migrations and a repeatable one-command seed/reset create Summer Cup 2026 with fictitious people and contact details.
+- [x] Under-12 Football and Tennis Open exist as seeded Competitions with realistic starting data.
+- [x] Auth.js email magic links work through Mailpit, and a development-only account switcher selects seeded Owner and Team Manager accounts.
+- [x] Owner administration requires authentication and demo reset controls are protected.
+- [x] A public visitor can open the Summer Cup Event hub and navigate to a basic Competition overview without signing in.
+- [x] The Event hub establishes the approved Event-hub navigation and initial Summer Cup visual direction without dead controls on its implemented path.
