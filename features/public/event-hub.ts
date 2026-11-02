@@ -5,6 +5,7 @@ import {
   eq,
   gt,
   inArray,
+  isNull,
   ne,
   sql,
 } from "drizzle-orm";
@@ -55,6 +56,14 @@ async function leaderRows(
       ),
     )
     .innerJoin(
+      matches,
+      and(
+        eq(participantStatistics.matchId, matches.id),
+        ne(matches.status, "cancelled"),
+        isNull(matches.cancelledAt),
+      ),
+    )
+    .innerJoin(
       participants,
       eq(participantStatistics.participantId, participants.id),
     )
@@ -64,6 +73,7 @@ async function leaderRows(
       and(
         eq(competitions.eventId, eventId),
         eq(competitions.sport, sport),
+        ne(competitions.status, "cancelled"),
         gt(column, 0),
       ),
     )
@@ -106,6 +116,8 @@ export async function getEventHubBySlug(
       format: competitions.format,
       description: competitions.description,
       status: competitions.status,
+      publicNote: competitions.publicNote,
+      cancelledAt: competitions.cancelledAt,
       registrationState: competitions.registrationState,
       registrationDeadline: competitions.registrationDeadline,
       sortOrder: competitions.sortOrder,
@@ -127,6 +139,8 @@ export async function getEventHubBySlug(
       competitions.format,
       competitions.description,
       competitions.status,
+      competitions.publicNote,
+      competitions.cancelledAt,
       competitions.registrationState,
 
       competitions.registrationDeadline,
@@ -138,6 +152,7 @@ export async function getEventHubBySlug(
     (row) => ({
       ...row,
       registrationDeadline: toIso(row.registrationDeadline),
+      cancelledAt: toIso(row.cancelledAt),
     }),
   );
 
@@ -147,6 +162,7 @@ export async function getEventHubBySlug(
         eq(competitions.eventId, event.id),
         eq(matches.status, "published"),
         eq(matches.isBye, false),
+        isNull(matches.cancelledAt),
       ),
     )
     .orderBy(sql`${matches.startsAt} desc nulls last`)

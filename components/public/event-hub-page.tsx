@@ -170,6 +170,15 @@ function CompetitionCard({
         {competition.description}
       </p>
 
+      {competition.status === "cancelled" ? (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-5 text-red-800">
+          <p className="font-extrabold">{t("competition.cancelledTitle")}</p>
+          <p className="mt-1">
+            {competition.publicNote ?? t("competition.cancellationNote")}
+          </p>
+        </div>
+      ) : null}
+
       <div className="mt-5 flex flex-wrap gap-2 text-[11px] font-extrabold uppercase tracking-[0.1em] text-muted">
         <span className="rounded-full bg-cream px-2.5 py-1">
           {formatLabel(competition.format, t)}

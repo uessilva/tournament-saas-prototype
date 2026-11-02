@@ -39,11 +39,13 @@ function statusTone(status: string) {
 export function ManagerScoresheetActions({
   matchId,
   matchStatus,
+  competitionCancelled,
   sheets,
   timezone,
 }: {
   matchId: string;
   matchStatus: string;
+  competitionCancelled: boolean;
   sheets: ManagerScoresheetSummary[];
   timezone: string;
 }) {
@@ -51,6 +53,7 @@ export function ManagerScoresheetActions({
   const [state, action] = useActionState(uploadScoresheetAction, EMPTY);
   const active = sheets.find((sheet) => sheet.isActive) ?? sheets[0] ?? null;
   const blocked =
+    competitionCancelled ||
     matchStatus === "published" ||
     matchStatus === "cancelled" ||
     (active != null &&
@@ -90,6 +93,11 @@ export function ManagerScoresheetActions({
         </a>
       </div>
 
+      {competitionCancelled ? (
+        <p className="mt-2 text-[10px] font-bold text-clay">
+          {t("manage.competitionCancelled")}
+        </p>
+      ) : null}
       {active?.failureReason ? (
         <p role="alert" className="mt-2 text-[10px] font-bold text-red-700">
           {active.failureReason}

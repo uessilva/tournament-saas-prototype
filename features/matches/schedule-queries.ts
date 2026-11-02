@@ -38,6 +38,8 @@ export async function getScheduleWorkspace(
       name: competitions.name,
       slug: competitions.slug,
       sport: competitions.sport,
+      status: competitions.status,
+      publicNote: competitions.publicNote,
       defaultMatchDurationMinutes: competitions.defaultMatchDurationMinutes,
       sortOrder: competitions.sortOrder,
       matchCount: sql<number>`count(${matches.id})::int`,
@@ -54,6 +56,8 @@ export async function getScheduleWorkspace(
       competitions.name,
       competitions.slug,
       competitions.sport,
+      competitions.status,
+      competitions.publicNote,
       competitions.defaultMatchDurationMinutes,
       competitions.sortOrder,
     )
@@ -82,6 +86,7 @@ export async function getScheduleWorkspace(
       startsAtInput: match.startsAt
         ? utcToZonedDateTimeInput(new Date(match.startsAt), event.timezone)
         : null,
+      cancellationReason: row.cancellationReason,
     };
   });
 
@@ -99,6 +104,8 @@ export async function getScheduleWorkspace(
         name: competition.name,
         slug: competition.slug,
         sport: competition.sport,
+        status: competition.status,
+        publicNote: competition.publicNote,
         defaultMatchDurationMinutes:
           competition.defaultMatchDurationMinutes,
         matchCount: competition.matchCount,

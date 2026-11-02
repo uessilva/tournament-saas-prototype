@@ -58,6 +58,7 @@ export type PublicMatchRow = {
   defaultDurationMinutes: number;
   status: string;
   cancelledAt: Date | null;
+  cancellationReason: string | null;
   venueId: string | null;
   venueName: string | null;
   homeTeamId: string | null;
@@ -285,6 +286,7 @@ export function publicMatchQuery() {
       defaultDurationMinutes: competitions.defaultMatchDurationMinutes,
       status: matches.status,
       cancelledAt: matches.cancelledAt,
+      cancellationReason: matches.cancellationReason,
       venueId: venues.id,
       venueName: venues.name,
       homeTeamId: homeTeam.id,

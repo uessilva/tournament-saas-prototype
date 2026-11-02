@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { AppTopBar } from "@/components/app-top-bar";
+import { MatchCancellationPanel } from "@/components/admin/match-cancellation-panel";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -888,6 +889,8 @@ export function ReviewMatchView({
 }) {
   const { t, formatDateTime } = useI18n();
   const published = data.match.status === "published";
+  const matchCancelled = data.match.status === "cancelled";
+  const competitionCancelled = data.competition.status === "cancelled";
   const isTennis = data.competition.sport === "tennis";
   const active =
     data.scoresheets.find((sheet) => sheet.isActive) ?? data.scoresheets[0];
@@ -898,7 +901,9 @@ export function ReviewMatchView({
     ["uploaded", "processing", "needs_review", "extraction_failed", "rejected"].includes(
       active.status,
     ) &&
-    !published;
+    !published &&
+    !matchCancelled &&
+    !competitionCancelled;
 
   return (
     <div className="min-h-screen bg-[#f2f1ea]">
@@ -970,6 +975,33 @@ export function ReviewMatchView({
             {t(`review.notice.${notice}` as DictionaryKey)}
           </div>
         ) : null}
+
+        {competitionCancelled ? (
+          <div
+            role="alert"
+            className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          >
+            <p className="font-extrabold">
+              {t("compLifecycle.competitionCancelledReview")}
+            </p>
+            {data.competition.publicNote ? (
+              <p className="mt-1 leading-6">
+                <span className="font-extrabold">
+                  {t("competition.publicNote")}:
+                </span>{" "}
+                {data.competition.publicNote}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        <MatchCancellationPanel
+          eventId={data.event.id}
+          matchId={data.match.id}
+          matchStatus={data.match.status}
+          cancellationReason={data.match.cancellationReason}
+          competitionCancelled={competitionCancelled}
+        />
 
         {published && currentResult ? (
           <section className="mt-5 rounded-2xl bg-ink p-5 text-white sm:p-6">
@@ -1079,7 +1111,7 @@ export function ReviewMatchView({
               />
             ) : null}
 
-            {!published ? (
+            {!published && !matchCancelled && !competitionCancelled ? (
               isTennis ? (
                 <TennisResultForm data={data} mode="manual" />
               ) : (

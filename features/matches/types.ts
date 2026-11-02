@@ -3,6 +3,8 @@ import type { PublicMatch, Sport } from "@/features/public/types";
 export type ScheduleMatch = PublicMatch & {
   /** Current start rendered as a `datetime-local` value in the Event zone. */
   startsAtInput: string | null;
+  /** Owner-only internal cancellation reason. Never exposed publicly. */
+  cancellationReason: string | null;
 };
 
 export type ScheduleCompetition = {
@@ -10,6 +12,8 @@ export type ScheduleCompetition = {
   name: string;
   slug: string;
   sport: Sport;
+  status: string;
+  publicNote: string | null;
   defaultMatchDurationMinutes: number;
   matchCount: number;
   scheduledCount: number;

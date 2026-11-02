@@ -3,7 +3,7 @@
 import { randomBytes } from "node:crypto";
 
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import { z } from "zod";
 
 import { requireEventOwner } from "@/lib/auth/guards";
@@ -233,12 +233,29 @@ async function assertDrawEditable(
       and(
         eq(matches.competitionId, competitionId),
         eq(resultVersions.isCurrent, true),
+        ne(matches.status, "cancelled"),
+        isNull(matches.cancelledAt),
       ),
     )
     .limit(1);
 
   if (confirmed) {
     throw new DrawActionError("draw_locked");
+  }
+
+  const [cancelledMatch] = await tx
+    .select({ id: matches.id })
+    .from(matches)
+    .where(
+      and(
+        eq(matches.competitionId, competitionId),
+        eq(matches.status, "cancelled"),
+      ),
+    )
+    .limit(1);
+
+  if (cancelledMatch) {
+    throw new DrawActionError("cancelled_match_exists");
   }
 }
 

@@ -145,6 +145,9 @@ const ptBR = {
   "competition.football": "Futebol",
   "competition.tennis": "Tênis",
   "competition.publicNote": "Nota pública do organizador",
+  "competition.cancelledTitle": "Competição cancelada",
+  "competition.cancelledReadOnly":
+    "Jogos e resultados publicados continuam disponíveis para leitura, mas novas alterações estão bloqueadas.",
   "competition.cancellationNote":
     "Esta competição foi cancelada. O histórico permanece disponível para consulta.",
 
@@ -516,6 +519,8 @@ const ptBR = {
   "manage.teamNotFound": "Equipe não encontrada.",
   "manage.fixErrors": "Revise os campos destacados.",
   "manage.actionFailed": "Não foi possível salvar a alteração.",
+  "manage.competitionCancelled":
+    "Esta competição foi cancelada pelo organizador. O elenco permanece visível, mas não pode ser alterado.",
 
   "compAdmin.eyebrow": "Administração da competição",
   "compAdmin.title": "Regras e inscrições",
@@ -590,6 +595,109 @@ const ptBR = {
     "O torneio só pode ser gerado com as inscrições fechadas e todos os inscritos elegíveis. A reabertura fica bloqueada depois da geração.",
   "compAdmin.generated": "Torneio já gerado",
   "compAdmin.notGenerated": "Torneio ainda não gerado",
+
+  "compLifecycle.eyebrow": "Ciclo da competição",
+  "compLifecycle.title": "Cancelamento da competição",
+  "compLifecycle.body":
+    "Cancele a competição inteira com uma nota pública obrigatória. Jogos e resultados publicados continuam legíveis, mas todas as alterações ficam bloqueadas.",
+  "compLifecycle.cancelledTitle": "Competição cancelada",
+  "compLifecycle.cancelledBody":
+    "O público vê o estado cancelado e a nota abaixo. A competição está em modo somente leitura até ser restaurada.",
+  "compLifecycle.noPublicNote": "Nota pública não registrada.",
+  "compLifecycle.readOnlyBody":
+    "Inscrições, sorteio, agendamento, elencos e resultados estão bloqueados enquanto a competição permanecer cancelada.",
+  "compLifecycle.bannerBody":
+    "Esta competição está cancelada e somente para leitura.",
+  "compLifecycle.mutationsBlocked":
+    "A competição está cancelada. Restaure-a antes de fazer novas alterações.",
+  "compLifecycle.openForm": "Cancelar esta competição",
+  "compLifecycle.formBody":
+    "A nota é obrigatória e aparece nas páginas públicas. O motivo interno do cancelamento de uma partida nunca é publicado.",
+  "compLifecycle.publicNoteLabel": "Nota pública (obrigatória)",
+  "compLifecycle.publicNotePlaceholder":
+    "Explique ao público por que a competição foi cancelada.",
+  "compLifecycle.publicNoteRequired":
+    "Informe uma nota pública entre 3 e 1000 caracteres.",
+  "compLifecycle.confirmLabel":
+    "Confirmo o cancelamento de {competition} e entendo que as alterações serão bloqueadas.",
+  "compLifecycle.confirmRequired":
+    "Marque a confirmação para cancelar a competição.",
+  "compLifecycle.cancelAction": "Cancelar competição",
+  "compLifecycle.cancelling": "Cancelando…",
+  "compLifecycle.restoreAction": "Restaurar competição",
+  "compLifecycle.restoring": "Restaurando…",
+  "compLifecycle.cancelledNotice": "Competição cancelada.",
+  "compLifecycle.restoredNotice":
+    "Competição restaurada. O histórico foi preservado.",
+  "compLifecycle.historyTitle": "Histórico de cancelamentos",
+  "compLifecycle.historyLive": "Atualizado a cada ação",
+  "compLifecycle.noHistory": "Nenhum cancelamento ou restauração registrado.",
+  "compLifecycle.eventCancelled": "Competição cancelada",
+  "compLifecycle.eventRestored": "Competição restaurada",
+  "compLifecycle.matchCancelled": "Partida cancelada",
+  "compLifecycle.matchRestored": "Partida restaurada",
+  "compLifecycle.eventOther": "Atualização de ciclo",
+  "compLifecycle.competitionCancelledSchedule":
+    "Competição cancelada. Os jogos continuam visíveis, mas o agendamento está bloqueado.",
+  "compLifecycle.competitionCancelledReview":
+    "A competição está cancelada. A revisão e a publicação de resultados estão bloqueadas.",
+  "compLifecycle.error.action_failed":
+    "Não foi possível concluir a ação da competição.",
+  "compLifecycle.error.fix_errors": "Revise os campos destacados.",
+  "compLifecycle.error.competition_already_cancelled":
+    "Esta competição já está cancelada.",
+  "compLifecycle.error.competition_not_cancelled":
+    "Esta competição não está cancelada.",
+  "compLifecycle.error.competition_restore_conflict":
+    "Resolva as disputas abertas desta competição antes de restaurá-la.",
+
+  "matchCancel.eyebrow": "Ciclo da partida",
+  "matchCancel.cancelTitle": "Cancelar partida",
+  "matchCancel.openForm": "Cancelar esta partida",
+  "matchCancel.cancelBody":
+    "Uma partida sem resultado confirmado pode ser cancelada. O motivo interno fica visível apenas para o organizador.",
+  "matchCancel.cancelledTitle": "Partida cancelada",
+  "matchCancel.cancelledBody":
+    "A partida permanece visível na agenda e nos jogos públicos, mas não entra em classificações, resultados, avanço ou lideranças.",
+  "matchCancel.internalReason": "Motivo interno",
+  "matchCancel.noReason": "Motivo não registrado",
+  "matchCancel.reasonLabel": "Motivo interno (obrigatório)",
+  "matchCancel.reasonPlaceholder":
+    "Ex.: quadra interditada por chuva forte.",
+  "matchCancel.reasonRequired":
+    "Informe um motivo interno entre 3 e 1000 caracteres.",
+  "matchCancel.confirmLabel":
+    "Confirmo o cancelamento desta partida e entendo que o motivo não será publicado.",
+  "matchCancel.confirmRequired":
+    "Marque a confirmação para cancelar a partida.",
+  "matchCancel.cancelAction": "Cancelar partida",
+  "matchCancel.cancelling": "Cancelando…",
+  "matchCancel.restoreAction": "Restaurar partida",
+  "matchCancel.restoring": "Restaurando…",
+  "matchCancel.restoreBody":
+    "Restaurar devolve a partida ao estado anterior sem apagar o histórico de auditoria.",
+  "matchCancel.restoreBlocked":
+    "Restaure a competição antes de restaurar esta partida.",
+  "matchCancel.competitionCancelled":
+    "A competição está cancelada; esta partida está em somente leitura.",
+  "matchCancel.publishedHint":
+    "Partidas com resultado publicado não podem ser canceladas.",
+  "matchCancel.cancelledNotice": "Partida cancelada.",
+  "matchCancel.restoredNotice": "Partida restaurada.",
+  "matchCancel.error.action_failed":
+    "Não foi possível concluir a ação da partida.",
+  "matchCancel.error.fix_errors": "Revise os campos destacados.",
+  "matchCancel.error.competition_cancelled":
+    "A competição está cancelada. Restaure-a primeiro.",
+  "matchCancel.error.match_not_found": "Partida não encontrada.",
+  "matchCancel.error.match_already_cancelled":
+    "Esta partida já está cancelada.",
+  "matchCancel.error.match_has_result":
+    "Esta partida tem resultado confirmado e não pode ser cancelada.",
+  "matchCancel.error.match_not_cancelled":
+    "Esta partida não está cancelada.",
+  "matchCancel.error.match_restore_conflict":
+    "Há um resultado que precisa ser corrigido antes de restaurar a partida.",
 
   "competition.footballGeneratedTitle": "Sorteio publicado",
   "competition.footballGeneratedBody":
@@ -675,6 +783,8 @@ const ptBR = {
   "draw.errorSwap": "Escolha dois inscritos diferentes.",
   "draw.errorLocked":
     "O sorteio está bloqueado após o primeiro resultado confirmado.",
+  "draw.errorCancelledMatch":
+    "Restaure as partidas canceladas antes de regerar o sorteio.",
   "draw.errorCompetitionLocked": "A competição está encerrada ou cancelada.",
   "draw.errorFormat":
     "A geração está disponível apenas para o formato grupos + mata-mata.",
@@ -920,6 +1030,10 @@ const ptBR = {
   "review.statAwaiting": "Sem folha",
   "review.statFailed": "Falhas e rejeições",
   "review.statPublished": "Publicados",
+  "review.statCancelled": "Cancelados",
+  "review.cancelledTitle": "Partidas canceladas",
+  "review.cancelledBody":
+    "Estas partidas mantêm o histórico de folhas e resultados, mas não podem receber novos envios nem entrar nos cálculos públicos.",
   "review.pendingEyebrow": "Revisão obrigatória",
   "review.pendingTitle": "Folhas aguardando o organizador",
   "review.pendingEmpty": "Nenhuma folha aguardando revisão neste momento.",
@@ -1137,6 +1251,8 @@ const ptBR = {
   "manageScoresheet.error.extraction_failed":
     "A folha foi salva, mas a extração falhou. O organizador pode repetir ou registrar manualmente.",
   "manageScoresheet.error.demo_disabled": "Atalhos de demonstração desativados.",
+  "manageScoresheet.error.competition_cancelled":
+    "A competição está cancelada e não aceita novas folhas.",
   "manageScoresheet.error.action_failed": "Não foi possível enviar a folha.",
 } as const;
 
@@ -1283,6 +1399,9 @@ const en: Dictionary = {
   "competition.football": "Football",
   "competition.tennis": "Tennis",
   "competition.publicNote": "Public organiser note",
+  "competition.cancelledTitle": "Competition cancelled",
+  "competition.cancelledReadOnly":
+    "Fixtures and published results remain readable, but further changes are blocked.",
   "competition.cancellationNote":
     "This competition was cancelled. Its history remains available to read.",
 
@@ -1652,6 +1771,8 @@ const en: Dictionary = {
   "manage.teamNotFound": "Team not found.",
   "manage.fixErrors": "Review the highlighted fields.",
   "manage.actionFailed": "The change could not be saved.",
+  "manage.competitionCancelled":
+    "This competition was cancelled by the organiser. The roster remains visible but cannot be changed.",
 
   "compAdmin.eyebrow": "Competition administration",
   "compAdmin.title": "Rules and registration",
@@ -1726,6 +1847,109 @@ const en: Dictionary = {
     "The tournament can only be generated with registration closed and all entrants eligible. Reopening is blocked after generation.",
   "compAdmin.generated": "Tournament already generated",
   "compAdmin.notGenerated": "Tournament not generated yet",
+
+  "compLifecycle.eyebrow": "Competition lifecycle",
+  "compLifecycle.title": "Cancel competition",
+  "compLifecycle.body":
+    "Cancel the whole competition with a required public note. Fixtures and published results stay readable, but every change is blocked.",
+  "compLifecycle.cancelledTitle": "Competition cancelled",
+  "compLifecycle.cancelledBody":
+    "The public sees the cancelled state and the note below. The competition stays read-only until restored.",
+  "compLifecycle.noPublicNote": "No public note recorded.",
+  "compLifecycle.readOnlyBody":
+    "Registration, draw, scheduling, rosters and results are blocked while the competition remains cancelled.",
+  "compLifecycle.bannerBody":
+    "This competition is cancelled and read-only.",
+  "compLifecycle.mutationsBlocked":
+    "The competition is cancelled. Restore it before making further changes.",
+  "compLifecycle.openForm": "Cancel this competition",
+  "compLifecycle.formBody":
+    "The note is required and appears on public pages. A match's internal cancellation reason is never published.",
+  "compLifecycle.publicNoteLabel": "Public note (required)",
+  "compLifecycle.publicNotePlaceholder":
+    "Tell the public why the competition was cancelled.",
+  "compLifecycle.publicNoteRequired":
+    "Enter a public note between 3 and 1000 characters.",
+  "compLifecycle.confirmLabel":
+    "I confirm the cancellation of {competition} and understand that changes will be blocked.",
+  "compLifecycle.confirmRequired":
+    "Tick the confirmation to cancel the competition.",
+  "compLifecycle.cancelAction": "Cancel competition",
+  "compLifecycle.cancelling": "Cancelling…",
+  "compLifecycle.restoreAction": "Restore competition",
+  "compLifecycle.restoring": "Restoring…",
+  "compLifecycle.cancelledNotice": "Competition cancelled.",
+  "compLifecycle.restoredNotice":
+    "Competition restored. The audit history was preserved.",
+  "compLifecycle.historyTitle": "Cancellation history",
+  "compLifecycle.historyLive": "Updated on every action",
+  "compLifecycle.noHistory": "No cancellation or restoration recorded.",
+  "compLifecycle.eventCancelled": "Competition cancelled",
+  "compLifecycle.eventRestored": "Competition restored",
+  "compLifecycle.matchCancelled": "Match cancelled",
+  "compLifecycle.matchRestored": "Match restored",
+  "compLifecycle.eventOther": "Lifecycle update",
+  "compLifecycle.competitionCancelledSchedule":
+    "Competition cancelled. Fixtures stay visible, but scheduling is blocked.",
+  "compLifecycle.competitionCancelledReview":
+    "The competition is cancelled. Result review and publication are blocked.",
+  "compLifecycle.error.action_failed":
+    "The competition action could not be completed.",
+  "compLifecycle.error.fix_errors": "Review the highlighted fields.",
+  "compLifecycle.error.competition_already_cancelled":
+    "This competition is already cancelled.",
+  "compLifecycle.error.competition_not_cancelled":
+    "This competition is not cancelled.",
+  "compLifecycle.error.competition_restore_conflict":
+    "Resolve this competition's open disputes before restoring it.",
+
+  "matchCancel.eyebrow": "Match lifecycle",
+  "matchCancel.cancelTitle": "Cancel match",
+  "matchCancel.openForm": "Cancel this match",
+  "matchCancel.cancelBody":
+    "A match without a confirmed result can be cancelled. The internal reason stays visible only to the organiser.",
+  "matchCancel.cancelledTitle": "Match cancelled",
+  "matchCancel.cancelledBody":
+    "The match stays visible on schedules and public fixtures, but is excluded from standings, results, advancement and leaders.",
+  "matchCancel.internalReason": "Internal reason",
+  "matchCancel.noReason": "No reason recorded",
+  "matchCancel.reasonLabel": "Internal reason (required)",
+  "matchCancel.reasonPlaceholder":
+    "Example: court closed due to heavy rain.",
+  "matchCancel.reasonRequired":
+    "Enter an internal reason between 3 and 1000 characters.",
+  "matchCancel.confirmLabel":
+    "I confirm this match cancellation and understand that the reason will not be published.",
+  "matchCancel.confirmRequired":
+    "Tick the confirmation to cancel the match.",
+  "matchCancel.cancelAction": "Cancel match",
+  "matchCancel.cancelling": "Cancelling…",
+  "matchCancel.restoreAction": "Restore match",
+  "matchCancel.restoring": "Restoring…",
+  "matchCancel.restoreBody":
+    "Restoring returns the match to its previous state without deleting audit history.",
+  "matchCancel.restoreBlocked":
+    "Restore the competition before restoring this match.",
+  "matchCancel.competitionCancelled":
+    "The competition is cancelled; this match is read-only.",
+  "matchCancel.publishedHint":
+    "Matches with a published result cannot be cancelled.",
+  "matchCancel.cancelledNotice": "Match cancelled.",
+  "matchCancel.restoredNotice": "Match restored.",
+  "matchCancel.error.action_failed":
+    "The match action could not be completed.",
+  "matchCancel.error.fix_errors": "Review the highlighted fields.",
+  "matchCancel.error.competition_cancelled":
+    "The competition is cancelled. Restore it first.",
+  "matchCancel.error.match_not_found": "Match not found.",
+  "matchCancel.error.match_already_cancelled":
+    "This match is already cancelled.",
+  "matchCancel.error.match_has_result":
+    "This match has a confirmed result and cannot be cancelled.",
+  "matchCancel.error.match_not_cancelled":
+    "This match is not cancelled.",
+  "matchCancel.error.match_restore_conflict":
+    "A result must be corrected before this match can be restored.",
 
   "competition.footballGeneratedTitle": "Draw published",
   "competition.footballGeneratedBody":
@@ -1812,6 +2036,8 @@ const en: Dictionary = {
   "draw.errorSwap": "Choose two different entrants.",
   "draw.errorLocked":
     "The draw is locked after the first confirmed result.",
+  "draw.errorCancelledMatch":
+    "Restore cancelled matches before regenerating the draw.",
   "draw.errorCompetitionLocked": "The competition is completed or cancelled.",
   "draw.errorFormat":
     "Generation is available only for the groups + knockout format.",
@@ -2054,6 +2280,10 @@ const en: Dictionary = {
   "review.statAwaiting": "No sheet",
   "review.statFailed": "Failures and rejections",
   "review.statPublished": "Published",
+  "review.statCancelled": "Cancelled",
+  "review.cancelledTitle": "Cancelled matches",
+  "review.cancelledBody":
+    "These matches keep their scoresheet and result history, but cannot receive new submissions or contribute to public calculations.",
   "review.pendingEyebrow": "Review required",
   "review.pendingTitle": "Sheets waiting for the organiser",
   "review.pendingEmpty": "No sheets are waiting for review right now.",
@@ -2270,6 +2500,8 @@ const en: Dictionary = {
   "manageScoresheet.error.extraction_failed":
     "The sheet was stored, but extraction failed. The organiser can retry or enter the result manually.",
   "manageScoresheet.error.demo_disabled": "Demo shortcuts are disabled.",
+  "manageScoresheet.error.competition_cancelled":
+    "The competition is cancelled and does not accept new sheets.",
   "manageScoresheet.error.action_failed": "The sheet could not be uploaded.",
 };
 

@@ -25,6 +25,8 @@ export type ManagerFixtureTeam = {
   competitionId: string;
   competitionName: string;
   competitionSlug: string;
+  competitionStatus: string;
+  competitionPublicNote: string | null;
   sport: "football" | "tennis";
   eventId: string;
   eventName: string;
@@ -59,6 +61,8 @@ export async function getManagerFixtures(
       competitionId: competitions.id,
       competitionName: competitions.name,
       competitionSlug: competitions.slug,
+      competitionStatus: competitions.status,
+      competitionPublicNote: competitions.publicNote,
       sport: competitions.sport,
       eventId: events.id,
       eventName: events.name,

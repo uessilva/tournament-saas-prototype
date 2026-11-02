@@ -4,6 +4,7 @@ import { CompetitionAdminView } from "@/components/admin/competition-admin-view"
 import { getDemoAccounts, requireEventOwner } from "@/lib/auth/guards";
 import { isDemoMode } from "@/lib/demo-mode";
 import { getAdminCompetitionData } from "@/features/competitions/admin-queries";
+import { getCompetitionLifecycleEvents } from "@/features/competitions/lifecycle-queries";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,10 @@ export default async function AdminCompetitionPage({
 }) {
   const { eventId, competitionId } = await params;
   const { user } = await requireEventOwner(eventId);
-  const data = await getAdminCompetitionData(eventId, competitionId);
+  const [data, lifecycle] = await Promise.all([
+    getAdminCompetitionData(eventId, competitionId),
+    getCompetitionLifecycleEvents(eventId, competitionId),
+  ]);
 
   if (!data) {
     notFound();
@@ -29,6 +33,7 @@ export default async function AdminCompetitionPage({
       user={{ name: user.name, email: user.email }}
       demoAccounts={demoAccounts}
       demoMode={demoMode}
+      lifecycle={lifecycle}
     />
   );
 }

@@ -63,6 +63,10 @@ export function CompetitionPage({
   const { t, formatDate, formatDateTime } = useI18n();
   const competition = data.competition;
   const isTennis = competition.sport === "tennis";
+  const registrationState =
+    competition.status === "cancelled"
+      ? "closed"
+      : competition.registrationState;
   const competitions = data.event.competitions.map((sibling) => ({
     name: sibling.name,
     slug: sibling.slug,
@@ -113,9 +117,9 @@ export function CompetitionPage({
                 <SportTag sport={competition.sport} />
                 <CompetitionStatusBadge
                   status={competition.status}
-                  registrationState={competition.registrationState}
+                  registrationState={registrationState}
                 />
-                <RegistrationBadge state={competition.registrationState} />
+                <RegistrationBadge state={registrationState} />
               </div>
               <h1 className="display-title mt-5 text-5xl sm:text-6xl">
                 {competition.name}
@@ -151,7 +155,7 @@ export function CompetitionPage({
                     {t("competition.registration")}
                   </dt>
                   <dd className="mt-0.5 font-bold">
-                    {competition.registrationState === "open"
+                    {registrationState === "open"
                       ? t("registration.open")
                       : t("registration.closed")}
                   </dd>
@@ -194,11 +198,20 @@ export function CompetitionPage({
           </div>
 
           {competition.status === "cancelled" ? (
-            <div className="border-t border-line bg-red-50 px-6 py-4 text-sm font-semibold text-red-800 sm:px-9 lg:px-11">
-              <span className="font-extrabold">
-                {t("competition.publicNote")}:
-              </span>{" "}
-              {competition.publicNote ?? t("competition.cancellationNote")}
+            <div
+              role="alert"
+              className="border-t border-red-200 bg-red-50 px-6 py-4 text-sm text-red-800 sm:px-9 lg:px-11"
+            >
+              <p className="font-extrabold">{t("competition.cancelledTitle")}</p>
+              <p className="mt-1 font-semibold">
+                <span className="font-extrabold">
+                  {t("competition.publicNote")}:
+                </span>{" "}
+                {competition.publicNote ?? t("competition.cancellationNote")}
+              </p>
+              <p className="mt-1 text-xs font-semibold text-red-700">
+                {t("competition.cancelledReadOnly")}
+              </p>
             </div>
           ) : null}
         </section>

@@ -89,7 +89,10 @@ function QueueCard({
 }) {
   const { t, formatDateTime } = useI18n();
   const active = item.activeScoresheet;
-  const canEnterResult = item.matchStatus !== "published";
+  const canEnterResult =
+    item.matchStatus !== "published" &&
+    item.matchStatus !== "cancelled" &&
+    item.competitionStatus !== "cancelled";
 
   return (
     <article className="border-b border-line/80 py-4 last:border-b-0">
@@ -115,6 +118,12 @@ function QueueCard({
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <MatchStatusBadge status={item.matchStatus} />
+            {item.competitionStatus === "cancelled" ? (
+              <StatusChip
+                label={t("compLifecycle.cancelledTitle")}
+                tone="bg-red-50 text-red-700"
+              />
+            ) : null}
             {active ? (
               <StatusChip
                 label={t(`scoresheetStatus.${active.status}` as DictionaryKey)}
@@ -212,23 +221,38 @@ export function ReviewQueueView({
   demoMode: boolean;
 }) {
   const { t } = useI18n();
-  const pending = data.items.filter(
+  const actionable = data.items.filter(
+    (item) =>
+      item.matchStatus !== "cancelled" &&
+      item.competitionStatus !== "cancelled",
+  );
+  const pending = actionable.filter(
     (item) =>
       item.activeScoresheet &&
       ["uploaded", "processing", "needs_review"].includes(
         item.activeScoresheet.status,
       ),
   );
-  const awaiting = data.items.filter(
+  const awaiting = actionable.filter(
     (item) => !item.activeScoresheet && item.matchStatus !== "published",
   );
-  const failed = data.items.filter(
+  const failed = actionable.filter(
     (item) =>
       item.activeScoresheet &&
       ["extraction_failed", "rejected"].includes(item.activeScoresheet.status),
   );
   const published = data.items.filter(
-    (item) => item.matchStatus === "published",
+    (item) =>
+      item.matchStatus === "published" &&
+      item.competitionStatus !== "cancelled",
+  );
+  const cancelled = data.items.filter(
+    (item) =>
+      item.matchStatus === "cancelled" ||
+      item.competitionStatus === "cancelled",
+  );
+  const hasCancelledCompetition = data.items.some(
+    (item) => item.competitionStatus === "cancelled",
   );
 
   return (
@@ -268,12 +292,22 @@ export function ReviewQueueView({
           </Link>
         </div>
 
-        <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {hasCancelledCompetition ? (
+          <div
+            role="status"
+            className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800"
+          >
+            {t("compLifecycle.competitionCancelledReview")}
+          </div>
+        ) : null}
+
+        <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
           {[
             [t("review.statPending"), data.counts.pending],
             [t("review.statAwaiting"), data.counts.awaiting],
             [t("review.statFailed"), data.counts.failed],
             [t("review.statPublished"), data.counts.published],
+            [t("review.statCancelled"), data.counts.cancelled],
           ].map(([label, value]) => (
             <div key={String(label)} className="surface p-4">
               <div className="display-title text-3xl">{value}</div>
@@ -373,6 +407,30 @@ export function ReviewQueueView({
               </span>
             </div>
             {published.map((item) => (
+              <QueueCard
+                key={item.matchId}
+                item={item}
+                event={data.event}
+                demoMode={demoMode}
+              />
+            ))}
+          </section>
+        ) : null}
+
+        {cancelled.length ? (
+          <section className="surface mt-5 p-5 sm:p-7">
+            <div className="flex items-center gap-2 border-b border-line pb-3">
+              <h2 className="display-title text-2xl">
+                {t("review.cancelledTitle")}
+              </h2>
+              <span className="ml-auto text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted">
+                {cancelled.length}
+              </span>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-muted">
+              {t("review.cancelledBody")}
+            </p>
+            {cancelled.map((item) => (
               <QueueCard
                 key={item.matchId}
                 item={item}

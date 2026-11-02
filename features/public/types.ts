@@ -58,6 +58,8 @@ export type CompetitionSummary = {
   format: string;
   description: string | null;
   status: string;
+  publicNote: string | null;
+  cancelledAt: string | null;
   registrationState: string;
   registrationDeadline: string | null;
   teamCount: number;
@@ -119,6 +121,8 @@ export type FixturesPageData = {
     name: string;
     slug: string;
     sport: Sport;
+    status: string;
+    publicNote: string | null;
     matchCount: number;
   }>;
   activeCompetitionSlug: string | null;
@@ -138,6 +142,8 @@ export type ResultsPageData = {
     name: string;
     slug: string;
     sport: Sport;
+    status: string;
+    publicNote: string | null;
     resultCount: number;
   }>;
   activeCompetitionSlug: string | null;

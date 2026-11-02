@@ -107,6 +107,8 @@ export type AdminCompetitionData = {
     drawSeed: string | null;
     drawGeneratedAt: string | null;
     status: string;
+    publicNote: string | null;
+    cancelledAt: string | null;
   };
   entrants: AdminCompetitionEntrant[];
   draw: AdminDrawData;

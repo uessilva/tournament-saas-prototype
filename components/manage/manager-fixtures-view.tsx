@@ -27,6 +27,9 @@ export function ManagerFixturesView({
   const primaryTeam = data.teams[0];
   const eventSlug = primaryTeam?.eventSlug ?? "";
   const timezone = primaryTeam?.eventTimezone ?? "America/Sao_Paulo";
+  const competitionStatusById = new Map(
+    data.teams.map((team) => [team.competitionId, team.competitionStatus]),
+  );
 
   return (
     <div className="min-h-screen bg-[#f2f1ea]">
@@ -64,6 +67,14 @@ export function ManagerFixturesView({
                 {team.competitionName}
               </p>
               <h2 className="display-title mt-1 text-2xl">{team.name}</h2>
+              {team.competitionStatus === "cancelled" ? (
+                <div className="mt-2 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-700">
+                  {t("manage.competitionCancelled")}
+                  {team.competitionPublicNote
+                    ? ` · ${team.competitionPublicNote}`
+                    : ""}
+                </div>
+              ) : null}
               <Link
                 href={`/events/${team.eventSlug}/competitions/${team.competitionSlug}`}
                 className="mt-2 inline-flex items-center gap-1 text-[11px] font-extrabold text-green hover:underline"
@@ -102,6 +113,10 @@ export function ManagerFixturesView({
                   <ManagerScoresheetActions
                     matchId={match.id}
                     matchStatus={match.status}
+                    competitionCancelled={
+                      competitionStatusById.get(match.competitionId) ===
+                      "cancelled"
+                    }
                     sheets={data.scoresheetsByMatch[match.id] ?? []}
                     timezone={timezone}
                   />

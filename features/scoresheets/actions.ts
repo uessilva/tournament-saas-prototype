@@ -298,6 +298,10 @@ export async function uploadScoresheetAction(
 
   const { user, context, isOwner } = authorization;
 
+  if (context.competition.status === "cancelled") {
+    return { status: "error", code: "competition_cancelled" };
+  }
+
   if (context.match.status === "published" || context.match.status === "cancelled") {
     return { status: "error", code: "match_not_open" };
   }
@@ -500,6 +504,14 @@ export async function saveReviewAction(
     return { status: "error", code: "match_not_found" };
   }
 
+  if (context.competition.status === "cancelled") {
+    return { status: "error", code: "competition_cancelled" };
+  }
+
+  if (context.match.status === "cancelled") {
+    return { status: "error", code: "match_not_playable" };
+  }
+
   let editCount = 0;
   await db.transaction(async (tx) => {
     const saved = await saveReviewFieldsInTransaction(
@@ -569,8 +581,16 @@ export async function confirmScoresheetAction(
     return { status: "error", code: "match_not_found" };
   }
 
+  if (context.competition.status === "cancelled") {
+    return { status: "error", code: "competition_cancelled" };
+  }
+
   if (context.match.status === "published") {
     return { status: "error", code: "result_already_published" };
+  }
+
+  if (context.match.status === "cancelled") {
+    return { status: "error", code: "match_not_playable" };
   }
 
   const isTennis = context.competition.sport === "tennis";
@@ -748,8 +768,16 @@ export async function rejectScoresheetAction(
   if (!context) {
     return { status: "error", code: "match_not_found" };
   }
+  if (context.competition.status === "cancelled") {
+    return { status: "error", code: "competition_cancelled" };
+  }
+
   if (context.match.status === "published") {
     return { status: "error", code: "result_already_published" };
+  }
+
+  if (context.match.status === "cancelled") {
+    return { status: "error", code: "match_not_playable" };
   }
 
   const now = new Date();
@@ -807,8 +835,16 @@ export async function retryExtractionAction(
   if (!context) {
     return { status: "error", code: "match_not_found" };
   }
+  if (context.competition.status === "cancelled") {
+    return { status: "error", code: "competition_cancelled" };
+  }
+
   if (context.match.status === "published") {
     return { status: "error", code: "result_already_published" };
+  }
+
+  if (context.match.status === "cancelled") {
+    return { status: "error", code: "match_not_playable" };
   }
 
   await db.transaction(async (tx) => {
@@ -855,6 +891,14 @@ export async function manualResultAction(
   const context = await loadMatchContext(matchId);
   if (!context || context.event.id !== eventId) {
     return { status: "error", code: "match_not_found" };
+  }
+
+  if (context.competition.status === "cancelled") {
+    return { status: "error", code: "competition_cancelled" };
+  }
+
+  if (context.match.status === "cancelled") {
+    return { status: "error", code: "match_not_playable" };
   }
 
   const isTennis = context.competition.sport === "tennis";

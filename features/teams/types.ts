@@ -37,6 +37,7 @@ export type TeamRosterData = {
     sport: "football" | "tennis";
     registrationState: string;
     registrationOpen: boolean;
+    cancelled: boolean;
     registrationClosedByDeadline: boolean;
     registrationDeadline: string | null;
     drawGeneratedAt: string | null;

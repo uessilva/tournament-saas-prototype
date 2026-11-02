@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull, ne } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -42,6 +42,8 @@ export async function hasConfirmedResult(competitionId: string) {
       and(
         eq(matches.competitionId, competitionId),
         eq(resultVersions.isCurrent, true),
+        ne(matches.status, "cancelled"),
+        isNull(matches.cancelledAt),
       ),
     )
     .limit(1);

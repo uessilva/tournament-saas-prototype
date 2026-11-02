@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { AppTopBar } from "@/components/app-top-bar";
+import { CompetitionLifecyclePanel } from "@/components/admin/competition-lifecycle-panel";
 import { DrawAdminPanel } from "@/components/admin/draw-admin-panel";
 import {
   ArrowLeftIcon,
@@ -31,6 +32,7 @@ import {
   registrationStateAction,
   type CompetitionAdminActionState,
 } from "@/features/competitions/admin-actions";
+import type { CompetitionLifecycleEvent } from "@/features/competitions/lifecycle-queries";
 import type { AdminCompetitionData } from "@/features/competitions/types";
 
 const EMPTY_STATE: CompetitionAdminActionState = { status: "idle" };
@@ -79,6 +81,7 @@ function ActionFeedback({ state }: { state: CompetitionAdminActionState }) {
       reopen_after_generation: "compAdmin.reopenAfterGeneration",
       deadline_passed: "compAdmin.deadlinePassedHint",
       action_failed: "compAdmin.actionFailed",
+      competition_cancelled: "compLifecycle.mutationsBlocked",
     };
     return (
       <p role="alert" className="mt-2 text-xs font-bold text-red-700">
@@ -113,6 +116,7 @@ function RegistrationStateCard({ data }: { data: AdminCompetitionData }) {
     EMPTY_STATE,
   );
   const competition = data.competition;
+  const cancelled = competition.status === "cancelled";
   const generated = Boolean(competition.drawGeneratedAt);
   const reopenDisabled = generated || competition.deadlinePassed;
 
@@ -169,7 +173,7 @@ function RegistrationStateCard({ data }: { data: AdminCompetitionData }) {
             label={t("compAdmin.closeRegistration")}
             pendingLabel={t("common.loading")}
             tone="danger"
-            disabled={!competition.registrationOpen}
+            disabled={!competition.registrationOpen || cancelled}
           />
         </form>
         <form action={action}>
@@ -180,11 +184,15 @@ function RegistrationStateCard({ data }: { data: AdminCompetitionData }) {
             label={t("compAdmin.reopenRegistration")}
             pendingLabel={t("common.loading")}
             tone="dark"
-            disabled={competition.registrationOpen || reopenDisabled}
+            disabled={competition.registrationOpen || reopenDisabled || cancelled}
           />
         </form>
       </div>
-      {generated ? (
+      {cancelled ? (
+        <p className="mt-2 rounded-lg bg-red-50 px-2.5 py-1.5 text-[11px] font-bold text-red-700">
+          {t("compLifecycle.mutationsBlocked")}
+        </p>
+      ) : generated ? (
         <p className="mt-2 inline-flex items-start gap-1.5 rounded-lg bg-soft-orange px-2.5 py-1.5 text-[11px] font-bold text-clay">
           <LockIcon className="mt-0.5 size-3.5 shrink-0" />
           {t("compAdmin.reopenAfterGeneration")}
@@ -202,6 +210,7 @@ function RegistrationStateCard({ data }: { data: AdminCompetitionData }) {
 function DeadlineEditor({ data }: { data: AdminCompetitionData }) {
   const { t } = useI18n();
   const [state, action] = useActionState(deadlineAction, EMPTY_STATE);
+  const cancelled = data.competition.status === "cancelled";
 
   return (
     <section id="deadline" className="surface p-5 sm:p-6">
@@ -245,7 +254,8 @@ function DeadlineEditor({ data }: { data: AdminCompetitionData }) {
             name="deadline"
             type="datetime-local"
             defaultValue={data.competition.registrationDeadlineInput ?? ""}
-            className="mt-1.5 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold focus:border-green focus:bg-white focus:outline-none"
+            disabled={cancelled}
+            className="mt-1.5 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold focus:border-green focus:bg-white focus:outline-none disabled:opacity-60"
           />
           {state.fieldErrors?.deadline ? (
             <p role="alert" className="mt-1 text-xs font-bold text-red-700">
@@ -258,6 +268,7 @@ function DeadlineEditor({ data }: { data: AdminCompetitionData }) {
             label={t("compAdmin.saveDeadline")}
             pendingLabel={t("common.loading")}
             tone="dark"
+            disabled={cancelled}
           />
           <span className="text-[11px] font-semibold text-muted">
             {t("compAdmin.deadlineHint")}
@@ -274,6 +285,7 @@ function DeadlineEditor({ data }: { data: AdminCompetitionData }) {
             label={t("compAdmin.extendSevenDays")}
             pendingLabel={t("common.loading")}
             tone="quiet"
+            disabled={cancelled}
           />
         </form>
         <form action={action}>
@@ -284,6 +296,7 @@ function DeadlineEditor({ data }: { data: AdminCompetitionData }) {
             label={t("compAdmin.clearDeadline")}
             pendingLabel={t("common.loading")}
             tone="quiet"
+            disabled={cancelled}
           />
         </form>
       </div>
@@ -314,14 +327,19 @@ export function CompetitionAdminView({
   user,
   demoAccounts,
   demoMode,
+  lifecycle,
 }: {
   data: AdminCompetitionData;
   user: { name: string | null; email: string | null };
   demoAccounts: DemoAccount[];
   demoMode: boolean;
+  lifecycle: CompetitionLifecycleEvent[];
 }) {
   const { t, formatDate } = useI18n();
   const competition = data.competition;
+  const cancelled = competition.status === "cancelled";
+  const effectiveRegistrationOpen =
+    competition.registrationOpen && !cancelled;
   const formatLabel = t(`format.${competition.format}` as DictionaryKey);
   const birthRange =
     competition.birthDateFrom || competition.birthDateTo
@@ -373,11 +391,11 @@ export function CompetitionAdminView({
               <CompetitionStatusBadge
                 status={competition.status}
                 registrationState={
-                  competition.registrationOpen ? "open" : "closed"
+                  effectiveRegistrationOpen ? "open" : "closed"
                 }
               />
               <RegistrationBadge
-                state={competition.registrationOpen ? "open" : "closed"}
+                state={effectiveRegistrationOpen ? "open" : "closed"}
               />
             </div>
             <h1 className="display-title mt-3 text-4xl sm:text-5xl">
@@ -408,6 +426,34 @@ export function CompetitionAdminView({
           </div>
         </header>
 
+        {cancelled ? (
+          <div
+            role="alert"
+            className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 sm:p-5"
+          >
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-clay">
+              {t("compLifecycle.cancelledTitle")}
+            </p>
+            <p className="mt-1 font-extrabold">
+              {t("compLifecycle.bannerBody")}
+            </p>
+            {competition.publicNote ? (
+              <p className="mt-2 leading-6">
+                <span className="font-extrabold">
+                  {t("competition.publicNote")}:
+                </span>{" "}
+                {competition.publicNote}
+              </p>
+            ) : null}
+            <a
+              href="#lifecycle"
+              className="mt-3 inline-flex text-xs font-extrabold text-red-800 underline decoration-2 underline-offset-4"
+            >
+              {t("compLifecycle.restoreAction")}
+            </a>
+          </div>
+        ) : null}
+
         <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             [t("compAdmin.statEntrants"), data.counts.entrants],
@@ -415,7 +461,7 @@ export function CompetitionAdminView({
             [t("compAdmin.statEligible"), data.counts.eligibleEntrants],
             [
               t("compAdmin.statRegistration"),
-              competition.registrationOpen
+              effectiveRegistrationOpen
                 ? t("compAdmin.openShort")
                 : t("compAdmin.closedShort"),
             ],
@@ -566,6 +612,17 @@ export function CompetitionAdminView({
           </div>
 
           <div className="space-y-5">
+            <CompetitionLifecyclePanel
+              eventId={data.event.id}
+              competitionId={competition.id}
+              competitionName={competition.name}
+              status={competition.status}
+              publicNote={competition.publicNote}
+              cancelledAt={competition.cancelledAt}
+              timezone={data.event.timezone}
+              history={lifecycle}
+            />
+
             <DeadlineEditor data={data} />
 
             {demoMode ? (

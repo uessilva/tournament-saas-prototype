@@ -28,6 +28,8 @@ export async function getFixturesPage(
       name: competitions.name,
       slug: competitions.slug,
       sport: competitions.sport,
+      status: competitions.status,
+      publicNote: competitions.publicNote,
       sortOrder: competitions.sortOrder,
     })
     .from(competitions)
@@ -71,6 +73,8 @@ export async function getFixturesPage(
       name: competition.name,
       slug: competition.slug,
       sport: competition.sport,
+      status: competition.status,
+      publicNote: competition.publicNote,
       matchCount: allFixtures.filter(
         (match) => match.competitionId === competition.id,
       ).length,
