@@ -119,3 +119,22 @@ export type FixturesPageData = {
   activeCompetitionSlug: string | null;
   fixtures: PublicMatch[];
 };
+
+export type ResultsPageData = {
+  event: {
+    id: string;
+    name: string;
+    slug: string;
+    timezone: string;
+    locationLabel: string | null;
+  };
+  competitions: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    sport: Sport;
+    resultCount: number;
+  }>;
+  activeCompetitionSlug: string | null;
+  results: PublicMatch[];
+};

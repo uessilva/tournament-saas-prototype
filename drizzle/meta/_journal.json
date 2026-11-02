@@ -15,6 +15,13 @@
       "when": 1793642648596,
       "tag": "0001_luxuriant_midnight",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793643308104,
+      "tag": "0002_blue_gabe_jones",
+      "breakpoints": true
     }
   ]
 }

@@ -92,6 +92,13 @@ export function AdminDashboard({
               <ChevronRightIcon className="size-3.5" />
             </Link>
             <Link
+              href={`/admin/events/${data.event.id}/review`}
+              className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 font-bold text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              {t("admin.reviewQueue")}
+              <ChevronRightIcon className="size-3.5" />
+            </Link>
+            <Link
               href={`/events/${data.event.slug}`}
               className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 font-bold text-white/70 transition-colors hover:bg-white/5 hover:text-white"
             >

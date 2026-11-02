@@ -93,3 +93,20 @@ export function scoresheetStorageKey(
     path.basename(filename),
   );
 }
+
+export function scoresheetAssetKey(
+  eventId: string,
+  matchId: string,
+  scoresheetId: string,
+  ...segments: string[]
+) {
+  return path.posix.join(
+    "events",
+    eventId,
+    "matches",
+    matchId,
+    "scoresheets",
+    scoresheetId,
+    ...segments.map((segment) => path.basename(segment)),
+  );
+}

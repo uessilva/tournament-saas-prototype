@@ -79,7 +79,9 @@ export function SiteHeader({
           <Link
             href={`${basePath}#overview`}
             className={`shrink-0 rounded-full px-3 py-1.5 font-bold transition-colors ${
-              !activeCompetitionSlug && !currentPath.endsWith("/fixtures")
+              !activeCompetitionSlug &&
+              !currentPath.endsWith("/fixtures") &&
+              !currentPath.endsWith("/results")
                 ? "bg-green/10 text-green"
                 : "text-muted hover:bg-cream hover:text-ink"
             }`}
@@ -108,6 +110,16 @@ export function SiteHeader({
             }`}
           >
             {t("nav.fixtures")}
+          </Link>
+          <Link
+            href={`${basePath}/results`}
+            className={`shrink-0 rounded-full px-3 py-1.5 font-bold transition-colors ${
+              currentPath.endsWith("/results")
+                ? "bg-green/10 text-green"
+                : "text-muted hover:bg-cream hover:text-ink"
+            }`}
+          >
+            {t("nav.results")}
           </Link>
           <Link
             href={`${basePath}#about`}

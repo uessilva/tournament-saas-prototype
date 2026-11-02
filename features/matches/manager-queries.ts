@@ -1,7 +1,14 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { competitions, events, matches, teamManagers, teams } from "@/lib/db/schema";
+import {
+  competitions,
+  events,
+  matches,
+  scoresheets,
+  teamManagers,
+  teams,
+} from "@/lib/db/schema";
 import {
   mapPublicMatch,
   publicMatchQueryForTeams,
@@ -21,9 +28,20 @@ export type ManagerFixtureTeam = {
   eventTimezone: string;
 };
 
+export type ManagerScoresheetSummary = {
+  id: string;
+  status: string;
+  isActive: boolean;
+  createdAt: string;
+  extractionSource: string | null;
+  failureReason: string | null;
+  rejectionReason: string | null;
+};
+
 export type ManagerFixturesData = {
   teams: ManagerFixtureTeam[];
   fixtures: PublicMatch[];
+  scoresheetsByMatch: Record<string, ManagerScoresheetSummary[]>;
 };
 
 export async function getManagerFixtures(
@@ -50,7 +68,7 @@ export async function getManagerFixtures(
     .orderBy(asc(teams.name));
 
   if (!teamRows.length) {
-    return { teams: [], fixtures: [] };
+    return { teams: [], fixtures: [], scoresheetsByMatch: {} };
   }
 
   const rows = await publicMatchQueryForTeams(
@@ -60,8 +78,43 @@ export async function getManagerFixtures(
     asc(matches.matchNumber),
   );
 
+  const fixtures = rows.map(mapPublicMatch).filter((match) => !match.isBye);
+  const matchIds = fixtures.map((match) => match.id);
+  const sheetRows = matchIds.length
+    ? await db
+        .select({
+          id: scoresheets.id,
+          matchId: scoresheets.matchId,
+          status: scoresheets.status,
+          isActive: scoresheets.isActive,
+          createdAt: scoresheets.createdAt,
+          extractionSource: scoresheets.extractionSource,
+          failureReason: scoresheets.failureReason,
+          rejectionReason: scoresheets.rejectionReason,
+        })
+        .from(scoresheets)
+        .where(inArray(scoresheets.matchId, matchIds))
+        .orderBy(desc(scoresheets.createdAt))
+    : [];
+
+  const scoresheetsByMatch: Record<string, ManagerScoresheetSummary[]> = {};
+  for (const sheet of sheetRows) {
+    const list = scoresheetsByMatch[sheet.matchId] ?? [];
+    list.push({
+      id: sheet.id,
+      status: sheet.status,
+      isActive: sheet.isActive,
+      createdAt: sheet.createdAt.toISOString(),
+      extractionSource: sheet.extractionSource,
+      failureReason: sheet.failureReason,
+      rejectionReason: sheet.rejectionReason,
+    });
+    scoresheetsByMatch[sheet.matchId] = list;
+  }
+
   return {
     teams: teamRows,
-    fixtures: rows.map(mapPublicMatch).filter((match) => !match.isBye),
+    fixtures,
+    scoresheetsByMatch,
   };
 }

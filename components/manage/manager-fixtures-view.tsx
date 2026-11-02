@@ -10,6 +10,7 @@ import {
   ClockIcon,
 } from "@/components/icons";
 import { MatchRow } from "@/components/public/match-row";
+import { ManagerScoresheetActions } from "@/components/manage/manager-scoresheet-actions";
 import { useI18n } from "@/lib/i18n/client";
 import type { ManagerFixturesData } from "@/features/matches/manager-queries";
 
@@ -89,13 +90,22 @@ export function ManagerFixturesView({
           {data.fixtures.length ? (
             <div className="mt-1">
               {data.fixtures.map((match) => (
-                <MatchRow
-                  key={match.id}
-                  match={match}
-                  timezone={timezone}
-                  eventSlug={eventSlug}
-                  showCompetition
-                />
+                <div key={match.id}>
+                  <MatchRow
+                    match={match}
+                    timezone={timezone}
+                    eventSlug={eventSlug}
+                    showCompetition
+                  />
+                  {match.sport === "football" ? (
+                    <ManagerScoresheetActions
+                      matchId={match.id}
+                      matchStatus={match.status}
+                      sheets={data.scoresheetsByMatch[match.id] ?? []}
+                      timezone={timezone}
+                    />
+                  ) : null}
+                </div>
               ))}
             </div>
           ) : (
