@@ -17,9 +17,9 @@ import {
   SportTag,
 } from "@/components/public/badges";
 import { MatchRow } from "@/components/public/match-row";
+import { StandingsTable } from "@/components/public/standings-table";
 import { useI18n } from "@/lib/i18n/client";
 import { formatTimeZoneLabel } from "@/lib/timezone";
-import { groupDisplayName } from "@/features/public/labels";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type { CompetitionPageData } from "@/features/competitions/types";
 
@@ -28,13 +28,6 @@ function formatLabel(
   t: (key: DictionaryKey) => string,
 ) {
   return t(`format.${format}` as DictionaryKey);
-}
-
-function Signed(value: number) {
-  if (value === 0) {
-    return "0";
-  }
-  return value > 0 ? `+${value}` : String(value);
 }
 
 export function CompetitionPage({
@@ -198,101 +191,49 @@ export function CompetitionPage({
                     {t("competition.standings")}
                   </p>
                   <h2 className="display-title mt-2 text-3xl">
-                    {isTennis
-                      ? t("competition.partialStandings")
-                      : competition.drawGeneratedAt
-                        ? t("competition.footballGeneratedTitle")
-                        : t("competition.footballPendingTitle")}
+                    {data.groups.length
+                      ? t("competition.groupStandingsTitle")
+                      : isTennis
+                        ? t("competition.partialStandings")
+                        : competition.drawGeneratedAt
+                          ? t("competition.footballGeneratedTitle")
+                          : t("competition.footballPendingTitle")}
                   </h2>
                 </div>
-                <p className="max-w-sm text-xs leading-5 text-muted">
-                  {isTennis
-                    ? t("competition.standingsNote")
-                    : t("competition.footballStandingsNote")}
-                </p>
+                <div className="flex flex-col items-start gap-2 sm:items-end">
+                  <p className="max-w-sm text-xs leading-5 text-muted">
+                    {isTennis
+                      ? t("competition.standingsNote")
+                      : t("competition.footballStandingsNote")}
+                  </p>
+                  {data.groups.length ? (
+                    <Link
+                      href={`/events/${data.event.slug}/standings?competition=${competition.slug}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-extrabold text-green hover:underline"
+                    >
+                      {t("standings.viewFull")}
+                      <ArrowRightIcon className="size-3.5" />
+                    </Link>
+                  ) : null}
+                  <Link
+                    href={`/events/${data.event.slug}/leaders?competition=${competition.slug}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-extrabold text-clay hover:underline"
+                  >
+                    {t("nav.leaders")}
+                    <ArrowRightIcon className="size-3.5" />
+                  </Link>
+                </div>
               </div>
 
-              {isTennis && data.groups.length ? (
+              {data.groups.length ? (
                 <div className="mt-6 grid gap-8">
                   {data.groups.map((group) => (
-                    <div key={group.id}>
-                      <h3 className="text-sm font-extrabold">
-                        {groupDisplayName(group.name, t)}
-                      </h3>
-                      <div className="mt-2 overflow-x-auto">
-                        <table className="w-full min-w-[560px] text-left text-sm">
-                          <caption className="sr-only">
-                            {groupDisplayName(group.name, t)} —{" "}
-                            {t("competition.partialStandings")}
-                          </caption>
-                          <thead>
-                            <tr className="border-b border-line text-[10px] uppercase tracking-[0.1em] text-muted">
-                              <th className="py-2 pr-2 font-extrabold">
-                                {t("standings.pos")}
-                              </th>
-                              <th className="py-2 pr-2 font-extrabold">
-                                {t("standings.entrant")}
-                              </th>
-                              <th className="py-2 pr-2 text-center font-extrabold">
-                                {t("standings.played")}
-                              </th>
-                              <th className="py-2 pr-2 text-center font-extrabold">
-                                {t("standings.won")}
-                              </th>
-                              <th className="py-2 pr-2 text-center font-extrabold">
-                                {t("standings.lost")}
-                              </th>
-                              <th className="py-2 pr-2 text-center font-extrabold">
-                                {t("standings.sets")}
-                              </th>
-                              <th className="py-2 pr-2 text-center font-extrabold">
-                                {t("standings.games")}
-                              </th>
-                              <th className="py-2 text-center font-extrabold">
-                                {t("standings.points")}
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {group.standings.map((row, index) => (
-                              <tr
-                                key={row.teamId}
-                                className={`border-b border-line/70 last:border-b-0 ${
-                                  index < competition.qualifiersPerGroup
-                                    ? "bg-soft-green/50"
-                                    : ""
-                                }`}
-                              >
-                                <td className="py-2.5 pr-2 font-extrabold text-muted">
-                                  {index + 1}
-                                </td>
-                                <td className="py-2.5 pr-2 font-bold">
-                                  {row.teamName}
-                                </td>
-                                <td className="py-2.5 pr-2 text-center">
-                                  {row.played}
-                                </td>
-                                <td className="py-2.5 pr-2 text-center">
-                                  {row.wins}
-                                </td>
-                                <td className="py-2.5 pr-2 text-center">
-                                  {row.losses}
-                                </td>
-                                <td className="py-2.5 pr-2 text-center">
-                                  {Signed(row.setDifference)}
-                                </td>
-                                <td className="py-2.5 pr-2 text-center">
-                                  {Signed(row.gameDifference)}
-                                </td>
-                                <td className="py-2.5 text-center text-lg font-extrabold">
-                                  {row.points}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                    <StandingsTable
+                      key={group.id}
+                      group={group}
+                      sport={competition.sport}
+                      qualifiersPerGroup={competition.qualifiersPerGroup}
+                    />
                   ))}
                 </div>
               ) : (

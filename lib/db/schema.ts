@@ -1014,6 +1014,28 @@ export const footballResultsRelations = relations(
   }),
 );
 
+export const participantStatisticsRelations = relations(
+  participantStatistics,
+  ({ one }) => ({
+    resultVersion: one(resultVersions, {
+      fields: [participantStatistics.resultVersionId],
+      references: [resultVersions.id],
+    }),
+    match: one(matches, {
+      fields: [participantStatistics.matchId],
+      references: [matches.id],
+    }),
+    team: one(teams, {
+      fields: [participantStatistics.teamId],
+      references: [teams.id],
+    }),
+    participant: one(participants, {
+      fields: [participantStatistics.participantId],
+      references: [participants.id],
+    }),
+  }),
+);
+
 export const tennisResultsRelations = relations(tennisResults, ({ one }) => ({
   resultVersion: one(resultVersions, {
     fields: [tennisResults.resultVersionId],

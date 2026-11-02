@@ -1,14 +1,11 @@
 import {
   and,
   asc,
-  desc,
   eq,
-  gt,
   inArray,
   ne,
   sql,
 } from "drizzle-orm";
-import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 import { db } from "@/lib/db/client";
 import {
@@ -17,71 +14,18 @@ import {
   matches,
   participantStatistics,
   participants,
-  resultVersions,
   teams,
   venues,
 } from "@/lib/db/schema";
+import { leaderRows } from "@/features/public/leaders";
 import { mapPublicMatch, publicMatchQuery } from "@/features/public/matches";
 import type {
   CompetitionSummary,
   EventHubData,
-  LeaderRow,
-  Sport,
 } from "@/features/public/types";
 
 function toIso(value: Date | null | undefined) {
   return value ? value.toISOString() : null;
-}
-
-async function leaderRows(
-  eventId: string,
-  sport: Sport,
-  column: AnyPgColumn,
-): Promise<LeaderRow[]> {
-  const rows = await db
-    .select({
-      participantId: participants.id,
-      firstName: participants.firstName,
-      lastName: participants.lastName,
-      teamName: teams.name,
-      total: sql<number>`coalesce(sum(${column}), 0)::int`,
-    })
-    .from(participantStatistics)
-    .innerJoin(
-      resultVersions,
-      and(
-        eq(participantStatistics.resultVersionId, resultVersions.id),
-        eq(resultVersions.isCurrent, true),
-      ),
-    )
-    .innerJoin(
-      participants,
-      eq(participantStatistics.participantId, participants.id),
-    )
-    .innerJoin(teams, eq(participantStatistics.teamId, teams.id))
-    .innerJoin(competitions, eq(teams.competitionId, competitions.id))
-    .where(
-      and(
-        eq(competitions.eventId, eventId),
-        eq(competitions.sport, sport),
-        gt(column, 0),
-      ),
-    )
-    .groupBy(
-      participants.id,
-      participants.firstName,
-      participants.lastName,
-      teams.name,
-    )
-    .orderBy(desc(sql`sum(${column})`), asc(participants.firstName))
-    .limit(5);
-
-  return rows.map((row) => ({
-    participantId: row.participantId,
-    name: `${row.firstName} ${row.lastName}`.trim(),
-    teamName: row.teamName,
-    total: row.total,
-  }));
 }
 
 export async function getEventHubBySlug(

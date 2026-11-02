@@ -7,6 +7,7 @@ import {
   extractedFields,
   jobs,
   matches,
+  participants,
   resultVersions,
   scoresheets,
   users,
@@ -298,6 +299,15 @@ export type ReviewMatchDetail = {
   };
   scoresheets: ReviewScoresheetData[];
   activeScoresheetId: string | null;
+  participants: Array<{
+    id: string;
+    teamId: string;
+    teamName: string;
+    name: string;
+    shirtNumber: number | null;
+    goals: number;
+    assists: number;
+  }>;
   resultVersions: Array<{
     id: string;
     version: number;
@@ -331,7 +341,7 @@ export async function getReviewMatchDetail(
       },
       resultVersions: {
         orderBy: [desc(resultVersions.version)],
-        with: { footballResult: true },
+        with: { footballResult: true, statistics: true },
       },
     },
   });
@@ -378,6 +388,39 @@ export async function getReviewMatchDetail(
         ),
       )
     : [];
+
+  const homeEntry = match.entries.find((entry) => entry.side === "home");
+  const awayEntry = match.entries.find((entry) => entry.side === "away");
+  const rosterTeamIds = [homeEntry?.teamId, awayEntry?.teamId].filter(
+    (teamId): teamId is string => Boolean(teamId),
+  );
+  const rosterRows = rosterTeamIds.length
+    ? await db
+        .select({
+          id: participants.id,
+          teamId: participants.teamId,
+          firstName: participants.firstName,
+          lastName: participants.lastName,
+          shirtNumber: participants.shirtNumber,
+        })
+        .from(participants)
+        .where(inArray(participants.teamId, rosterTeamIds))
+        .orderBy(participants.teamId, participants.shirtNumber)
+    : [];
+  const currentVersion = match.resultVersions.find(
+    (version) => version.isCurrent,
+  );
+  const statisticsByParticipant = new Map(
+    (currentVersion?.statistics ?? []).map((row) => [
+      row.participantId,
+      row,
+    ]),
+  );
+  const teamNames = new Map(
+    match.entries
+      .filter((entry) => entry.team)
+      .map((entry) => [entry.teamId, entry.team!.name] as const),
+  );
 
   const scoresheetData: ReviewScoresheetData[] = match.scoresheets.map(
     (sheet) => ({
@@ -475,6 +518,15 @@ export async function getReviewMatchDetail(
     scoresheets: scoresheetData,
     activeScoresheetId:
       scoresheetData.find((sheet) => sheet.isActive)?.id ?? null,
+    participants: rosterRows.map((participant) => ({
+      id: participant.id,
+      teamId: participant.teamId,
+      teamName: teamNames.get(participant.teamId) ?? "",
+      name: `${participant.firstName} ${participant.lastName}`.trim(),
+      shirtNumber: participant.shirtNumber,
+      goals: statisticsByParticipant.get(participant.id)?.goals ?? 0,
+      assists: statisticsByParticipant.get(participant.id)?.assists ?? 0,
+    })),
     resultVersions: match.resultVersions.map((version) => ({
       id: version.id,
       version: version.version,

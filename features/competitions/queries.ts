@@ -4,19 +4,14 @@ import { db } from "@/lib/db/client";
 import {
   competitions,
   events,
-  groupEntries,
-  groups,
   matches,
   participants,
   teams,
   venues,
 } from "@/lib/db/schema";
 import { getRegistrationStatus } from "@/features/competitions/registration";
-import { calculateTennisStandings } from "@/features/competitions/tennis-standings";
-import type {
-  CompetitionGroup,
-  CompetitionPageData,
-} from "@/features/competitions/types";
+import { loadCompetitionStandings } from "@/features/competitions/standings-queries";
+import type { CompetitionPageData } from "@/features/competitions/types";
 import { mapPublicMatch, publicMatchQuery } from "@/features/public/matches";
 
 function toIso(value: Date | null | undefined) {
@@ -79,27 +74,6 @@ export async function getCompetitionPage(
     participantCount: team.participantCount,
   }));
 
-  const groupRows = await db
-    .select({ id: groups.id, name: groups.name, sortOrder: groups.sortOrder })
-    .from(groups)
-    .where(eq(groups.competitionId, competition.id))
-    .orderBy(asc(groups.sortOrder), asc(groups.name));
-
-  const groupIds = groupRows.map((group) => group.id);
-  const groupEntryRows = groupIds.length
-    ? await db
-        .select({
-          groupId: groupEntries.groupId,
-          teamId: groupEntries.teamId,
-          teamName: teams.name,
-          seedPosition: groupEntries.seedPosition,
-        })
-        .from(groupEntries)
-        .innerJoin(teams, eq(groupEntries.teamId, teams.id))
-        .where(inArray(groupEntries.groupId, groupIds))
-        .orderBy(asc(groupEntries.seedPosition))
-    : [];
-
   const resultRows = await publicMatchQuery()
     .where(
       and(
@@ -131,37 +105,7 @@ export async function getCompetitionPage(
     .orderBy(sql`${matches.startsAt} desc nulls last`);
 
   const results = resultRows.map(mapPublicMatch);
-
-  const competitionGroups: CompetitionGroup[] = groupRows.map((group) => {
-    const standingsTeams = groupEntryRows
-      .filter((entry) => entry.groupId === group.id)
-      .map((entry) => ({
-        teamId: entry.teamId,
-        teamName: entry.teamName,
-        seedPosition: entry.seedPosition,
-      }));
-
-    const standingsMatches = results
-      .filter(
-        (match) =>
-          match.groupId === group.id &&
-          match.homeTeamId != null &&
-          match.awayTeamId != null,
-      )
-      .map((match) => ({
-        homeTeamId: match.homeTeamId!,
-        awayTeamId: match.awayTeamId!,
-        winnerTeamId: match.winnerTeamId,
-        sets: match.sets,
-        isWalkover: match.isWalkover,
-      }));
-
-    return {
-      id: group.id,
-      name: group.name,
-      standings: calculateTennisStandings(standingsTeams, standingsMatches),
-    };
-  });
+  const competitionGroups = await loadCompetitionStandings(competition);
 
   const venueRows = await db
     .select({ id: venues.id, name: venues.name })

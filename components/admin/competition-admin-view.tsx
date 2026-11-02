@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 
 import { AppTopBar } from "@/components/app-top-bar";
 import { DrawAdminPanel } from "@/components/admin/draw-admin-panel";
+import { StandingsTable } from "@/components/public/standings-table";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -434,6 +435,41 @@ export function CompetitionAdminView({
             <RegistrationStateCard data={data} />
 
             <DrawAdminPanel data={data} />
+
+            {data.standings.length ? (
+              <section className="surface p-5 sm:p-6">
+                <div className="flex flex-wrap items-end justify-between gap-2">
+                  <div>
+                    <p className="eyebrow text-green">
+                      {t("compAdmin.standingsEyebrow")}
+                    </p>
+                    <h2 className="display-title mt-2 text-3xl">
+                      {t("compAdmin.standingsTitle")}
+                    </h2>
+                  </div>
+                  <Link
+                    href={`/events/${data.event.slug}/standings?competition=${competition.slug}`}
+                    className="inline-flex items-center gap-1 text-xs font-extrabold text-green hover:underline"
+                  >
+                    {t("standings.viewFull")}
+                    <ArrowUpRightIcon className="size-3.5" />
+                  </Link>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  {t("compAdmin.standingsBody")}
+                </p>
+                <div className="mt-5 grid gap-7 lg:grid-cols-2">
+                  {data.standings.map((group) => (
+                    <StandingsTable
+                      key={group.id}
+                      group={group}
+                      sport={competition.sport}
+                      qualifiersPerGroup={competition.qualifiersPerGroup}
+                    />
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <section className="surface p-5 sm:p-6">
               <p className="eyebrow text-green">{t("compAdmin.rulesEyebrow")}</p>

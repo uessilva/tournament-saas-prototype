@@ -85,6 +85,8 @@ export type PublicMatchRow = {
   footballAwayScore: number | null;
   footballWalkover: boolean | null;
   footballWalkoverWinnerTeamId: string | null;
+  footballPenaltyHome: number | null;
+  footballPenaltyAway: number | null;
 };
 
 function toIso(value: Date | null | undefined) {
@@ -153,22 +155,32 @@ function scoreSummary(row: PublicMatchRow) {
   const isWalkover = row.footballWalkover ?? false;
   const hasScore =
     row.footballHomeScore != null && row.footballAwayScore != null;
+  const hasPenalties =
+    row.footballPenaltyHome != null && row.footballPenaltyAway != null;
 
   return {
     homeScore:
       row.footballHomeScore == null ? null : String(row.footballHomeScore),
     awayScore:
       row.footballAwayScore == null ? null : String(row.footballAwayScore),
-    detail: isWalkover ? "W.O." : null,
+    detail: isWalkover
+      ? "W.O."
+      : hasPenalties
+        ? `pên. ${row.footballPenaltyHome}–${row.footballPenaltyAway}`
+        : null,
     winnerTeamId:
       row.footballWalkoverWinnerTeamId ??
-      (!hasScore
-        ? null
-        : row.footballHomeScore! > row.footballAwayScore!
+      (hasPenalties
+        ? row.footballPenaltyHome! > row.footballPenaltyAway!
           ? row.homeTeamId
-          : row.footballHomeScore! < row.footballAwayScore!
-            ? row.awayTeamId
-            : null),
+          : row.awayTeamId
+        : !hasScore
+          ? null
+          : row.footballHomeScore! > row.footballAwayScore!
+            ? row.homeTeamId
+            : row.footballHomeScore! < row.footballAwayScore!
+              ? row.awayTeamId
+              : null),
   };
 }
 
@@ -306,6 +318,8 @@ export function publicMatchQuery() {
       footballAwayScore: footballResults.awayScore,
       footballWalkover: footballResults.isWalkover,
       footballWalkoverWinnerTeamId: footballResults.walkoverWinnerTeamId,
+      footballPenaltyHome: footballResults.penaltyHome,
+      footballPenaltyAway: footballResults.penaltyAway,
     })
     .from(matches)
     .innerJoin(competitions, eq(matches.competitionId, competitions.id))

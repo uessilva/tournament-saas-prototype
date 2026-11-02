@@ -14,6 +14,7 @@ import { utcToZonedDateTimeInput } from "@/lib/timezone";
 import { getRegistrationStatus } from "@/features/competitions/registration";
 import { getEntrantRosterStatus } from "@/features/competitions/eligibility";
 import { getAdminDrawData } from "@/features/competitions/draw-queries";
+import { loadCompetitionStandings } from "@/features/competitions/standings-queries";
 import type {
   AdminCompetitionData,
   AdminCompetitionEntrant,
@@ -141,6 +142,9 @@ export async function getAdminCompetitionData(
     })),
     eligibleEntrantCount,
   });
+  const standings = competition.drawGeneratedAt
+    ? await loadCompetitionStandings(competition)
+    : [];
 
   return {
     event,
@@ -173,6 +177,7 @@ export async function getAdminCompetitionData(
     },
     entrants,
     draw,
+    standings,
     counts: {
       entrants: entrants.length,
       participants: participantRows.length,

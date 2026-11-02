@@ -81,7 +81,9 @@ export function SiteHeader({
             className={`shrink-0 rounded-full px-3 py-1.5 font-bold transition-colors ${
               !activeCompetitionSlug &&
               !currentPath.endsWith("/fixtures") &&
-              !currentPath.endsWith("/results")
+              !currentPath.endsWith("/results") &&
+              !currentPath.endsWith("/standings") &&
+              !currentPath.endsWith("/leaders")
                 ? "bg-green/10 text-green"
                 : "text-muted hover:bg-cream hover:text-ink"
             }`}
@@ -120,6 +122,26 @@ export function SiteHeader({
             }`}
           >
             {t("nav.results")}
+          </Link>
+          <Link
+            href={`${basePath}/standings`}
+            className={`shrink-0 rounded-full px-3 py-1.5 font-bold transition-colors ${
+              currentPath.endsWith("/standings")
+                ? "bg-green/10 text-green"
+                : "text-muted hover:bg-cream hover:text-ink"
+            }`}
+          >
+            {t("nav.standings")}
+          </Link>
+          <Link
+            href={`${basePath}/leaders`}
+            className={`shrink-0 rounded-full px-3 py-1.5 font-bold transition-colors ${
+              currentPath.endsWith("/leaders")
+                ? "bg-green/10 text-green"
+                : "text-muted hover:bg-cream hover:text-ink"
+            }`}
+          >
+            {t("nav.leaders")}
           </Link>
           <Link
             href={`${basePath}#about`}

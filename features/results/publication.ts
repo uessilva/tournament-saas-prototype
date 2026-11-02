@@ -6,10 +6,22 @@ import {
   competitions,
   footballResults,
   matches,
+  participantStatistics,
   resultVersions,
 } from "@/lib/db/schema";
+import {
+  planCompetitionAdvancement,
+  recalculateCompetition,
+} from "@/features/results/recalculation";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+export type FootballStatisticInput = {
+  participantId: string;
+  teamId: string;
+  goals: number;
+  assists: number;
+};
 
 export type FootballResultInput = {
   homeScore: number;
@@ -19,6 +31,7 @@ export type FootballResultInput = {
   penaltyHome?: number | null;
   penaltyAway?: number | null;
   notes?: string | null;
+  statistics?: FootballStatisticInput[];
 };
 
 export type FootballValidationContext = {
@@ -204,6 +217,24 @@ export async function publishFootballResult(
     throw new ResultPublicationError("result_already_published");
   }
 
+  if (current) {
+    // A correction may only change a bracket side when no later confirmed
+    // result depends on it. Owners repair reverse order by reopening first.
+    const plan = await planCompetitionAdvancement(tx, match.competitionId, {
+      matchId: match.id,
+      homeScore: input.result.homeScore,
+      awayScore: input.result.awayScore,
+      isWalkover: Boolean(input.result.isWalkover),
+      walkoverWinnerSide: input.result.walkoverWinnerSide ?? null,
+      penaltyHome: input.result.penaltyHome ?? null,
+      penaltyAway: input.result.penaltyAway ?? null,
+      winnerTeamId: validation.winnerTeamId,
+    });
+    if (plan.blockedMatchIds.length) {
+      throw new ResultPublicationError("downstream_result_exists");
+    }
+  }
+
   const [latest] = await tx
     .select({ version: resultVersions.version })
     .from(resultVersions)
@@ -237,6 +268,8 @@ export async function publishFootballResult(
         ...input.metadata,
         scoresheetId: input.scoresheetId ?? null,
         winnerTeamId: validation.winnerTeamId,
+        correction: Boolean(current),
+        previousVersionId: current?.id ?? null,
       },
     })
     .returning({ id: resultVersions.id, version: resultVersions.version });
@@ -263,6 +296,32 @@ export async function publishFootballResult(
     notes: input.result.notes ?? null,
   });
 
+  // Walkovers deliberately contribute no Participant statistics. For normal
+  // results the owner-entered goals and assists belong to the new version, so
+  // leader queries only ever read the current confirmed version.
+  if (!isWalkover && input.result.statistics?.length) {
+    const validStatistics = input.result.statistics.filter(
+      (row) =>
+        row.goals >= 0 &&
+        row.assists >= 0 &&
+        (row.teamId === homeTeamId || row.teamId === awayTeamId),
+    );
+    if (validStatistics.length) {
+      await tx.insert(participantStatistics).values(
+        validStatistics.map((row) => ({
+          resultVersionId: version.id,
+          matchId: match.id,
+          teamId: row.teamId,
+          participantId: row.participantId,
+          goals: row.goals,
+          assists: row.assists,
+          aces: 0,
+          doubleFaults: 0,
+        })),
+      );
+    }
+  }
+
   await tx
     .update(matches)
     .set({ status: "published", updatedAt: now })
@@ -284,10 +343,12 @@ export async function publishFootballResult(
   await tx.insert(auditEvents).values({
     eventId: match.competition.eventId,
     actorUserId: input.actorUserId,
-    type: "result.published",
+    type: current ? "result.corrected" : "result.published",
     entityType: "result_version",
     entityId: version.id,
-    summary: `Match #${match.matchNumber} published (version ${version.version}, ${input.source}).`,
+    summary: current
+      ? `Match #${match.matchNumber} corrected (version ${version.version}, ${input.source}).`
+      : `Match #${match.matchNumber} published (version ${version.version}, ${input.source}).`,
     metadata: {
       matchId: match.id,
       version: version.version,
@@ -297,6 +358,7 @@ export async function publishFootballResult(
       awayScore: input.result.awayScore,
       isWalkover,
       reason: input.reason ?? null,
+      previousVersionId: current?.id ?? null,
     },
   });
 
@@ -307,18 +369,4 @@ export async function publishFootballResult(
     version: version.version,
     winnerTeamId: validation.winnerTeamId,
   };
-}
-
-/**
- * Recalculation hook. Public result reads are derived from current result
- * versions, so the immediate result page needs no cache update. Ticket 06 adds
- * football standings/advancement and ticket 07 adds tennis calculations here.
- */
-export async function recalculateCompetition(
-  tx: Transaction,
-  competitionId: string,
-): Promise<{ competitionId: string; updatedEntries: number }> {
-  void tx;
-  void competitionId;
-  return { competitionId, updatedEntries: 0 };
 }

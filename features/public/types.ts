@@ -1,3 +1,5 @@
+import type { CompetitionGroup } from "@/features/competitions/types";
+
 export type Sport = "football" | "tennis";
 
 export type SetScore = {
@@ -142,4 +144,58 @@ export type ResultsPageData = {
   }>;
   activeCompetitionSlug: string | null;
   results: PublicMatch[];
+};
+
+export type PublicCompetitionStandings = {
+  id: string;
+  name: string;
+  slug: string;
+  sport: Sport;
+  format: string;
+  status: string;
+  qualifiersPerGroup: number;
+  drawSeed: string | null;
+  drawGeneratedAt: string | null;
+  groups: CompetitionGroup[];
+};
+
+export type StandingsPageData = {
+  event: {
+    id: string;
+    name: string;
+    slug: string;
+    timezone: string;
+    locationLabel: string | null;
+  };
+  competitions: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    sport: Sport;
+  }>;
+  activeCompetitionSlug: string | null;
+  standings: PublicCompetitionStandings[];
+};
+
+export type LeadersPageData = {
+  event: {
+    id: string;
+    name: string;
+    slug: string;
+    timezone: string;
+    locationLabel: string | null;
+  };
+  competitions: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    sport: Sport;
+  }>;
+  activeCompetitionSlug: string | null;
+  leaders: {
+    goals: LeaderRow[];
+    assists: LeaderRow[];
+    aces: LeaderRow[];
+    doubleFaults: LeaderRow[];
+  };
 };

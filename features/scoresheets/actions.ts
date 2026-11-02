@@ -14,6 +14,8 @@ import {
   events,
   extractedFields,
   matches,
+  participants,
+  resultVersions,
   scoresheets,
   teamManagers,
 } from "@/lib/db/schema";
@@ -27,7 +29,12 @@ import {
   ResultPublicationError,
   validateFootballResult,
   type FootballResultInput,
+  type FootballStatisticInput,
 } from "@/features/results/publication";
+import {
+  planCompetitionAdvancement,
+  recalculateCompetition,
+} from "@/features/results/recalculation";
 
 export type ScoresheetActionState = {
   status: "idle" | "success" | "error";
@@ -46,6 +53,11 @@ type MatchContext = {
   awayTeamId: string;
   homeTeamName: string;
   awayTeamName: string;
+  participants: Array<{
+    id: string;
+    teamId: string;
+    name: string;
+  }>;
 };
 
 async function loadMatchContext(matchId: string): Promise<MatchContext | null> {
@@ -75,6 +87,17 @@ async function loadMatchContext(matchId: string): Promise<MatchContext | null> {
     return null;
   }
 
+  const participantRows = await db
+    .select({
+      id: participants.id,
+      teamId: participants.teamId,
+      firstName: participants.firstName,
+      lastName: participants.lastName,
+    })
+    .from(participants)
+    .where(inArray(participants.teamId, [home.teamId, away.teamId]))
+    .orderBy(participants.teamId, participants.shirtNumber);
+
   return {
     match,
     competition: match.competition,
@@ -83,6 +106,11 @@ async function loadMatchContext(matchId: string): Promise<MatchContext | null> {
     awayTeamId: away.teamId,
     homeTeamName: home.team?.name ?? "Casa",
     awayTeamName: away.team?.name ?? "Visitante",
+    participants: participantRows.map((participant) => ({
+      id: participant.id,
+      teamId: participant.teamId,
+      name: `${participant.firstName} ${participant.lastName}`.trim(),
+    })),
   };
 }
 
@@ -132,6 +160,8 @@ function revalidateResults(context: MatchContext) {
   revalidatePath(`/events/${context.event.slug}`);
   revalidatePath(`/events/${context.event.slug}/fixtures`);
   revalidatePath(`/events/${context.event.slug}/results`);
+  revalidatePath(`/events/${context.event.slug}/standings`);
+  revalidatePath(`/events/${context.event.slug}/leaders`);
   revalidatePath(
     `/events/${context.event.slug}/competitions/${context.competition.slug}`,
   );
@@ -429,6 +459,36 @@ function numberField(formData: FormData, key: string) {
   return Number(raw);
 }
 
+function parseStatistics(
+  formData: FormData,
+  context: MatchContext,
+): FootballStatisticInput[] {
+  return context.participants
+    .map((participant) => {
+      const goalsValue = Number(formData.get(`stat_goals_${participant.id}`) ?? 0);
+      const assistsValue = Number(
+        formData.get(`stat_assists_${participant.id}`) ?? 0,
+      );
+      return {
+        participantId: participant.id,
+        teamId: participant.teamId,
+        goals:
+          Number.isInteger(goalsValue) &&
+          goalsValue >= 0 &&
+          goalsValue <= 30
+            ? goalsValue
+            : 0,
+        assists:
+          Number.isInteger(assistsValue) &&
+          assistsValue >= 0 &&
+          assistsValue <= 30
+            ? assistsValue
+            : 0,
+      };
+    })
+    .filter((row) => row.goals > 0 || row.assists > 0);
+}
+
 export async function confirmScoresheetAction(
   _previous: ScoresheetActionState,
   formData: FormData,
@@ -468,6 +528,7 @@ export async function confirmScoresheetAction(
     penaltyHome: numberField(formData, "result_home_penalty"),
     penaltyAway: numberField(formData, "result_away_penalty"),
     notes: fieldValueFromForm(formData, "result_notes") || null,
+    statistics: parseStatistics(formData, context),
   };
 
   if (walkover) {
@@ -723,6 +784,7 @@ export async function manualResultAction(
     penaltyHome: penaltyHomeRaw ? Number(penaltyHomeRaw) : null,
     penaltyAway: penaltyAwayRaw ? Number(penaltyAwayRaw) : null,
     notes: String(formData.get("notes") ?? "").trim() || null,
+    statistics: parseStatistics(formData, context),
   };
 
   const validation = validateFootballResult(result, {
@@ -763,7 +825,7 @@ export async function manualResultAction(
 
       const published = await publishFootballResult(tx, {
         matchId: context.match.id,
-        source: "manual",
+        source: walkover ? "walkover" : "manual",
         result,
         actorUserId: user.id,
         reviewerUserId: user.id,
@@ -794,5 +856,195 @@ export async function manualResultAction(
   revalidateResults(context);
   redirect(
     `/admin/events/${eventId}/review/${context.match.id}?notice=manual_published`,
+  );
+}
+
+function resultFromCorrectionForm(
+  formData: FormData,
+  context: MatchContext,
+): FootballResultInput {
+  const walkover = formData.get("isWalkover") === "true";
+  const winner = String(formData.get("walkoverWinner") ?? "");
+  const rawHome = Number(formData.get("homeScore") ?? "");
+  const rawAway = Number(formData.get("awayScore") ?? "");
+  const penaltyHomeRaw = String(formData.get("penaltyHome") ?? "").trim();
+  const penaltyAwayRaw = String(formData.get("penaltyAway") ?? "").trim();
+  const walkoverWinnerSide: "home" | "away" | null =
+    winner === "home" || winner === "away" ? winner : null;
+
+  const result: FootballResultInput = {
+    homeScore: walkover && winner === "home" ? 3 : walkover ? 0 : rawHome,
+    awayScore: walkover && winner === "away" ? 3 : walkover ? 0 : rawAway,
+    isWalkover: walkover,
+    walkoverWinnerSide,
+    penaltyHome: penaltyHomeRaw ? Number(penaltyHomeRaw) : null,
+    penaltyAway: penaltyAwayRaw ? Number(penaltyAwayRaw) : null,
+    notes: String(formData.get("notes") ?? "").trim() || null,
+    statistics: parseStatistics(formData, context),
+  };
+
+  return result;
+}
+
+export async function correctFootballResultAction(
+  _previous: ScoresheetActionState,
+  formData: FormData,
+): Promise<ScoresheetActionState> {
+  const eventId = String(formData.get("eventId") ?? "");
+  const matchId = String(formData.get("matchId") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  const { user } = await requireEventOwner(eventId);
+
+  if (reason.length < 3) {
+    return {
+      status: "error",
+      code: "fix_errors",
+      fieldErrors: { reason: "reason_required" },
+    };
+  }
+  if (formData.get("explicitConfirmation") !== "true") {
+    return {
+      status: "error",
+      code: "fix_errors",
+      fieldErrors: { explicitConfirmation: "confirmation_required" },
+    };
+  }
+
+  const context = await loadMatchContext(matchId);
+  if (!context || context.event.id !== eventId) {
+    return { status: "error", code: "match_not_found" };
+  }
+  if (context.match.status !== "published") {
+    return { status: "error", code: "result_not_published" };
+  }
+
+  const result = resultFromCorrectionForm(formData, context);
+  const validation = validateFootballResult(result, {
+    stage: context.match.stage,
+    homeTeamId: context.homeTeamId,
+    awayTeamId: context.awayTeamId,
+  });
+  if (!validation.valid) {
+    return { status: "error", code: validation.errors[0] ?? "invalid_result" };
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      await publishFootballResult(tx, {
+        matchId: context.match.id,
+        source: result.isWalkover ? "walkover" : "manual",
+        result,
+        actorUserId: user.id,
+        reviewerUserId: user.id,
+        reason,
+        metadata: {
+          entryMode: "correction",
+          explicitConfirmation: true,
+          correctedFromPublished: true,
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof ResultPublicationError) {
+      return { status: "error", code: error.code };
+    }
+    throw error;
+  }
+
+  revalidateResults(context);
+  redirect(
+    `/admin/events/${eventId}/review/${context.match.id}?notice=corrected`,
+  );
+}
+
+export async function reopenFootballResultAction(
+  _previous: ScoresheetActionState,
+  formData: FormData,
+): Promise<ScoresheetActionState> {
+  const eventId = String(formData.get("eventId") ?? "");
+  const matchId = String(formData.get("matchId") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  const { user } = await requireEventOwner(eventId);
+
+  if (reason.length < 3) {
+    return {
+      status: "error",
+      code: "fix_errors",
+      fieldErrors: { reason: "reason_required" },
+    };
+  }
+
+  const context = await loadMatchContext(matchId);
+  if (!context || context.event.id !== eventId) {
+    return { status: "error", code: "match_not_found" };
+  }
+  if (context.match.status !== "published") {
+    return { status: "error", code: "result_not_published" };
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      const [current] = await tx
+        .select({ id: resultVersions.id, version: resultVersions.version })
+        .from(resultVersions)
+        .where(
+          and(
+            eq(resultVersions.matchId, context.match.id),
+            eq(resultVersions.isCurrent, true),
+          ),
+        )
+        .limit(1);
+
+      if (!current) {
+        throw new ResultPublicationError("result_not_published");
+      }
+
+      const plan = await planCompetitionAdvancement(
+        tx,
+        context.match.competitionId,
+        undefined,
+        context.match.id,
+      );
+      if (plan.blockedMatchIds.length) {
+        throw new ResultPublicationError("downstream_result_exists");
+      }
+
+      const now = new Date();
+      await tx
+        .update(resultVersions)
+        .set({ isCurrent: false })
+        .where(eq(resultVersions.id, current.id));
+      await tx
+        .update(matches)
+        .set({ status: "awaiting_result", updatedAt: now })
+        .where(eq(matches.id, context.match.id));
+
+      await tx.insert(auditEvents).values({
+        eventId: context.event.id,
+        actorUserId: user.id,
+        type: "result.reopened",
+        entityType: "match",
+        entityId: context.match.id,
+        summary: `Published result version ${current.version} reopened for match #${context.match.matchNumber}.`,
+        metadata: {
+          matchId: context.match.id,
+          previousVersionId: current.id,
+          previousVersion: current.version,
+          reason,
+        },
+      });
+
+      await recalculateCompetition(tx, context.match.competitionId);
+    });
+  } catch (error) {
+    if (error instanceof ResultPublicationError) {
+      return { status: "error", code: error.code };
+    }
+    throw error;
+  }
+
+  revalidateResults(context);
+  redirect(
+    `/admin/events/${eventId}/review/${context.match.id}?notice=reopened`,
   );
 }
