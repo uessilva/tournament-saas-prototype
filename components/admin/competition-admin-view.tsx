@@ -336,7 +336,7 @@ export function CompetitionAdminView({
   demoMode: boolean;
   lifecycle: CompetitionLifecycleEvent[];
 }) {
-  const { t, formatDate } = useI18n();
+  const { t, formatDate, seedText } = useI18n();
   const competition = data.competition;
   const cancelled = competition.status === "cancelled";
   const effectiveRegistrationOpen =
@@ -399,15 +399,12 @@ export function CompetitionAdminView({
                   effectiveRegistrationOpen ? "open" : "closed"
                 }
               />
-              <RegistrationBadge
-                state={effectiveRegistrationOpen ? "open" : "closed"}
-              />
             </div>
             <h1 className="display-title mt-3 text-4xl sm:text-5xl">
-              {competition.name}
+              {seedText(competition.name)}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-              {competition.description ?? t("compAdmin.body")}
+              {seedText(competition.description) ?? t("compAdmin.body")}
             </p>
             <p className="mt-1 text-xs font-bold text-muted">
               {data.event.name} · {formatLabel}
@@ -481,7 +478,7 @@ export function CompetitionAdminView({
         </section>
 
         <div className="mt-6 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-5">
+          <div className="min-w-0 space-y-5">
             <RegistrationStateCard data={data} />
 
             <DrawAdminPanel data={data} />
@@ -529,7 +526,7 @@ export function CompetitionAdminView({
                 {t("compAdmin.rulesTitle")}
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted">
-                {competition.eligibilityNotes ?? t("compAdmin.rulesBody")}
+                {seedText(competition.eligibilityNotes) ?? t("compAdmin.rulesBody")}
               </p>
 
               <dl className="mt-5 grid gap-3 border-t border-line pt-4 text-sm sm:grid-cols-2">
@@ -596,23 +593,28 @@ export function CompetitionAdminView({
                 {t("compAdmin.entrantsBody")}
               </p>
 
-              <div className="mt-4 overflow-x-auto">
+              <div
+                className="mt-4 overflow-x-auto"
+                role="region"
+                aria-label={t("compAdmin.entrantsTitle")}
+                tabIndex={0}
+              >
                 <table className="w-full min-w-[620px] text-left text-xs">
                   <caption className="sr-only">
-                    {competition.name} — {t("compAdmin.entrantsTitle")}
+                    {seedText(competition.name)} — {t("compAdmin.entrantsTitle")}
                   </caption>
                   <thead>
                     <tr className="border-b border-line bg-paper/60 text-[9px] uppercase tracking-[0.1em] text-muted">
-                      <th className="px-3 py-2.5 font-extrabold">
+                      <th scope="col" className="px-3 py-2.5 font-extrabold">
                         {t("compAdmin.entrant")}
                       </th>
-                      <th className="px-3 py-2.5 font-extrabold">
+                      <th scope="col" className="px-3 py-2.5 font-extrabold">
                         {t("compAdmin.roster")}
                       </th>
-                      <th className="px-3 py-2.5 font-extrabold">
+                      <th scope="col" className="px-3 py-2.5 font-extrabold">
                         {t("compAdmin.managers")}
                       </th>
-                      <th className="px-3 py-2.5 font-extrabold">
+                      <th scope="col" className="px-3 py-2.5 font-extrabold">
                         {t("compAdmin.eligibility")}
                       </th>
                     </tr>
@@ -657,11 +659,11 @@ export function CompetitionAdminView({
             </section>
           </div>
 
-          <div className="space-y-5">
+          <div className="min-w-0 space-y-5">
             <CompetitionLifecyclePanel
               eventId={data.event.id}
               competitionId={competition.id}
-              competitionName={competition.name}
+              competitionName={seedText(competition.name) ?? competition.name}
               status={competition.status}
               publicNote={competition.publicNote}
               cancelledAt={competition.cancelledAt}

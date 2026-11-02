@@ -1244,7 +1244,7 @@ export function ReviewMatchView({
   user: { name: string | null; email: string | null };
   notice?: string;
 }) {
-  const { t, formatDateTime } = useI18n();
+  const { t, formatDateTime, seedText } = useI18n();
   const published = data.match.status === "published";
   const matchCancelled = data.match.status === "cancelled";
   const competitionCancelled = data.competition.status === "cancelled";
@@ -1290,7 +1290,7 @@ export function ReviewMatchView({
             </h1>
             <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-bold text-muted">
               <SportTag sport={data.competition.sport} />
-              <span>{data.competition.name}</span>
+              <span>{seedText(data.competition.name)}</span>
               <span>· #{data.match.matchNumber}</span>
               {data.match.startsAt ? (
                 <span className="inline-flex items-center gap-1">
@@ -1301,7 +1301,7 @@ export function ReviewMatchView({
               {data.match.venueName ? (
                 <span className="inline-flex items-center gap-1">
                   <MapPinIcon className="size-3" />
-                  {data.match.venueName}
+                  {seedText(data.match.venueName)}
                 </span>
               ) : null}
             </p>

@@ -49,13 +49,13 @@ function SubmitButton() {
 }
 
 function MatchLine({ dispute, timezone }: { dispute: DisputeRecord; timezone: string }) {
-  const { t, formatDateTime } = useI18n();
+  const { t, formatDateTime, seedText } = useI18n();
 
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-muted">
       <SportTag sport={dispute.sport} />
       <span>#{dispute.matchNumber}</span>
-      <span>{dispute.competitionName}</span>
+      <span>{seedText(dispute.competitionName)}</span>
       {dispute.matchStartsAt ? (
         <span className="normal-case tracking-normal">
           {formatDateTime(dispute.matchStartsAt, timezone)}

@@ -46,10 +46,48 @@ export function AdminDashboard({
   resetSuccess: boolean;
   openDisputes: number;
 }) {
-  const { t, formatDate } = useI18n();
+  const { t, formatDate, seedText } = useI18n();
   const doneCount = data.checklist.filter((item) => item.state === "done").length;
   const progress = Math.round((doneCount / data.checklist.length) * 100);
   const callbackUrl = `/admin/events/${data.event.id}`;
+  const football = data.competitions.find(
+    (competition) => competition.sport === "football",
+  );
+  const currentStep = data.checklist.find((item) => item.state === "current")?.key;
+  const nextStep =
+    currentStep === "managers"
+      ? {
+          body: "admin.nextStepManagersBody" as const,
+          href: `/admin/events/${data.event.id}/teams`,
+          action: "admin.manageAccess" as const,
+        }
+      : currentStep === "registration"
+        ? {
+            body: "admin.nextStepRegistrationBody" as const,
+            href: football
+              ? `/admin/events/${data.event.id}/competitions/${football.id}`
+              : `/admin/events/${data.event.id}/teams`,
+            action: "admin.manageCompetition" as const,
+          }
+        : currentStep === "draw"
+          ? {
+              body: "admin.nextStepDrawBody" as const,
+              href: football
+                ? `/admin/events/${data.event.id}/competitions/${football.id}`
+                : `/admin/events/${data.event.id}/teams`,
+              action: "admin.manageCompetition" as const,
+            }
+          : currentStep === "results"
+            ? {
+                body: "admin.nextStepResultsBody" as const,
+                href: `/admin/events/${data.event.id}/review`,
+                action: "admin.reviewQueue" as const,
+              }
+            : {
+                body: "admin.nextStepCompleteBody" as const,
+                href: `/events/${data.event.slug}`,
+                action: "admin.publicHub" as const,
+              };
 
   return (
     <div className="min-h-screen bg-[#f2f1ea]">
@@ -151,7 +189,43 @@ export function AdminDashboard({
           ) : null}
         </aside>
 
-        <main id="main-content">
+        <main id="main-content" className="min-w-0">
+          <nav
+            aria-label={t("admin.mobileNav")}
+            className="mb-5 flex w-full gap-2 overflow-x-auto pb-1 lg:hidden"
+          >
+            <Link
+              href={`/admin/events/${data.event.id}/schedule`}
+              className="shrink-0 rounded-full border border-line bg-white px-3 py-2 text-[11px] font-extrabold text-ink"
+            >
+              {t("admin.schedule")}
+            </Link>
+            <Link
+              href={`/admin/events/${data.event.id}/teams`}
+              className="shrink-0 rounded-full border border-line bg-white px-3 py-2 text-[11px] font-extrabold text-ink"
+            >
+              {t("admin.teamsAccess")}
+            </Link>
+            <Link
+              href={`/admin/events/${data.event.id}/review`}
+              className="shrink-0 rounded-full border border-line bg-white px-3 py-2 text-[11px] font-extrabold text-ink"
+            >
+              {t("admin.reviewQueue")}
+            </Link>
+            <Link
+              href={`/admin/events/${data.event.id}/disputes`}
+              className="shrink-0 rounded-full border border-line bg-white px-3 py-2 text-[11px] font-extrabold text-ink"
+            >
+              {t("admin.disputes")}
+            </Link>
+            <Link
+              href={`/events/${data.event.slug}`}
+              className="shrink-0 rounded-full bg-ink px-3 py-2 text-[11px] font-extrabold text-white"
+            >
+              {t("admin.publicHub")}
+            </Link>
+          </nav>
+
           <header className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="eyebrow text-green">{t("admin.eyebrow")}</p>
@@ -333,7 +407,7 @@ export function AdminDashboard({
                         />
                       </div>
                       <h3 className="display-title mt-3 text-2xl">
-                        {competition.name}
+                        {seedText(competition.name)}
                       </h3>
                       <p className="mt-1 text-xs font-medium text-muted">
                         {formatLabel(competition.format, t)}
@@ -392,7 +466,7 @@ export function AdminDashboard({
               <section className="surface p-5">
                 <p className="eyebrow text-green">{t("admin.nextStepTitle")}</p>
                 <p className="mt-2 text-sm leading-6 text-muted">
-                  {t("admin.nextStepBody")}
+                  {t(nextStep.body)}
                 </p>
                 <div className="mt-4 flex items-center gap-2 rounded-xl bg-soft-orange p-3 text-xs font-bold text-clay">
                   <UsersIcon className="size-4" />
@@ -401,10 +475,10 @@ export function AdminDashboard({
                     .replace("{total}", String(data.managers.total))}
                 </div>
                 <Link
-                  href={`/admin/events/${data.event.id}/teams`}
+                  href={nextStep.href}
                   className="mt-3 inline-flex w-full items-center justify-between gap-2 rounded-xl bg-ink px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green"
                 >
-                  {t("admin.manageAccess")}
+                  {t(nextStep.action)}
                   <ChevronRightIcon className="size-3.5" />
                 </Link>
               </section>

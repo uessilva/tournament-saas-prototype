@@ -145,7 +145,7 @@ function ConflictList({
   conflicts: ScheduleConflictView[];
   timezone: string;
 }) {
-  const { t, message, formatDateTime, formatTime } = useI18n();
+  const { t, message, formatDateTime, formatTime, seedText } = useI18n();
 
   return (
     <div
@@ -164,14 +164,14 @@ function ConflictList({
                 ? message(t("schedule.conflictTeam"), {
                     team: conflict.teamNames.join(", "),
                     match: String(conflict.otherMatchNumber),
-                    competition: conflict.otherCompetitionName,
+                    competition: seedText(conflict.otherCompetitionName) ?? "",
                     start,
                     end,
                   })
                 : message(t("schedule.conflictVenue"), {
-                    venue: conflict.venueName ?? "",
+                    venue: seedText(conflict.venueName) ?? "",
                     match: String(conflict.otherMatchNumber),
-                    competition: conflict.otherCompetitionName,
+                    competition: seedText(conflict.otherCompetitionName) ?? "",
                     start,
                     end,
                   })}
@@ -201,7 +201,7 @@ function MatchScheduleCard({
   defaultDurationMinutes: number;
   competitionStatus: string;
 }) {
-  const { t } = useI18n();
+  const { t, seedText } = useI18n();
   const competitionCancelled = competitionStatus === "cancelled";
   const formLocked =
     competitionCancelled || match.status === "cancelled";
@@ -345,7 +345,7 @@ function MatchScheduleCard({
               <option value="">{t("schedule.venueNone")}</option>
               {venues.map((venue) => (
                 <option key={venue.id} value={venue.id}>
-                  {venue.name}
+                  {seedText(venue.name)}
                 </option>
               ))}
             </select>
@@ -461,7 +461,7 @@ function VenuePanel({
   data: ScheduleWorkspaceData;
   usedByVenue: Map<string, number>;
 }) {
-  const { t } = useI18n();
+  const { t, seedText } = useI18n();
   const [state, action] = useActionState(createVenueAction, EMPTY_STATE);
   const nameError = state.fieldErrors?.name;
 
@@ -529,7 +529,7 @@ function VenuePanel({
                 className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-1.5 text-[11px] font-bold"
               >
                 <MapPinIcon className="size-3 text-green" />
-                {venue.name}
+                {seedText(venue.name)}
                 <span className="text-[10px] font-extrabold text-muted">
                   {t("schedule.venueUsage").replace(
                     "{count}",
@@ -633,7 +633,7 @@ export function ScheduleView({
   data: ScheduleWorkspaceData;
   user: { name: string | null; email: string | null };
 }) {
-  const { t } = useI18n();
+  const { t, seedText } = useI18n();
   const scheduledCount = data.matches.filter(
     (match) => match.startsAt != null,
   ).length;
@@ -745,7 +745,7 @@ export function ScheduleView({
                       <div className="flex flex-wrap items-center gap-2">
                         <SportTag sport={competition.sport} />
                         <h3 className="text-sm font-extrabold">
-                          {competition.name}
+                          {seedText(competition.name)}
                         </h3>
                       </div>
                       <span className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted">

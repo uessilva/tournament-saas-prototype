@@ -13,8 +13,11 @@ export function groupDisplayName(name: string | null, t: Translate) {
   if (name === "league") {
     return t("competition.leagueTable");
   }
-  if (/^[A-Z]$/.test(name)) {
-    return t("draw.groupName").replace("{letter}", name);
+  const groupMatch =
+    name.match(/^(?:Grupo|Group)\s+([A-Z])$/i) ??
+    name.match(/^([A-Z])$/);
+  if (groupMatch?.[1]) {
+    return t("draw.groupName").replace("{letter}", groupMatch[1]);
   }
   return name;
 }
@@ -38,8 +41,14 @@ export function knockoutRoundLabel(
 }
 
 export function matchRoundLabel(match: PublicMatch, t: Translate) {
-  if (match.roundLabel) {
-    return match.roundLabel;
+  // Seeded tennis fixtures carry a Portuguese "Rodada N" label. Derive the
+  // label from the fixture shape so it follows the language switcher.
+  const rawRoundLabel =
+    match.roundLabel && !/^(Rodada|Round)\s+\d+$/i.test(match.roundLabel)
+      ? match.roundLabel
+      : null;
+  if (rawRoundLabel) {
+    return rawRoundLabel;
   }
   if (match.format === "round_robin") {
     return t("fixtures.leagueRound").replace(

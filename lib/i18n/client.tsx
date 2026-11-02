@@ -19,11 +19,13 @@ import {
   type DictionaryKey,
   type Locale,
 } from "@/lib/i18n/dictionaries";
+import { localizeSeedText } from "@/lib/i18n/seed-copy";
 
 type I18nValue = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   t: (key: DictionaryKey) => string;
+  seedText: (value: string | null | undefined) => string | null;
   message: (template: string, values: Record<string, string | number>) => string;
   formatDate: (
     value: string | Date,
@@ -68,6 +70,7 @@ export function LanguageProvider({
       locale,
       setLocale,
       t: (key) => dictionary[key] ?? getDictionary(DEFAULT_LOCALE)[key] ?? key,
+      seedText: (value) => localizeSeedText(value, locale),
       message: formatMessage,
       formatDate: (input, timeZone, options) =>
         new Intl.DateTimeFormat(locale, {

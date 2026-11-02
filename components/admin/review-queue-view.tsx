@@ -87,7 +87,7 @@ function QueueCard({
   event: ReviewQueueData["event"];
   demoMode: boolean;
 }) {
-  const { t, formatDateTime } = useI18n();
+  const { t, formatDateTime, seedText } = useI18n();
   const active = item.activeScoresheet;
   const canEnterResult =
     item.matchStatus !== "published" &&
@@ -99,14 +99,14 @@ function QueueCard({
       <div className="flex flex-wrap items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted">
         <SportTag sport={item.sport} />
         <span>#{item.matchNumber}</span>
-        <span>{item.competitionName}</span>
+        <span>{seedText(item.competitionName)}</span>
         {item.startsAt ? (
           <span className="inline-flex items-center gap-1 normal-case tracking-normal">
             <ClockIcon className="size-3" />
             {formatDateTime(item.startsAt, event.timezone)}
           </span>
         ) : null}
-        {item.venueName ? <span>{item.venueName}</span> : null}
+        {item.venueName ? <span>{seedText(item.venueName)}</span> : null}
       </div>
 
       <div className="mt-2 flex flex-wrap items-start justify-between gap-3">

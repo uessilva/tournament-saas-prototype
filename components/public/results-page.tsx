@@ -27,9 +27,9 @@ export function ResultsPage({
   signedIn: boolean;
   currentPath: string;
 }) {
-  const { t, formatDate } = useI18n();
+  const { t, formatDate, seedText } = useI18n();
   const competitions = data.competitions.map((competition) => ({
-    name: competition.name,
+    name: seedText(competition.name) ?? competition.name,
     slug: competition.slug,
     sport: competition.sport,
   }));
@@ -136,7 +136,7 @@ export function ResultsPage({
                   : "border border-line bg-white text-ink hover:border-green hover:text-green"
               }`}
             >
-              {competition.name}
+              {seedText(competition.name)}
               <span className="ml-1.5 text-[10px] opacity-70">
                 {competition.resultCount}
               </span>
@@ -153,7 +153,7 @@ export function ResultsPage({
                 className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
               >
                 <p className="font-extrabold">
-                  {competition.name} · {t("competition.cancelledTitle")}
+                  {seedText(competition.name)} · {t("competition.cancelledTitle")}
                 </p>
                 <p className="mt-1 leading-6">
                   {competition.publicNote ?? t("competition.cancellationNote")}
@@ -174,7 +174,11 @@ export function ResultsPage({
                   <h2 className="display-title text-2xl">{group.label}</h2>
                   <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted">
                     <CalendarIcon className="size-3.5" />
-                    {t("fixtures.matchCount").replace(
+                    {t(
+                      group.matches.length === 1
+                        ? "fixtures.matchCountOne"
+                        : "fixtures.matchCount",
+                    ).replace(
                       "{count}",
                       String(group.matches.length),
                     )}

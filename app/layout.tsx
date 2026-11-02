@@ -5,6 +5,7 @@ import "@fontsource-variable/fraunces";
 import "@/app/globals.css";
 
 import { LanguageProvider } from "@/lib/i18n/client";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getServerLocale } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const locale = await getServerLocale();
+  const dictionary = getDictionary(locale);
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -36,7 +38,7 @@ export default async function RootLayout({
             href="#main-content"
             className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-full bg-ink px-4 py-2 text-sm font-bold text-white transition-transform focus:translate-y-0"
           >
-            Pular para o conteúdo / Skip to content
+            {dictionary["common.skipToContent"]}
           </a>
           {children}
         </LanguageProvider>
