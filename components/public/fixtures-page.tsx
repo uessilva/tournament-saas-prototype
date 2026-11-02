@@ -7,6 +7,7 @@ import { MatchRow } from "@/components/public/match-row";
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 import { useI18n } from "@/lib/i18n/client";
+import { formatTimeZoneLabel } from "@/lib/timezone";
 import type { FixturesPageData, PublicMatch } from "@/features/public/types";
 
 function dateKey(value: string, timeZone: string) {
@@ -93,7 +94,11 @@ export function FixturesPage({
           </div>
           <p className="inline-flex items-center gap-1.5 text-xs font-bold text-muted">
             <ClockIcon className="size-3.5" />
-            {t("home.timezoneValue")}
+            {t("home.timezone")}:{" "}
+            {formatTimeZoneLabel(
+              data.event.timezone,
+              new Date(data.event.startsAt),
+            )}
           </p>
         </div>
 
@@ -169,7 +174,7 @@ export function FixturesPage({
         )}
       </main>
 
-      <SiteFooter eventSlug={data.event.slug} />
+      <SiteFooter eventSlug={data.event.slug} timezone={data.event.timezone} />
     </div>
   );
 }

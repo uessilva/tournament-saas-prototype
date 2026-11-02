@@ -11,6 +11,7 @@ import {
 } from "@/components/icons";
 import { MatchRow } from "@/components/public/match-row";
 import { useI18n } from "@/lib/i18n/client";
+import { formatTimeZoneLabel } from "@/lib/timezone";
 import type { ManagerFixturesData } from "@/features/matches/manager-queries";
 
 export function ManagerFixturesView({
@@ -50,7 +51,7 @@ export function ManagerFixturesView({
           </div>
           <p className="inline-flex items-center gap-1.5 text-xs font-bold text-muted">
             <ClockIcon className="size-3.5" />
-            {timezone}
+            {formatTimeZoneLabel(timezone)}
           </p>
         </div>
 

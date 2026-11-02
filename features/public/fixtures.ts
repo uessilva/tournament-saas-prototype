@@ -63,6 +63,7 @@ export async function getFixturesPage(
       name: event.name,
       slug: event.slug,
       timezone: event.timezone,
+      startsAt: event.startsAt.toISOString(),
       locationLabel: event.locationLabel,
     },
     competitions: competitionRows.map((competition) => ({

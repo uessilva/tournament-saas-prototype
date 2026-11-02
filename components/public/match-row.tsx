@@ -9,6 +9,7 @@ import {
   matchRoundLabel,
   matchSideName,
 } from "@/features/public/labels";
+import { addMinutes } from "@/features/matches/scheduling";
 import type { PublicMatch } from "@/features/public/types";
 
 export function MatchRow({
@@ -40,6 +41,19 @@ export function MatchRow({
     match.knockoutRoundCount,
     t,
   );
+  const startTime =
+    match.startsAt && published
+      ? formatDateTime(match.startsAt, timezone)
+      : match.startsAt
+        ? formatTime(match.startsAt, timezone)
+        : null;
+  const endTime =
+    match.startsAt && match.durationMinutes
+      ? formatTime(
+          addMinutes(new Date(match.startsAt), match.durationMinutes),
+          timezone,
+        )
+      : null;
 
   return (
     <article className="group border-b border-line/80 py-4 last:border-b-0">
@@ -55,12 +69,12 @@ export function MatchRow({
           <SportTag sport={match.sport} />
         )}
         <span>{matchRoundLabel(match, t)}</span>
-        {match.startsAt ? (
+        {startTime ? (
           <span className="inline-flex items-center gap-1">
             <ClockIcon className="size-3.5" />
-            {published
-              ? formatDateTime(match.startsAt, timezone)
-              : formatTime(match.startsAt, timezone)}
+            <span>{startTime}</span>
+            {endTime ? <span aria-hidden="true">–</span> : null}
+            {endTime ? <span>{endTime}</span> : null}
           </span>
         ) : (
           <span className="inline-flex items-center gap-1">
