@@ -11,6 +11,7 @@ import {
   teams,
   venues,
 } from "@/lib/db/schema";
+import { getRegistrationStatus } from "@/features/competitions/registration";
 import { calculateTennisStandings } from "@/features/competitions/tennis-standings";
 import type {
   CompetitionGroup,
@@ -50,6 +51,12 @@ export async function getCompetitionPage(
   if (!competition) {
     return null;
   }
+
+  const registration = getRegistrationStatus(competition);
+  const effectiveStatus =
+    competition.status === "registration_open" && !registration.open
+      ? "registration_closed"
+      : competition.status;
 
   const teamRows = await db
     .select({
@@ -206,13 +213,13 @@ export async function getCompetitionPage(
       birthDateTo: competition.birthDateTo,
       rosterMin: competition.rosterMin,
       rosterMax: competition.rosterMax,
-      registrationState: competition.registrationState,
+      registrationState: registration.open ? "open" : "closed",
       registrationDeadline: toIso(competition.registrationDeadline),
       qualifiersPerGroup: competition.qualifiersPerGroup,
       defaultMatchDurationMinutes: competition.defaultMatchDurationMinutes,
       drawSeed: competition.drawSeed,
       drawGeneratedAt: toIso(competition.drawGeneratedAt),
-      status: competition.status,
+      status: effectiveStatus,
       publicNote: competition.publicNote,
       cancelledAt: toIso(competition.cancelledAt),
     },

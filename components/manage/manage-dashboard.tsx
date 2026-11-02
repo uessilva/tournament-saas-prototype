@@ -18,9 +18,13 @@ import type { ManagedTeam } from "@/features/teams/types";
 export function ManageDashboard({
   user,
   teams,
+  inviteAccepted = false,
+  inviteCount = 0,
 }: {
   user: { name: string | null; email: string | null };
   teams: ManagedTeam[];
+  inviteAccepted?: boolean;
+  inviteCount?: number;
 }) {
   const { t } = useI18n();
 
@@ -35,6 +39,19 @@ export function ManageDashboard({
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
           {t("manage.body")}
         </p>
+
+        {inviteAccepted ? (
+          <div
+            role="status"
+            className="mt-5 flex items-start gap-3 rounded-xl border border-green/20 bg-soft-green px-4 py-3 text-sm font-semibold text-green"
+          >
+            <ArrowRightIcon className="mt-0.5 size-4 shrink-0" />
+            {t("manage.inviteAccepted").replace(
+              "{count}",
+              String(inviteCount || teams.length),
+            )}
+          </div>
+        ) : null}
 
         {teams.length ? (
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">

@@ -494,16 +494,28 @@ export async function resetDemoData(): Promise<DemoResetSummary> {
 
       invitationTeamValues.push({ invitationId, teamId });
 
-      accessEventValues.push({
-        eventId: DEMO_EVENT_ID,
-        teamId,
-        invitationId,
-        actorUserId: DEMO_OWNER_ID,
-        subjectUserId: manager?.id ?? null,
-        type: "invitation_created",
-        metadata: { email: managerInfo.email },
-        createdAt: addDays(now, -6),
-      });
+      accessEventValues.push(
+        {
+          eventId: DEMO_EVENT_ID,
+          teamId,
+          invitationId,
+          actorUserId: DEMO_OWNER_ID,
+          subjectUserId: manager?.id ?? null,
+          type: "invitation_created",
+          metadata: { email: managerInfo.email },
+          createdAt: addDays(now, -6),
+        },
+        {
+          eventId: DEMO_EVENT_ID,
+          teamId,
+          invitationId,
+          actorUserId: DEMO_OWNER_ID,
+          subjectUserId: null,
+          type: "invitation_email_sent",
+          metadata: { email: managerInfo.email },
+          createdAt: addDays(now, -6),
+        },
+      );
 
       if (manager) {
         accessEventValues.push({

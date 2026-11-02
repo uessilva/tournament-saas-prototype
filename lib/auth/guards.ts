@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
+import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
@@ -44,6 +45,10 @@ export async function requireUser(callbackUrl: string): Promise<SessionUser> {
 }
 
 export async function requireEventOwner(eventId: string) {
+  if (!z.string().uuid().safeParse(eventId).success) {
+    notFound();
+  }
+
   const user = await requireUser(`/admin/events/${eventId}`);
   const event = await db.query.events.findFirst({
     where: eq(events.id, eventId),
@@ -57,6 +62,10 @@ export async function requireEventOwner(eventId: string) {
 }
 
 export async function requireTeamManager(teamId: string) {
+  if (!z.string().uuid().safeParse(teamId).success) {
+    notFound();
+  }
+
   const user = await requireUser(`/manage/teams/${teamId}`);
 
   const assignment = await db
