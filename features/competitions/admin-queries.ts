@@ -12,6 +12,8 @@ import {
 } from "@/lib/db/schema";
 import { utcToZonedDateTimeInput } from "@/lib/timezone";
 import { getRegistrationStatus } from "@/features/competitions/registration";
+import { getEntrantRosterStatus } from "@/features/competitions/eligibility";
+import { getAdminDrawData } from "@/features/competitions/draw-queries";
 import type {
   AdminCompetitionData,
   AdminCompetitionEntrant,
@@ -108,26 +110,6 @@ export async function getAdminCompetitionData(
   const entrants: AdminCompetitionEntrant[] = teamRows.map((team) => {
     const birthDates = participantsByTeam.get(team.id) ?? [];
     const participantCount = birthDates.length;
-    const birthRangeOk = birthDates.every((dateOfBirth) => {
-      if (competition.birthDateFrom && dateOfBirth < competition.birthDateFrom) {
-        return false;
-      }
-      if (competition.birthDateTo && dateOfBirth > competition.birthDateTo) {
-        return false;
-      }
-      return true;
-    });
-
-    let rosterStatus: AdminCompetitionEntrant["rosterStatus"] = "ok";
-    if (participantCount === 0) {
-      rosterStatus = "empty";
-    } else if (competition.rosterMin != null && participantCount < competition.rosterMin) {
-      rosterStatus = "below_min";
-    } else if (competition.rosterMax != null && participantCount > competition.rosterMax) {
-      rosterStatus = "above_max";
-    } else if (!birthRangeOk) {
-      rosterStatus = "birth_range";
-    }
 
     return {
       id: team.id,
@@ -135,11 +117,30 @@ export async function getAdminCompetitionData(
       shortName: team.shortName,
       participantCount,
       managerNames: managersByTeam.get(team.id) ?? [],
-      rosterStatus,
+      rosterStatus: getEntrantRosterStatus({
+        participantCount,
+        dateOfBirths: birthDates,
+        birthDateFrom: competition.birthDateFrom,
+        birthDateTo: competition.birthDateTo,
+        rosterMin: competition.rosterMin,
+        rosterMax: competition.rosterMax,
+      }),
     };
   });
 
   const registration = getRegistrationStatus(competition);
+  const eligibleEntrantCount = entrants.filter(
+    (entrant) => entrant.rosterStatus === "ok",
+  ).length;
+  const draw = await getAdminDrawData({
+    competition,
+    entrants: teamRows.map((team, index) => ({
+      id: team.id,
+      name: team.name,
+      seedPosition: team.seedPosition ?? index + 1,
+    })),
+    eligibleEntrantCount,
+  });
 
   return {
     event,
@@ -163,6 +164,7 @@ export async function getAdminCompetitionData(
       registrationDeadlineInput: competition.registrationDeadline
         ? utcToZonedDateTimeInput(competition.registrationDeadline, event.timezone)
         : null,
+      groupCount: competition.groupCount,
       qualifiersPerGroup: competition.qualifiersPerGroup,
       defaultMatchDurationMinutes: competition.defaultMatchDurationMinutes,
       drawSeed: competition.drawSeed,
@@ -170,11 +172,11 @@ export async function getAdminCompetitionData(
       status: competition.status,
     },
     entrants,
+    draw,
     counts: {
       entrants: entrants.length,
       participants: participantRows.length,
-      eligibleEntrants: entrants.filter((entrant) => entrant.rosterStatus === "ok")
-        .length,
+      eligibleEntrants: eligibleEntrantCount,
     },
   };
 }

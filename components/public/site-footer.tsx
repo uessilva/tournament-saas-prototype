@@ -29,8 +29,8 @@ export function SiteFooter({ eventSlug }: { eventSlug: string }) {
             <Link className="hover:text-green" href={`/events/${eventSlug}`}>
               {t("nav.overview")}
             </Link>
-            <Link className="hover:text-green" href={`/events/${eventSlug}#results`}>
-              {t("nav.matchCentre")}
+            <Link className="hover:text-green" href={`/events/${eventSlug}/fixtures`}>
+              {t("nav.fixtures")}
             </Link>
             <Link className="hover:text-green" href={`/events/${eventSlug}#about`}>
               {t("nav.about")}

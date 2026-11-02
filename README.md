@@ -8,7 +8,7 @@ This is throwaway demonstration code. It is not production hardening, and there 
 
 Summer Cup 2026 is seeded with:
 
-- **Under-12 Football** — 8 teams, 96 participants, open registration, 6 accepted Team Managers, 2 pending email invitations, and one reusable Team-scoped share link. The draw is intentionally not generated so the guided football path stays demonstrable. Owners can invite or remove managers, manage reusable links, and inspect the full access history.
+- **Under-12 Football** — 8 teams, 96 participants, open registration, 6 accepted Team Managers, 2 pending email invitations, and one reusable Team-scoped share link. The seeded seed makes a groups + knockout preview available immediately; the draw is intentionally not generated until the Owner closes registration so the guided football path stays demonstrable. Owners can preview, regenerate, swap entrants and generate group fixtures plus the knockout bracket. Generated fixtures appear publicly before scheduling and in the Manager area.
 - **Tennis Open** — 8 individual entrants, each represented by a one-Participant Team. Two groups, 12 round-robin fixtures, 8 published results with best-of-three set scores, and aces/double-fault leaders.
 - **Venues** — Campo Principal, Campo 2, Quadra Central and Quadra 2.
 - **Event** — `America/Sao_Paulo`, Parque Esportivo do Sol, São Paulo. Seeded dates are relative to the reset time so the event always feels current.
@@ -57,14 +57,16 @@ The seeded account switcher and protected reset controls are **development-only*
 | --- | --- |
 | `http://localhost:3000/` | Public Summer Cup 2026 hub, no login |
 | `http://localhost:3000/events/summer-cup-2026` | Event hub |
+| `http://localhost:3000/events/summer-cup-2026/fixtures` | Public fixtures, competition filters, unscheduled matches and Event-time-zone labels |
 | `http://localhost:3000/events/summer-cup-2026/competitions/under-12-football` | Football competition overview |
 | `http://localhost:3000/events/summer-cup-2026/competitions/tennis-open` | Tennis competition overview with provisional standings |
 | `http://localhost:3000/signin` | Magic-link sign-in and seeded account switcher |
 | `http://localhost:3000/admin` | Protected Owner administration |
 | `http://localhost:3000/admin/events/[eventId]/teams` | Owner Teams, managers, invitations, links and access history |
-| `http://localhost:3000/admin/events/[eventId]/competitions/[competitionId]` | Owner competition rules, entrants and registration controls |
+| `http://localhost:3000/admin/events/[eventId]/competitions/[competitionId]` | Owner competition rules, entrants, registration controls and the groups + knockout draw |
 | `http://localhost:3000/invitations/[token]` | Email-invitation or reusable-link acceptance |
 | `http://localhost:3000/manage` | Protected Team Manager area |
+| `http://localhost:3000/manage/matches` | Fixtures involving the Manager's assigned Teams |
 | `http://localhost:8025` | Mailpit inbox |
 
 ## Seeded accounts
@@ -159,12 +161,14 @@ app/                         Public, auth, Owner, and Manager routes
 components/                  Shared UI and feature UI
 features/
   auth/                      Server actions for sign-in/out, demo switch, reset
-  competitions/              Competition read model, tennis standings
+  competitions/              Competition read model, eligibility, registration,
+                             seeded groups + knockout draw, tennis standings
   events/                    Owner event read model and checklist
-  public/                    Public event/match read models
+  public/                    Public event, fixture and match read models
   teams/                     Roster read model
   scoresheets/               (reserved for the extraction/review ticket)
-  matches/                   (reserved for scheduling/results tickets)
+  matches/                   Manager fixtures; shared knockout advancement helper
+                             (scheduling/results arrive in later tickets)
 lib/
   auth/                      Auth.js config, guards, email delivery
   db/                        Drizzle schema, client, deterministic demo seed
@@ -183,14 +187,36 @@ The schema includes the full foundation plus forward-looking records needed by l
 `users`, `accounts`, `sessions`, `verification_tokens`, `authenticators`,
 `events`, `venues`, `competitions`, `teams`, `participants`, `team_managers`,
 `manager_invitations`, `invitation_teams`, `access_events`, `groups`,
-`group_entries`, `matches`, `match_entries`, `result_versions`,
+`group_entries`, `matches`, `match_entries`, `match_slots`, `result_versions`,
 `football_results`, `tennis_results`, `participant_statistics`, `scoresheets`,
 `extracted_fields`, `jobs`, `disputes`, `audit_events`.
 
 Important constraints include unique event/competition/team slugs, participant
 uniqueness within a competition, one current result version per match, one
-active scoresheet per match, one open dispute per match, and a single leaseable
-job row per processing claim.
+active scoresheet per match, one open dispute per match, one bracket slot per
+round, one source per knockout side, and a single leaseable job row per
+processing claim.
+
+### Groups + knockout draw
+
+- `features/competitions/draw.ts` is the pure rules engine: seeded entrant
+  order, snake group distribution, single round-robin fixtures, next-power-of-
+  two brackets, automatic byes, crossed group qualifiers and stable round/slot
+  positions. Preview and persistence call the same `buildDrawPlan`.
+- `teams.seed_position` is the persisted draw order. Regenerating a seed uses a
+  deterministic PRNG (`createSeededRandom`) and stores the new order. Swapping
+  two entrants exchanges their order directly.
+- `matches` stores group and knockout fixtures with `round_number` and
+  `bracket_slot`; `match_entries` holds known sides, while `match_slots` stores
+  group-qualifier, earlier-match-winner or Bye provenance. Bye nodes are
+  non-playable and never shown as public fixtures.
+- `features/matches/advancement.ts` resolves group qualifiers and Bye winners
+  into later-round slots. Result publication in ticket 06/07 can feed confirmed
+  winners into the same helper.
+- Generation requires closed registration, eligible entrants, at least two
+  entrants per group and enough entrants for the configured qualifiers. Draw
+  preview/regeneration/swaps and generation are blocked once any current result
+  exists for the Competition.
 
 ### Auth and authorization
 
@@ -248,21 +274,36 @@ Before a demo:
 8. As the Owner, close registration from the competition admin page and confirm
    roster edits are blocked. Reopen only before generation; test an Event-time-zone
    deadline, the extend action and the expired/revoked invitation states.
-9. Confirm `/admin/events/[eventId]` loads and a Manager cannot open it or a team
-   they do not manage.
-10. Run the Owner demo reset action; confirm the success state and seeded data.
-11. Start `pnpm worker`, enqueue or observe a job, and confirm it is marked
+9. With registration closed, inspect the groups + knockout preview, regenerate
+   the seed, swap two entrants, then generate the tournament. Confirm the prompt
+   if registration is still open: generation is rejected until it closes.
+10. Reload the Owner competition page and confirm the generated groups and
+    bracket persist. Open `/events/summer-cup-2026/fixtures` without signing in:
+    confirm all group and knockout fixtures appear, including unscheduled ones,
+    the competition filter works and times are labelled in the Event time zone.
+    Confirm Bye nodes never appear as playable fixtures.
+11. Sign in as Maya Chen and open `/manage/matches`; confirm only fixtures
+    involving Riverside Rovers are listed. Confirm the same generated fixtures
+    appear on the public competition page.
+12. Create a throwaway current `result_versions` row for one Competition Match,
+    reload the Owner draw panel and confirm preview, regeneration and swaps are
+    blocked (including a direct form submission). Run `pnpm db:reset` afterwards.
+13. Confirm `/admin/events/[eventId]` loads and a Manager cannot open it or a team
+    they do not manage.
+14. Run the Owner demo reset action; confirm the success state and seeded data.
+15. Start `pnpm worker`, enqueue or observe a job, and confirm it is marked
     completed without logging payload contents.
-12. Check the main screens at mobile width with keyboard focus and visible
+16. Check the main screens at mobile width with keyboard focus and visible
     focus rings.
 
 ## Current scope and next tickets
 
-This ticket adds delegation and registration. Later tickets add seeded draw
-generation and swapping, scheduling/conflict validation, Scoresheet PDF
-generation/upload/extraction, Owner review and publication, corrections,
-disputes, and full lifecycle controls. The schema, feature folders, read models
-and guards are shaped so those screens can be added without a wholesale rewrite.
+This ticket adds seeded groups + knockout generation, persisted group/bracket
+positions, Byes, public fixtures and Manager fixture visibility. Later tickets
+add scheduling/conflict validation, Scoresheet PDF generation/upload/extraction,
+Owner review and publication, result-driven advancement, corrections, disputes,
+and full lifecycle controls. The schema, feature folders, read models and guards
+are shaped so those screens can be added without a wholesale rewrite.
 
 Public hosting is intentionally out of scope until the localhost demo is
 accepted.
@@ -288,7 +329,8 @@ accepted.
 - Seeded pending email invitations only store token hashes, so their raw links
   cannot be recovered. Replace one in **Teams and access** to obtain a fresh,
   copyable link for the demo.
-- The public competition football page intentionally shows “waiting for the
-  draw” until the tournament-generation ticket runs.
+- The public football competition page shows “waiting for the draw” until the
+  Owner closes registration and generates the tournament. After generation it
+  shows the published draw and all unscheduled fixtures.
 - If Docker is unavailable, PostgreSQL and Mailpit can be run externally and
   pointed at with `DATABASE_URL`/`SMTP_*`; the app and `pnpm build` still work.

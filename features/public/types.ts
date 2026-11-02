@@ -7,21 +7,36 @@ export type SetScore = {
   tiebreakAway?: number;
 };
 
+export type PublicMatchSource =
+  | { type: "group_qualifier"; groupName: string; position: number }
+  | { type: "match_winner"; roundNumber: number; bracketSlot: number }
+  | { type: "bye" };
+
 export type PublicMatch = {
   id: string;
+  matchNumber: number;
   competitionId: string;
   competitionName: string;
   competitionSlug: string;
   sport: Sport;
+  stage: "group" | "knockout";
   groupId: string | null;
+  groupName: string | null;
   roundLabel: string | null;
+  roundNumber: number;
+  bracketSlot: number | null;
+  bracketSize: number;
+  knockoutRoundCount: number;
+  isBye: boolean;
   startsAt: string | null;
   status: string;
   venueName: string | null;
-  homeTeamId: string;
-  homeTeamName: string;
-  awayTeamId: string;
-  awayTeamName: string;
+  homeTeamId: string | null;
+  homeTeamName: string | null;
+  awayTeamId: string | null;
+  awayTeamName: string | null;
+  homeSource: PublicMatchSource | null;
+  awaySource: PublicMatchSource | null;
   homeScore: string | null;
   awayScore: string | null;
   scoreDetail: string | null;
@@ -84,4 +99,23 @@ export type EventHubData = {
     publishedResults: number;
     venues: number;
   };
+};
+
+export type FixturesPageData = {
+  event: {
+    id: string;
+    name: string;
+    slug: string;
+    timezone: string;
+    locationLabel: string | null;
+  };
+  competitions: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    sport: Sport;
+    matchCount: number;
+  }>;
+  activeCompetitionSlug: string | null;
+  fixtures: PublicMatch[];
 };
