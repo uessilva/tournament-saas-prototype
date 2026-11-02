@@ -11,6 +11,11 @@ export type AdvancementSource =
       sourceMatchId: string;
     }
   | {
+      /** A named entrant placed directly in a no-group knockout draw. */
+      type: "entrant";
+      teamId: string;
+    }
+  | {
       type: "bye";
     };
 
@@ -61,6 +66,9 @@ export function resolveSourceTeamId(
         groupQualifierKey(source.groupId, source.groupPosition),
       ) ?? null
     );
+  }
+  if (source.type === "entrant") {
+    return source.teamId;
   }
   return context.matchWinners.get(source.sourceMatchId) ?? null;
 }

@@ -10,6 +10,9 @@ export function groupDisplayName(name: string | null, t: Translate) {
   if (!name) {
     return t("competition.groups");
   }
+  if (name === "league") {
+    return t("competition.leagueTable");
+  }
   if (/^[A-Z]$/.test(name)) {
     return t("draw.groupName").replace("{letter}", name);
   }
@@ -37,6 +40,12 @@ export function knockoutRoundLabel(
 export function matchRoundLabel(match: PublicMatch, t: Translate) {
   if (match.roundLabel) {
     return match.roundLabel;
+  }
+  if (match.format === "round_robin") {
+    return t("fixtures.leagueRound").replace(
+      "{round}",
+      String(match.roundNumber),
+    );
   }
   if (match.stage === "group") {
     if (match.groupName) {

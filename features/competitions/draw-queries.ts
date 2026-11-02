@@ -13,6 +13,7 @@ import {
   bracketRoundCount,
   nextPowerOfTwo,
   validateDrawConfig,
+  type CompetitionFormat,
   type DrawConfig,
   type DrawEntrant,
   type DrawSource,
@@ -51,7 +52,7 @@ export async function hasConfirmedResult(competitionId: string) {
   return Boolean(row);
 }
 
-function toPublicSource(source: DrawSource): PublicMatchSource {
+function toPublicSource(source: DrawSource): PublicMatchSource | null {
   if (source.type === "group_qualifier") {
     return {
       type: "group_qualifier",
@@ -66,7 +67,19 @@ function toPublicSource(source: DrawSource): PublicMatchSource {
       bracketSlot: source.bracketSlot,
     };
   }
-  return { type: "bye" };
+  if (source.type === "bye") {
+    return { type: "bye" };
+  }
+  // Known single-elimination entrants are shown as a named side instead of a
+  // source placeholder.
+  return null;
+}
+
+function sideFromSource(source: DrawSource): DrawSideView {
+  if (source.type === "entrant") {
+    return side(source.entrantId, source.entrantName, null);
+  }
+  return side(null, null, toPublicSource(source));
 }
 
 function side(teamId: string | null, teamName: string | null, source: PublicMatchSource | null): DrawSideView {
@@ -144,6 +157,23 @@ async function loadPersistedDraw(competitionId: string) {
   };
 }
 
+function bracketSizeFor(format: CompetitionFormat, values: {
+  entrantCount: number;
+  groupCount: number;
+  qualifiersPerGroup: number;
+  storedBracketSize?: number | null;
+}) {
+  if (format === "round_robin") {
+    return 0;
+  }
+  if (format === "single_elimination") {
+    return values.storedBracketSize ?? nextPowerOfTwo(Math.max(2, values.entrantCount));
+  }
+  return nextPowerOfTwo(
+    Math.max(2, values.groupCount * values.qualifiersPerGroup),
+  );
+}
+
 export async function getAdminDrawData({
   competition,
   entrants,
@@ -151,10 +181,12 @@ export async function getAdminDrawData({
 }: {
   competition: {
     id: string;
+    format: CompetitionFormat;
     drawSeed: string | null;
     drawGeneratedAt: Date | null;
     groupCount: number;
     qualifiersPerGroup: number;
+    bracketSize: number | null;
   };
   entrants: DrawEntrant[];
   eligibleEntrantCount: number;
@@ -163,11 +195,13 @@ export async function getAdminDrawData({
   const generated = competition.drawGeneratedAt != null;
   const seed = competition.drawSeed ?? defaultDrawSeed(competition.id);
   const config: DrawConfig = {
+    format: competition.format,
     groupCount: competition.groupCount,
     qualifiersPerGroup: competition.qualifiersPerGroup,
     seed,
   };
   const validationErrors = validateDrawConfig({
+    format: config.format,
     entrantCount: entrants.length,
     eligibleEntrantCount,
     groupCount: config.groupCount,
@@ -177,18 +211,23 @@ export async function getAdminDrawData({
   if (generated) {
     const persisted = await loadPersistedDraw(competition.id);
     if (persisted) {
-      const qualifierCount =
-        config.groupCount * config.qualifiersPerGroup;
-      const bracketSize = nextPowerOfTwo(Math.max(2, qualifierCount));
+      const bracketSize = bracketSizeFor(config.format, {
+        entrantCount: entrants.length,
+        groupCount: config.groupCount,
+        qualifiersPerGroup: config.qualifiersPerGroup,
+        storedBracketSize: competition.bracketSize,
+      });
       return {
         generated,
         canEdit: !confirmedResultExists,
         confirmedResultExists,
         seed,
+        format: config.format,
         groupCount: config.groupCount,
         qualifiersPerGroup: config.qualifiersPerGroup,
         bracketSize,
-        knockoutRoundCount: bracketRoundCount(bracketSize),
+        knockoutRoundCount:
+          config.format === "round_robin" ? 0 : bracketRoundCount(bracketSize),
         validationErrors,
         groups: persisted.groups.map((group) => ({
           ...group,
@@ -200,17 +239,23 @@ export async function getAdminDrawData({
     }
   }
 
-  const qualifierCount = config.groupCount * config.qualifiersPerGroup;
-  const bracketSize = nextPowerOfTwo(Math.max(2, qualifierCount));
+  const bracketSize = bracketSizeFor(config.format, {
+    entrantCount: entrants.length,
+    groupCount: config.groupCount,
+    qualifiersPerGroup: config.qualifiersPerGroup,
+    storedBracketSize: competition.bracketSize,
+  });
   const fallback: AdminDrawData = {
     generated,
     canEdit: !confirmedResultExists,
     confirmedResultExists,
     seed,
+    format: config.format,
     groupCount: config.groupCount,
     qualifiersPerGroup: config.qualifiersPerGroup,
     bracketSize,
-    knockoutRoundCount: bracketRoundCount(bracketSize),
+    knockoutRoundCount:
+      config.format === "round_robin" ? 0 : bracketRoundCount(bracketSize),
     validationErrors,
     groups: [],
     groupFixtures: [],
@@ -223,9 +268,10 @@ export async function getAdminDrawData({
 
   const plan = buildDrawPlan(entrants, config);
   const entrantNames = new Map(
-    plan.groups.flatMap((group) =>
-      group.entrants.map((entrant) => [entrant.id, entrant.name] as const),
-    ),
+    (plan.groups.length
+      ? plan.groups.flatMap((group) => group.entrants)
+      : entrants
+    ).map((entrant) => [entrant.id, entrant.name] as const),
   );
   const groups: DrawGroupView[] = plan.groups.map((group) => ({
     id: null,
@@ -240,12 +286,17 @@ export async function getAdminDrawData({
 
   return {
     ...fallback,
+    bracketSize: plan.bracketSize,
+    knockoutRoundCount: plan.knockoutRoundCount,
     groups,
     groupFixtures: plan.groupFixtures.map((fixture) => ({
       id: null,
       matchNumber: null,
       stage: "group" as const,
-      groupName: plan.groups[fixture.groupIndex]!.name,
+      groupName:
+        plan.groups.length > 0
+          ? plan.groups[fixture.groupIndex]?.name ?? null
+          : null,
       roundNumber: fixture.roundNumber,
       bracketSlot: null,
       isBye: false,
@@ -271,8 +322,8 @@ export async function getAdminDrawData({
       roundNumber: fixture.roundNumber,
       bracketSlot: fixture.bracketSlot,
       isBye: fixture.isBye,
-      home: side(null, null, toPublicSource(fixture.sources[0])),
-      away: side(null, null, toPublicSource(fixture.sources[1])),
+      home: sideFromSource(fixture.sources[0]),
+      away: sideFromSource(fixture.sources[1]),
       status: "scheduled",
       startsAt: null,
       venueName: null,

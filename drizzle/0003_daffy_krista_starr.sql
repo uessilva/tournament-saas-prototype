@@ -1,0 +1,1 @@
+ALTER TABLE "competitions" ADD COLUMN "bracket_size" integer;

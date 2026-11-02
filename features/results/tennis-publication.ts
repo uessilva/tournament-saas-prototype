@@ -472,7 +472,9 @@ export async function recalculateTennisCompetition(
         (candidate) => candidate.matchId === match.id && candidate.side === side,
       );
       if (!slot) {
-        return null;
+        // Single-elimination first-round sides are stored as direct entries.
+        const teamId = match.entries.find((entry) => entry.side === side)?.teamId;
+        return teamId ? { type: "entrant", teamId } : null;
       }
       if (slot.sourceType === "group_qualifier" && slot.groupId) {
         return {

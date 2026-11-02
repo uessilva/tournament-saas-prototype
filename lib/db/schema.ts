@@ -252,6 +252,7 @@ export const competitions = pgTable(
     }),
     groupCount: integer("group_count").notNull().default(2),
     qualifiersPerGroup: integer("qualifiers_per_group").notNull().default(2),
+    bracketSize: integer("bracket_size"),
     defaultMatchDurationMinutes: integer("default_match_duration_minutes")
       .notNull()
       .default(50),

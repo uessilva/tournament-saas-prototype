@@ -3,7 +3,10 @@ import type {
   FootballStandingRow,
   SeededStandingDraw,
 } from "@/features/competitions/football-standings";
-import type { DrawValidationError } from "@/features/competitions/draw";
+import type {
+  CompetitionFormat,
+  DrawValidationError,
+} from "@/features/competitions/draw";
 import type {
   LeaderRow,
   PublicMatch,
@@ -75,6 +78,7 @@ export type AdminDrawData = {
   canEdit: boolean;
   confirmedResultExists: boolean;
   seed: string;
+  format: CompetitionFormat;
   groupCount: number;
   qualifiersPerGroup: number;
   bracketSize: number;
@@ -97,7 +101,7 @@ export type AdminCompetitionData = {
     name: string;
     slug: string;
     sport: Sport;
-    format: string;
+    format: CompetitionFormat;
     description: string | null;
     eligibilityNotes: string | null;
     birthDateFrom: string | null;
@@ -143,7 +147,7 @@ export type CompetitionPageData = {
     name: string;
     slug: string;
     sport: Sport;
-    format: string;
+    format: CompetitionFormat;
     description: string | null;
     eligibilityNotes: string | null;
     birthDateFrom: string | null;
@@ -164,6 +168,8 @@ export type CompetitionPageData = {
   venues: Array<{ id: string; name: string }>;
   entrants: CompetitionEntrant[];
   groups: CompetitionGroup[];
+  /** Non-bye knockout fixtures, used to render an elimination bracket. */
+  bracket: PublicMatch[];
   results: PublicMatch[];
   upcoming: PublicMatch[];
   cancelled: PublicMatch[];

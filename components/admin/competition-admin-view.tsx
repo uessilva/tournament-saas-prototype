@@ -342,6 +342,10 @@ export function CompetitionAdminView({
   const effectiveRegistrationOpen =
     competition.registrationOpen && !cancelled;
   const formatLabel = t(`format.${competition.format}` as DictionaryKey);
+  const qualifyingPlaces =
+    competition.format === "groups_knockout"
+      ? competition.qualifiersPerGroup
+      : 0;
   const birthRange =
     competition.birthDateFrom || competition.birthDateTo
       ? t("competition.birthRange")
@@ -490,7 +494,9 @@ export function CompetitionAdminView({
                       {t("compAdmin.standingsEyebrow")}
                     </p>
                     <h2 className="display-title mt-2 text-3xl">
-                      {t("compAdmin.standingsTitle")}
+                      {competition.format === "round_robin"
+                        ? t("competition.leagueTable")
+                        : t("compAdmin.standingsTitle")}
                     </h2>
                   </div>
                   <Link
@@ -510,7 +516,7 @@ export function CompetitionAdminView({
                       key={group.id}
                       group={group}
                       sport={competition.sport}
-                      qualifiersPerGroup={competition.qualifiersPerGroup}
+                      qualifiersPerGroup={qualifyingPlaces}
                     />
                   ))}
                 </div>
@@ -541,13 +547,17 @@ export function CompetitionAdminView({
                         : "—",
                   ],
                   [t("competition.birthRangeLabel"), birthRange],
-                  [
-                    t("competition.qualifiers"),
-                    t("competition.qualifiersValue").replace(
-                      "{count}",
-                      String(competition.qualifiersPerGroup),
-                    ),
-                  ],
+                  ...(competition.format === "groups_knockout"
+                    ? [
+                        [
+                          t("competition.qualifiers"),
+                          t("competition.qualifiersValue").replace(
+                            "{count}",
+                            String(competition.qualifiersPerGroup),
+                          ),
+                        ],
+                      ]
+                    : []),
                   [
                     t("competition.defaultDuration"),
                     `${competition.defaultMatchDurationMinutes} ${t("common.minutes")}`,

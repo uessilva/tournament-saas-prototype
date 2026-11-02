@@ -187,6 +187,19 @@ export async function getCompetitionPage(
 
   const results = resultRows.map(mapPublicMatch);
   const competitionGroups = await loadCompetitionStandings(competition);
+  const bracket =
+    competition.format === "single_elimination"
+      ? (
+          await publicMatchQuery()
+            .where(
+              and(
+                eq(matches.competitionId, competition.id),
+                eq(matches.isBye, false),
+              ),
+            )
+            .orderBy(asc(matches.roundNumber), asc(matches.bracketSlot))
+        ).map(mapPublicMatch)
+      : [];
 
   const leaders = await getCompetitionLeaders(competition.id, competition.sport);
 
@@ -261,6 +274,7 @@ export async function getCompetitionPage(
     venues: competitionVenues,
     entrants,
     groups: competitionGroups,
+    bracket,
     results,
     upcoming: upcomingRows.map(mapPublicMatch),
     cancelled: cancelledRows.map(mapPublicMatch),

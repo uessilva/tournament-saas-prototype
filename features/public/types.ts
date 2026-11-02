@@ -21,6 +21,7 @@ export type PublicMatch = {
   competitionName: string;
   competitionSlug: string;
   sport: Sport;
+  format: string;
   stage: "group" | "knockout";
   groupId: string | null;
   groupName: string | null;
@@ -163,6 +164,8 @@ export type PublicCompetitionStandings = {
   drawSeed: string | null;
   drawGeneratedAt: string | null;
   groups: CompetitionGroup[];
+  /** Non-bye knockout fixtures for single-elimination competitions. */
+  fixtures: PublicMatch[];
 };
 
 export type StandingsPageData = {
