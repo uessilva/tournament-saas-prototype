@@ -20,7 +20,11 @@ import {
 import { MatchRow } from "@/components/public/match-row";
 import { useI18n } from "@/lib/i18n/client";
 import { formatTimeZoneLabel } from "@/lib/timezone";
-import { matchRoundLabel, matchSideName } from "@/features/public/labels";
+import {
+  matchRoundLabel,
+  matchScoreDetail,
+  matchSideName,
+} from "@/features/public/labels";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type {
   CompetitionSummary,
@@ -220,7 +224,7 @@ function CompetitionCard({
               {latestAway}
             </p>
             <p className="mt-1 text-xs font-medium text-muted">
-              {latest.scoreDetail}
+              {matchScoreDetail(latest, t)}
             </p>
           </>
         ) : next ? (
@@ -402,7 +406,7 @@ export function EventHubPage({
                         {` · ${matchRoundLabel(latest, t)}`}
                       </p>
                       <p className="mt-1 text-xs font-medium text-green-deep/70">
-                        {latest.scoreDetail}
+                        {matchScoreDetail(latest, t)}
                       </p>
                       <Link
                         href={`/events/${data.event.slug}/competitions/${latest.competitionSlug}`}

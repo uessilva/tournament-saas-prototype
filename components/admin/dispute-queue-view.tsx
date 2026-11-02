@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 
 import { AppTopBar } from "@/components/app-top-bar";
 import {
@@ -12,6 +11,7 @@ import {
   TrophyIcon,
 } from "@/components/icons";
 import { SportTag } from "@/components/public/badges";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { useI18n } from "@/lib/i18n/client";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type {
@@ -30,22 +30,6 @@ function statusTone(status: DisputeRecord["status"]) {
   if (status === "open") return "bg-soft-orange text-clay";
   if (status === "resolved") return "bg-soft-green text-green";
   return "bg-cream text-muted";
-}
-
-function SubmitButton() {
-  const { t } = useI18n();
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="inline-flex items-center justify-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[11px] font-extrabold text-white transition-colors hover:bg-green disabled:cursor-wait disabled:opacity-60"
-    >
-      {pending ? t("disputes.owner.saving") : t("disputes.owner.saveDecision")}
-      {pending ? null : <CheckIcon className="size-3.5" />}
-    </button>
-  );
 }
 
 function MatchLine({ dispute, timezone }: { dispute: DisputeRecord; timezone: string }) {
@@ -198,7 +182,13 @@ function ResolutionForm({
       ) : null}
 
       <div className="mt-3">
-        <SubmitButton />
+        <SubmitButton
+          label={t("disputes.owner.saveDecision")}
+          pendingLabel={t("disputes.owner.saving")}
+          tone="pillDark"
+          arrowClassName="size-3.5"
+          icon={<CheckIcon className="size-3.5" />}
+        />
       </div>
     </form>
   );

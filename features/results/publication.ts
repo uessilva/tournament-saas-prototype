@@ -13,6 +13,7 @@ import {
   planCompetitionAdvancement,
   recalculateCompetition,
 } from "@/features/results/recalculation";
+import { footballWinnerTeamId } from "@/features/results/winner";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -122,17 +123,16 @@ export function validateFootballResult(
     return { valid: false, errors, winnerTeamId: null };
   }
 
-  let winnerTeamId: string | null = null;
-  if (hasPenalties) {
-    winnerTeamId =
-      input.penaltyHome! > input.penaltyAway!
-        ? context.homeTeamId
-        : context.awayTeamId;
-  } else if (input.homeScore > input.awayScore) {
-    winnerTeamId = context.homeTeamId;
-  } else if (input.awayScore > input.homeScore) {
-    winnerTeamId = context.awayTeamId;
-  }
+  const winnerTeamId = footballWinnerTeamId({
+    homeTeamId: context.homeTeamId,
+    awayTeamId: context.awayTeamId,
+    homeScore: input.homeScore,
+    awayScore: input.awayScore,
+    isWalkover: false,
+    walkoverWinnerTeamId: null,
+    penaltyHome: input.penaltyHome ?? null,
+    penaltyAway: input.penaltyAway ?? null,
+  });
 
   return { valid: true, errors, winnerTeamId };
 }
@@ -222,13 +222,15 @@ export async function publishFootballResult(
     // result depends on it. Owners repair reverse order by reopening first.
     const plan = await planCompetitionAdvancement(tx, match.competitionId, {
       matchId: match.id,
-      homeScore: input.result.homeScore,
-      awayScore: input.result.awayScore,
-      isWalkover: Boolean(input.result.isWalkover),
-      walkoverWinnerSide: input.result.walkoverWinnerSide ?? null,
-      penaltyHome: input.result.penaltyHome ?? null,
-      penaltyAway: input.result.penaltyAway ?? null,
       winnerTeamId: validation.winnerTeamId,
+      football: {
+        homeScore: input.result.homeScore,
+        awayScore: input.result.awayScore,
+        isWalkover: Boolean(input.result.isWalkover),
+        walkoverWinnerSide: input.result.walkoverWinnerSide ?? null,
+        penaltyHome: input.result.penaltyHome ?? null,
+        penaltyAway: input.result.penaltyAway ?? null,
+      },
     });
     if (plan.blockedMatchIds.length) {
       throw new ResultPublicationError("downstream_result_exists");

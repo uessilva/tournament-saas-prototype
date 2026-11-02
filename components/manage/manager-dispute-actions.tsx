@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 
-import { ArrowRightIcon, LockIcon } from "@/components/icons";
+import { LockIcon } from "@/components/icons";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { useI18n } from "@/lib/i18n/client";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type { DisputeRecord } from "@/features/disputes/queries";
@@ -19,22 +19,6 @@ function statusTone(status: DisputeRecord["status"]) {
   if (status === "open") return "bg-soft-orange text-clay";
   if (status === "resolved") return "bg-soft-green text-green";
   return "bg-cream text-muted";
-}
-
-function SubmitButton() {
-  const { t } = useI18n();
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="inline-flex items-center justify-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-[11px] font-extrabold text-white transition-colors hover:bg-green disabled:cursor-wait disabled:opacity-60"
-    >
-      {pending ? t("disputes.manager.opening") : t("disputes.manager.openAction")}
-      {pending ? null : <ArrowRightIcon className="size-3" />}
-    </button>
-  );
 }
 
 function DisputeHistoryItem({ dispute }: { dispute: DisputeRecord }) {
@@ -241,7 +225,12 @@ export function ManagerDisputeActions({
             </p>
           ) : null}
 
-          <SubmitButton />
+          <SubmitButton
+            label={t("disputes.manager.openAction")}
+            pendingLabel={t("disputes.manager.opening")}
+            tone="pillDark"
+            arrowClassName="size-3"
+          />
         </form>
       )}
 

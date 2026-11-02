@@ -128,6 +128,17 @@ async function loadMatchContext(matchId: string): Promise<MatchContext | null> {
   };
 }
 
+async function loadEventMatchContext(
+  eventId: string,
+  matchId: string,
+): Promise<MatchContext | null> {
+  const context = await loadMatchContext(matchId);
+  if (!context || context.event.id !== eventId) {
+    return null;
+  }
+  return context;
+}
+
 async function authorizeMatch(matchId: string) {
   const user = await getCurrentUser();
   if (!user) {
@@ -164,6 +175,18 @@ async function authorizeMatch(matchId: string) {
   }
 
   return { user, context, isOwner, isManager };
+}
+
+function cancelledCompetitionError(): ScoresheetActionState {
+  return { status: "error", code: "competition_cancelled" };
+}
+
+function matchNotPlayableError(): ScoresheetActionState {
+  return { status: "error", code: "match_not_playable" };
+}
+
+function resultAlreadyPublishedError(): ScoresheetActionState {
+  return { status: "error", code: "result_already_published" };
 }
 
 function revalidateResults(context: MatchContext) {
@@ -329,7 +352,7 @@ export async function uploadScoresheetAction(
   const { user, context, isOwner } = authorization;
 
   if (context.competition.status === "cancelled") {
-    return { status: "error", code: "competition_cancelled" };
+    return cancelledCompetitionError();
   }
 
   if (context.match.status === "published" || context.match.status === "cancelled") {
@@ -526,20 +549,19 @@ export async function saveReviewAction(
     return { status: "error", code: "scoresheet_not_found" };
   }
 
-  const { user } = await requireEventOwner(
-    String(formData.get("eventId") ?? ""),
-  );
-  const context = await loadMatchContext(sheet.matchId);
+  const eventId = String(formData.get("eventId") ?? "");
+  const { user } = await requireEventOwner(eventId);
+  const context = await loadEventMatchContext(eventId, sheet.matchId);
   if (!context) {
     return { status: "error", code: "match_not_found" };
   }
 
   if (context.competition.status === "cancelled") {
-    return { status: "error", code: "competition_cancelled" };
+    return cancelledCompetitionError();
   }
 
   if (context.match.status === "cancelled") {
-    return { status: "error", code: "match_not_playable" };
+    return matchNotPlayableError();
   }
 
   let editCount = 0;
@@ -636,21 +658,21 @@ export async function confirmScoresheetAction(
     return { status: "error", code: "scoresheet_not_found" };
   }
 
-  const context = await loadMatchContext(sheet.matchId);
+  const context = await loadEventMatchContext(eventId, sheet.matchId);
   if (!context) {
     return { status: "error", code: "match_not_found" };
   }
 
   if (context.competition.status === "cancelled") {
-    return { status: "error", code: "competition_cancelled" };
+    return cancelledCompetitionError();
   }
 
   if (context.match.status === "published") {
-    return { status: "error", code: "result_already_published" };
+    return resultAlreadyPublishedError();
   }
 
   if (context.match.status === "cancelled") {
-    return { status: "error", code: "match_not_playable" };
+    return matchNotPlayableError();
   }
 
   const isTennis = context.competition.sport === "tennis";
@@ -825,20 +847,20 @@ export async function rejectScoresheetAction(
   if (!sheet) {
     return { status: "error", code: "scoresheet_not_found" };
   }
-  const context = await loadMatchContext(sheet.matchId);
+  const context = await loadEventMatchContext(eventId, sheet.matchId);
   if (!context) {
     return { status: "error", code: "match_not_found" };
   }
   if (context.competition.status === "cancelled") {
-    return { status: "error", code: "competition_cancelled" };
+    return cancelledCompetitionError();
   }
 
   if (context.match.status === "published") {
-    return { status: "error", code: "result_already_published" };
+    return resultAlreadyPublishedError();
   }
 
   if (context.match.status === "cancelled") {
-    return { status: "error", code: "match_not_playable" };
+    return matchNotPlayableError();
   }
 
   const now = new Date();
@@ -892,20 +914,20 @@ export async function retryExtractionAction(
     return { status: "error", code: "scoresheet_not_found" };
   }
 
-  const context = await loadMatchContext(sheet.matchId);
+  const context = await loadEventMatchContext(eventId, sheet.matchId);
   if (!context) {
     return { status: "error", code: "match_not_found" };
   }
   if (context.competition.status === "cancelled") {
-    return { status: "error", code: "competition_cancelled" };
+    return cancelledCompetitionError();
   }
 
   if (context.match.status === "published") {
-    return { status: "error", code: "result_already_published" };
+    return resultAlreadyPublishedError();
   }
 
   if (context.match.status === "cancelled") {
-    return { status: "error", code: "match_not_playable" };
+    return matchNotPlayableError();
   }
 
   await db.transaction(async (tx) => {
@@ -955,11 +977,11 @@ export async function manualResultAction(
   }
 
   if (context.competition.status === "cancelled") {
-    return { status: "error", code: "competition_cancelled" };
+    return cancelledCompetitionError();
   }
 
   if (context.match.status === "cancelled") {
-    return { status: "error", code: "match_not_playable" };
+    return matchNotPlayableError();
   }
 
   const isTennis = context.competition.sport === "tennis";
@@ -1144,7 +1166,7 @@ export async function correctFootballResultAction(
     return { status: "error", code: "wrong_sport" };
   }
   if (context.competition.status === "cancelled") {
-    return { status: "error", code: "competition_cancelled" };
+    return cancelledCompetitionError();
   }
   if (context.match.status !== "published") {
     return { status: "error", code: "result_not_published" };
@@ -1288,7 +1310,7 @@ export async function reopenFootballResultAction(
     return { status: "error", code: "wrong_sport" };
   }
   if (context.competition.status === "cancelled") {
-    return { status: "error", code: "competition_cancelled" };
+    return cancelledCompetitionError();
   }
   if (context.match.status !== "published") {
     return { status: "error", code: "result_not_published" };

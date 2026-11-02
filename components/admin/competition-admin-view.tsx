@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 
 import { AppTopBar } from "@/components/app-top-bar";
 import { CompetitionLifecyclePanel } from "@/components/admin/competition-lifecycle-panel";
@@ -13,7 +12,6 @@ import {
   ArrowRightIcon,
   ArrowUpRightIcon,
   CalendarIcon,
-  CheckIcon,
   ClockIcon,
   LockIcon,
   MailIcon,
@@ -24,6 +22,8 @@ import {
   RegistrationBadge,
   SportTag,
 } from "@/components/public/badges";
+import { ActionFeedback } from "@/components/ui/action-feedback";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { useI18n } from "@/lib/i18n/client";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type { DemoAccount } from "@/lib/auth/guards";
@@ -31,6 +31,7 @@ import { switchDemoAccount } from "@/features/auth/actions";
 import {
   deadlineAction,
   registrationStateAction,
+  saveCompetitionConfigurationAction,
   type CompetitionAdminActionState,
 } from "@/features/competitions/admin-actions";
 import type { CompetitionLifecycleEvent } from "@/features/competitions/lifecycle-queries";
@@ -38,75 +39,38 @@ import type { AdminCompetitionData } from "@/features/competitions/types";
 
 const EMPTY_STATE: CompetitionAdminActionState = { status: "idle" };
 
-function SubmitButton({
-  label,
-  pendingLabel,
-  tone = "primary",
-  disabled,
+function CompetitionAdminFeedback({
+  state,
 }: {
-  label: string;
-  pendingLabel: string;
-  tone?: "primary" | "dark" | "quiet" | "danger";
-  disabled?: boolean;
+  state: CompetitionAdminActionState;
 }) {
-  const { pending } = useFormStatus();
-  const className =
-    tone === "dark"
-      ? "inline-flex items-center justify-center gap-1.5 rounded-xl bg-ink px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green disabled:cursor-not-allowed disabled:opacity-60"
-      : tone === "quiet"
-        ? "inline-flex items-center justify-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-[11px] font-extrabold text-muted transition-colors hover:border-green hover:text-green disabled:cursor-not-allowed disabled:opacity-60"
-        : tone === "danger"
-          ? "inline-flex items-center justify-center gap-1.5 rounded-xl bg-clay px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-          : "inline-flex items-center justify-center gap-1.5 rounded-xl bg-green px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green-deep disabled:cursor-not-allowed disabled:opacity-60";
-
-  return (
-    <button
-      type="submit"
-      disabled={pending || disabled}
-      className={className}
-    >
-      {pending ? pendingLabel : label}
-      {pending ? null : <ArrowRightIcon className="size-3.5" />}
-    </button>
-  );
-}
-
-function ActionFeedback({ state }: { state: CompetitionAdminActionState }) {
   const { t } = useI18n();
-  if (state.status === "idle") {
-    return null;
-  }
 
-  if (state.status === "error") {
-    const keyByCode: Record<string, DictionaryKey> = {
-      reopen_after_generation: "compAdmin.reopenAfterGeneration",
-      deadline_passed: "compAdmin.deadlinePassedHint",
-      action_failed: "compAdmin.actionFailed",
-      competition_cancelled: "compLifecycle.mutationsBlocked",
-    };
-    return (
-      <p role="alert" className="mt-2 text-xs font-bold text-red-700">
-        {t(keyByCode[state.code ?? ""] ?? "compAdmin.actionFailed")}
-      </p>
-    );
-  }
-
-  const keyByCode: Record<string, DictionaryKey> = {
-    registration_closed: "compAdmin.registrationClosedNotice",
-    registration_opened: "compAdmin.registrationOpenedNotice",
-    deadline_saved: "compAdmin.deadlineSaved",
-    deadline_extended: "compAdmin.deadlineExtended",
-    deadline_cleared: "compAdmin.deadlineCleared",
-  };
+  const keyByCode: Record<string, DictionaryKey> =
+    state.status === "error"
+      ? {
+          reopen_after_generation: "compAdmin.reopenAfterGeneration",
+          deadline_passed: "compAdmin.deadlinePassedHint",
+          action_failed: "compAdmin.actionFailed",
+          competition_cancelled: "compLifecycle.mutationsBlocked",
+          fix_errors: "compAdmin.configFixErrors",
+          sport_locked: "compAdmin.sportLocked",
+          configuration_locked: "compAdmin.configurationLocked",
+        }
+      : {
+          registration_closed: "compAdmin.registrationClosedNotice",
+          registration_opened: "compAdmin.registrationOpenedNotice",
+          deadline_saved: "compAdmin.deadlineSaved",
+          deadline_extended: "compAdmin.deadlineExtended",
+          deadline_cleared: "compAdmin.deadlineCleared",
+          configuration_saved: "compAdmin.configurationSaved",
+        };
 
   return (
-    <p
-      role="status"
-      className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-soft-green px-2.5 py-1.5 text-[11px] font-extrabold text-green"
-    >
-      <CheckIcon className="size-3.5" />
-      {t(keyByCode[state.code ?? ""] ?? "compAdmin.actionFailed")}
-    </p>
+    <ActionFeedback
+      status={state.status}
+      message={t(keyByCode[state.code ?? ""] ?? "compAdmin.actionFailed")}
+    />
   );
 }
 
@@ -203,7 +167,204 @@ function RegistrationStateCard({ data }: { data: AdminCompetitionData }) {
           {t("compAdmin.deadlinePassedHint")}
         </p>
       ) : null}
-      <ActionFeedback state={state} />
+      <CompetitionAdminFeedback state={state} />
+    </section>
+  );
+}
+
+function ConfigurationEditor({ data }: { data: AdminCompetitionData }) {
+  const { t } = useI18n();
+  const [state, action] = useActionState(
+    saveCompetitionConfigurationAction,
+    EMPTY_STATE,
+  );
+  const competition = data.competition;
+  const cancelled = competition.status === "cancelled";
+  const sportLocked = cancelled || data.counts.entrants > 0;
+  const eligibilityLocked =
+    cancelled || data.draw.generated || data.draw.confirmedResultExists;
+  const durationLocked = cancelled || data.draw.confirmedResultExists;
+  const inputClass =
+    "mt-1.5 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold focus:border-green focus:bg-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-60";
+  const labelClass =
+    "text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted";
+
+  return (
+    <section id="configuration" className="surface p-5 sm:p-6">
+      <p className="eyebrow text-green">{t("compAdmin.configEyebrow")}</p>
+      <h2 className="display-title mt-2 text-2xl">
+        {t("compAdmin.configTitle")}
+      </h2>
+      <p className="mt-1.5 text-xs leading-5 text-muted">
+        {t("compAdmin.configBody")}
+      </p>
+
+      <form
+        key={state.status === "success" ? state.code : "config-form"}
+        action={action}
+        className="mt-4 space-y-4"
+      >
+        <input type="hidden" name="eventId" value={data.event.id} />
+        <input type="hidden" name="competitionId" value={competition.id} />
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor="competition-sport" className={labelClass}>
+              {t("competition.sport")}
+            </label>
+            <select
+              id="competition-sport"
+              name="sport"
+              defaultValue={competition.sport}
+              disabled={sportLocked}
+              className={inputClass}
+            >
+              <option value="football">{t("competition.football")}</option>
+              <option value="tennis">{t("competition.tennis")}</option>
+            </select>
+            {sportLocked ? (
+              <p className="mt-1 text-[10px] font-semibold text-clay">
+                {cancelled
+                  ? t("compLifecycle.mutationsBlocked")
+                  : t("compAdmin.sportLocked")}
+              </p>
+            ) : null}
+          </div>
+
+          <div>
+            <label
+              htmlFor="competition-duration"
+              className={labelClass}
+            >
+              {t("competition.defaultDuration")}
+            </label>
+            <input
+              id="competition-duration"
+              name="defaultMatchDurationMinutes"
+              type="number"
+              min={1}
+              max={600}
+              defaultValue={competition.defaultMatchDurationMinutes}
+              disabled={durationLocked}
+              className={inputClass}
+            />
+            {state.fieldErrors?.defaultMatchDurationMinutes ? (
+              <p role="alert" className="mt-1 text-xs font-bold text-red-700">
+                {t("compAdmin.durationInvalid")}
+              </p>
+            ) : durationLocked && !cancelled ? (
+              <p className="mt-1 text-[10px] font-semibold text-clay">
+                {t("compAdmin.configurationLocked")}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor="birth-date-from" className={labelClass}>
+              {t("compAdmin.birthDateFrom")}
+            </label>
+            <input
+              id="birth-date-from"
+              name="birthDateFrom"
+              type="date"
+              defaultValue={competition.birthDateFrom ?? ""}
+              disabled={eligibilityLocked}
+              className={inputClass}
+            />
+            {state.fieldErrors?.birthDateFrom ? (
+              <p role="alert" className="mt-1 text-xs font-bold text-red-700">
+                {t("compAdmin.dateInvalid")}
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <label htmlFor="birth-date-to" className={labelClass}>
+              {t("compAdmin.birthDateTo")}
+            </label>
+            <input
+              id="birth-date-to"
+              name="birthDateTo"
+              type="date"
+              defaultValue={competition.birthDateTo ?? ""}
+              disabled={eligibilityLocked}
+              className={inputClass}
+            />
+            {state.fieldErrors?.birthDateTo ? (
+              <p role="alert" className="mt-1 text-xs font-bold text-red-700">
+                {state.fieldErrors.birthDateTo === "before_from"
+                  ? t("compAdmin.dateRangeInvalid")
+                  : t("compAdmin.dateInvalid")}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor="roster-min" className={labelClass}>
+              {t("compAdmin.rosterMin")}
+            </label>
+            <input
+              id="roster-min"
+              name="rosterMin"
+              type="number"
+              min={1}
+              max={99}
+              defaultValue={competition.rosterMin ?? ""}
+              disabled={eligibilityLocked}
+              className={inputClass}
+            />
+            {state.fieldErrors?.rosterMin ? (
+              <p role="alert" className="mt-1 text-xs font-bold text-red-700">
+                {t("compAdmin.rosterInvalid")}
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <label htmlFor="roster-max" className={labelClass}>
+              {t("compAdmin.rosterMax")}
+            </label>
+            <input
+              id="roster-max"
+              name="rosterMax"
+              type="number"
+              min={1}
+              max={99}
+              defaultValue={competition.rosterMax ?? ""}
+              disabled={eligibilityLocked}
+              className={inputClass}
+            />
+            {state.fieldErrors?.rosterMax ? (
+              <p role="alert" className="mt-1 text-xs font-bold text-red-700">
+                {state.fieldErrors.rosterMax === "before_min"
+                  ? t("compAdmin.rosterRangeInvalid")
+                  : t("compAdmin.rosterInvalid")}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        {eligibilityLocked && !cancelled ? (
+          <p className="rounded-lg bg-soft-orange px-2.5 py-1.5 text-[11px] font-bold text-clay">
+            {t("compAdmin.eligibilityLocked")}
+          </p>
+        ) : null}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <SubmitButton
+            label={t("compAdmin.saveConfiguration")}
+            pendingLabel={t("common.loading")}
+            tone="dark"
+            disabled={cancelled}
+          />
+          <span className="text-[11px] font-semibold text-muted">
+            {t("compAdmin.configHint")}
+          </span>
+        </div>
+      </form>
+      <CompetitionAdminFeedback state={state} />
     </section>
   );
 }
@@ -301,7 +462,7 @@ function DeadlineEditor({ data }: { data: AdminCompetitionData }) {
           />
         </form>
       </div>
-      <ActionFeedback state={state} />
+      <CompetitionAdminFeedback state={state} />
     </section>
   );
 }
@@ -480,6 +641,8 @@ export function CompetitionAdminView({
         <div className="mt-6 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="min-w-0 space-y-5">
             <RegistrationStateCard data={data} />
+
+            <ConfigurationEditor data={data} />
 
             <DrawAdminPanel data={data} />
 

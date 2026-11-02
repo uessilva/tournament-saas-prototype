@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { useFormStatus } from "react-dom";
 
 import {
   CheckIcon,
@@ -9,6 +8,7 @@ import {
   PlusIcon,
   ShirtIcon,
 } from "@/components/icons";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { useI18n } from "@/lib/i18n/client";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import {
@@ -86,30 +86,6 @@ function FormFeedback({
     <p id={id} role="alert" className="mt-2 text-xs font-bold text-red-700">
       {key ? t(key) : t("manage.actionFailed")}
     </p>
-  );
-}
-
-function SubmitButton({
-  label,
-  pendingLabel,
-  tone = "primary",
-}: {
-  label: string;
-  pendingLabel: string;
-  tone?: "primary" | "quiet" | "danger";
-}) {
-  const { pending } = useFormStatus();
-  const className =
-    tone === "primary"
-      ? "inline-flex items-center justify-center gap-1.5 rounded-xl bg-ink px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green disabled:cursor-wait disabled:opacity-70"
-      : tone === "danger"
-        ? "inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-extrabold text-muted transition-colors hover:bg-red-50 hover:text-red-700 disabled:cursor-wait disabled:opacity-60"
-        : "inline-flex items-center justify-center gap-1.5 rounded-lg border border-line bg-white px-2.5 py-1.5 text-[11px] font-extrabold text-muted transition-colors hover:border-green hover:text-green disabled:cursor-wait disabled:opacity-60";
-
-  return (
-    <button type="submit" disabled={pending} className={className}>
-      {pending ? pendingLabel : label}
-    </button>
   );
 }
 
@@ -283,8 +259,10 @@ function ParticipantRow({
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <SubmitButton
+                icon={false}
                 label={t("manage.saveParticipant")}
                 pendingLabel={t("manage.saving")}
+              tone="ink"
               />
               <button
                 type="button"
@@ -363,9 +341,10 @@ function ParticipantRow({
                   value={participant.id}
                 />
                 <SubmitButton
+                  icon={false}
                   label={t("manage.remove")}
                   pendingLabel={t("manage.removing")}
-                  tone="danger"
+                  tone="ghostDanger"
                 />
               </form>
             </>
@@ -518,8 +497,10 @@ export function RosterEditor({
             ) : null}
             <div className="flex flex-wrap items-center gap-2">
               <SubmitButton
+                icon={false}
                 label={t("manage.addParticipant")}
                 pendingLabel={t("manage.adding")}
+              tone="ink"
               />
               {rosterMax != null ? (
                 <span className="text-[11px] font-semibold text-muted">

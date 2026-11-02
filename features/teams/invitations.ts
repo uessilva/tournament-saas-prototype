@@ -43,8 +43,13 @@ export function deriveInvitationStatus(
   return invitation.kind === "email" ? "pending" : "active";
 }
 
-async function loadInvitationTeams(invitationId: string) {
-  const rows = await db
+type InvitationTeamQuery = Pick<typeof db, "select">;
+
+async function loadInvitationTeamsWith(
+  query: InvitationTeamQuery,
+  invitationId: string,
+) {
+  const rows = await query
     .select({
       id: teams.id,
       name: teams.name,
@@ -58,6 +63,10 @@ async function loadInvitationTeams(invitationId: string) {
     .orderBy(teams.name);
 
   return rows satisfies AccessTeamRef[];
+}
+
+async function loadInvitationTeams(invitationId: string) {
+  return loadInvitationTeamsWith(db, invitationId);
 }
 
 export async function getInvitationViewByToken(
@@ -156,18 +165,10 @@ export async function redeemInvitation(
 
     if (invitation.kind === "email" && invitation.acceptedAt) {
       if (invitation.acceptedByUserId === user.id) {
-        const repeatedTeams = await tx
-          .select({
-            id: teams.id,
-            name: teams.name,
-            sport: competitions.sport,
-            competitionName: competitions.name,
-          })
-          .from(invitationTeams)
-          .innerJoin(teams, eq(invitationTeams.teamId, teams.id))
-          .innerJoin(competitions, eq(teams.competitionId, competitions.id))
-          .where(eq(invitationTeams.invitationId, invitation.id))
-          .orderBy(teams.name);
+        const repeatedTeams = await loadInvitationTeamsWith(
+          tx,
+          invitation.id,
+        );
 
         return {
           ok: true,
@@ -210,18 +211,7 @@ export async function redeemInvitation(
       }
     }
 
-    const teamRows = await tx
-      .select({
-        id: teams.id,
-        name: teams.name,
-        sport: competitions.sport,
-        competitionName: competitions.name,
-      })
-      .from(invitationTeams)
-      .innerJoin(teams, eq(invitationTeams.teamId, teams.id))
-      .innerJoin(competitions, eq(teams.competitionId, competitions.id))
-      .where(eq(invitationTeams.invitationId, invitation.id))
-      .orderBy(teams.name);
+    const teamRows = await loadInvitationTeamsWith(tx, invitation.id);
 
     if (!teamRows.length) {
       return { ok: false, reason: "no_teams" };

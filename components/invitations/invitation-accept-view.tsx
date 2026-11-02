@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useFormStatus } from "react-dom";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import {
@@ -13,6 +12,7 @@ import {
   UsersIcon,
 } from "@/components/icons";
 import { SportTag } from "@/components/public/badges";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { useI18n } from "@/lib/i18n/client";
 import {
   acceptInvitationAction,
@@ -20,33 +20,6 @@ import {
   switchInvitationAccountAction,
 } from "@/features/teams/access-actions";
 import type { InvitationView } from "@/features/teams/types";
-
-function SubmitButton({
-  label,
-  pendingLabel,
-  tone = "primary",
-}: {
-  label: string;
-  pendingLabel: string;
-  tone?: "primary" | "secondary";
-}) {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className={
-        tone === "primary"
-          ? "inline-flex w-full items-center justify-center gap-2 rounded-xl bg-ink px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-green disabled:cursor-wait disabled:opacity-70 sm:w-auto"
-          : "inline-flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-5 py-3 text-sm font-extrabold text-ink transition-colors hover:border-green hover:text-green disabled:cursor-wait disabled:opacity-70 sm:w-auto"
-      }
-    >
-      {pending ? pendingLabel : label}
-      {pending ? null : <ArrowRightIcon className="size-4" />}
-    </button>
-  );
-}
 
 function ErrorCard({
   title,
@@ -304,6 +277,8 @@ export function InvitationAcceptView({
           <form action={beginInvitationSignInAction} className="mt-5">
             <input type="hidden" name="token" value={token} />
             <SubmitButton
+              tone="invitePrimary"
+              arrowClassName="size-4"
               label={t("invite.signInToAccept")}
               pendingLabel={t("common.loading")}
             />
@@ -331,6 +306,8 @@ export function InvitationAcceptView({
           <input type="hidden" name="token" value={token} />
           <input type="hidden" name="returnPath" value={returnPath} />
           <SubmitButton
+            tone="invitePrimary"
+            arrowClassName="size-4"
             label={t("invite.accept")}
             pendingLabel={t("invite.accepting")}
           />
@@ -358,6 +335,8 @@ export function InvitationAcceptView({
           <input type="hidden" name="token" value={token} />
           <input type="hidden" name="returnPath" value={returnPath} />
           <SubmitButton
+            tone="invitePrimary"
+            arrowClassName="size-4"
             label={t("invite.accept")}
             pendingLabel={t("invite.accepting")}
           />

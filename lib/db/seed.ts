@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 
 import { sql } from "drizzle-orm";
 
+import { calculateTennisStandings } from "@/features/competitions/tennis-standings";
 import { db } from "./client";
 import {
   DEMO_EVENT_ID,
@@ -416,6 +417,7 @@ export async function resetDemoData(): Promise<DemoResetSummary> {
         registrationState: "closed",
         groupCount: 2,
         qualifiersPerGroup: 2,
+        bracketSize: 4,
         defaultMatchDurationMinutes: 90,
         drawSeed: "summer-cup-tennis-2026",
         drawGeneratedAt: addDays(now, -3),
@@ -767,6 +769,106 @@ export async function resetDemoData(): Promise<DemoResetSummary> {
     });
     await tx.insert(t.matchEntries).values(matchEntryValues);
 
+    // Tennis knockout bracket: semifinals from crossed group qualifiers and a
+    // final fed by both semifinal winners. Semifinal entrants are filled from
+    // the seeded partial group results below; the final deliberately stays TBD.
+    const tennisKnockoutRows = await tx
+      .insert(t.matches)
+      .values([
+        {
+          competitionId: DEMO_TENNIS_COMPETITION_ID,
+          groupId: null,
+          venueId: venueBySlug.get("quadra-central"),
+          stage: "knockout" as const,
+          roundLabel: null,
+          roundNumber: 1,
+          bracketSlot: 1,
+          matchNumber: 13,
+          startsAt: atUtc(now, 2, 14, 0),
+          durationMinutes: 90,
+          status: "scheduled" as const,
+          isBye: false,
+        },
+        {
+          competitionId: DEMO_TENNIS_COMPETITION_ID,
+          groupId: null,
+          venueId: venueBySlug.get("quadra-central"),
+          stage: "knockout" as const,
+          roundLabel: null,
+          roundNumber: 1,
+          bracketSlot: 2,
+          matchNumber: 14,
+          startsAt: atUtc(now, 2, 16, 0),
+          durationMinutes: 90,
+          status: "scheduled" as const,
+          isBye: false,
+        },
+        {
+          competitionId: DEMO_TENNIS_COMPETITION_ID,
+          groupId: null,
+          venueId: venueBySlug.get("quadra-central"),
+          stage: "knockout" as const,
+          roundLabel: null,
+          roundNumber: 2,
+          bracketSlot: 1,
+          matchNumber: 15,
+          startsAt: atUtc(now, 3, 15, 0),
+          durationMinutes: 90,
+          status: "scheduled" as const,
+          isBye: false,
+        },
+      ])
+      .returning({ id: t.matches.id, matchNumber: t.matches.matchNumber });
+
+    const tennisKnockoutByNumber = new Map(
+      tennisKnockoutRows.map((match) => [match.matchNumber, match.id]),
+    );
+    const tennisGroupAId = tennisGroupRows[0]!.id;
+    const tennisGroupBId = tennisGroupRows[1]!.id;
+
+    await tx.insert(t.matchSlots).values([
+      {
+        matchId: tennisKnockoutByNumber.get(13)!,
+        side: "home",
+        sourceType: "group_qualifier",
+        groupId: tennisGroupAId,
+        groupPosition: 1,
+      },
+      {
+        matchId: tennisKnockoutByNumber.get(13)!,
+        side: "away",
+        sourceType: "group_qualifier",
+        groupId: tennisGroupBId,
+        groupPosition: 2,
+      },
+      {
+        matchId: tennisKnockoutByNumber.get(14)!,
+        side: "home",
+        sourceType: "group_qualifier",
+        groupId: tennisGroupBId,
+        groupPosition: 1,
+      },
+      {
+        matchId: tennisKnockoutByNumber.get(14)!,
+        side: "away",
+        sourceType: "group_qualifier",
+        groupId: tennisGroupAId,
+        groupPosition: 2,
+      },
+      {
+        matchId: tennisKnockoutByNumber.get(15)!,
+        side: "home",
+        sourceType: "match_winner",
+        sourceMatchId: tennisKnockoutByNumber.get(13)!,
+      },
+      {
+        matchId: tennisKnockoutByNumber.get(15)!,
+        side: "away",
+        sourceType: "match_winner",
+        sourceMatchId: tennisKnockoutByNumber.get(14)!,
+      },
+    ]);
+
     const tennisParticipantByTeam = new Map(
       allParticipantRows
         .filter((participant) => {
@@ -778,6 +880,14 @@ export async function resetDemoData(): Promise<DemoResetSummary> {
     let publishedResults = 0;
     const statisticsValues: Array<typeof t.participantStatistics.$inferInsert> =
       [];
+    const publishedTennisMatches: Array<{
+      groupIndex: number;
+      homeTeamId: string;
+      awayTeamId: string;
+      winnerTeamId: string;
+      sets: ReturnType<typeof tennisSetsFor>;
+      isWalkover: boolean;
+    }> = [];
 
     for (let index = 0; index < matchSpecs.length; index += 1) {
       const spec = matchSpecs[index]!;
@@ -793,6 +903,14 @@ export async function resetDemoData(): Promise<DemoResetSummary> {
       const winnerTeamId = homeWon ? homeTeamId : awayTeamId;
       const sets = tennisSetsFor(index, homeWon);
       const resultId = randomUUID();
+      publishedTennisMatches.push({
+        groupIndex: spec.groupIndex,
+        homeTeamId,
+        awayTeamId,
+        winnerTeamId,
+        sets,
+        isWalkover: false,
+      });
 
       await tx.insert(t.resultVersions).values({
         id: resultId,
@@ -845,6 +963,70 @@ export async function resetDemoData(): Promise<DemoResetSummary> {
 
     if (statisticsValues.length) {
       await tx.insert(t.participantStatistics).values(statisticsValues);
+    }
+
+    const tennisQualifiers: Array<[string | null, string | null]> = [];
+    for (let groupIndex = 0; groupIndex < 2; groupIndex += 1) {
+      const groupTeamIds = tennisTeamIds.slice(groupIndex * 4, groupIndex * 4 + 4);
+      const standings = calculateTennisStandings(
+        groupTeamIds.map((teamId, position) => ({
+          teamId,
+          teamName:
+            TENNIS_PLAYERS[groupIndex * 4 + position] ?? teamId,
+          seedPosition: position + 1,
+        })),
+        publishedTennisMatches
+          .filter((match) => match.groupIndex === groupIndex)
+          .map((match) => ({
+            homeTeamId: match.homeTeamId,
+            awayTeamId: match.awayTeamId,
+            winnerTeamId: match.winnerTeamId,
+            sets: match.sets,
+            isWalkover: match.isWalkover,
+          })),
+        "summer-cup-tennis-2026",
+      );
+      tennisQualifiers.push([
+        standings[0]?.teamId ?? null,
+        standings[1]?.teamId ?? null,
+      ]);
+    }
+
+    const tennisKnockoutEntries: Array<typeof t.matchEntries.$inferInsert> = [];
+    const semiFinals = [
+      {
+        matchNumber: 13,
+        home: tennisQualifiers[0]?.[0] ?? null,
+        away: tennisQualifiers[1]?.[1] ?? null,
+      },
+      {
+        matchNumber: 14,
+        home: tennisQualifiers[1]?.[0] ?? null,
+        away: tennisQualifiers[0]?.[1] ?? null,
+      },
+    ];
+    for (const semiFinal of semiFinals) {
+      const matchId = tennisKnockoutByNumber.get(semiFinal.matchNumber);
+      if (!matchId) {
+        continue;
+      }
+      if (semiFinal.home) {
+        tennisKnockoutEntries.push({
+          matchId,
+          side: "home",
+          teamId: semiFinal.home,
+        });
+      }
+      if (semiFinal.away) {
+        tennisKnockoutEntries.push({
+          matchId,
+          side: "away",
+          teamId: semiFinal.away,
+        });
+      }
+    }
+    if (tennisKnockoutEntries.length) {
+      await tx.insert(t.matchEntries).values(tennisKnockoutEntries);
     }
 
     // Access history and audit trail ---------------------------------------
@@ -920,7 +1102,7 @@ export async function resetDemoData(): Promise<DemoResetSummary> {
         users: 1 + DEMO_MANAGER_ACCOUNTS.length,
         teams: FOOTBALL_TEAM_NAMES.length + TENNIS_PLAYERS.length,
         participants: participantValues.length + tennisParticipantValues.length,
-        matches: matchSpecs.length,
+        matches: matchSpecs.length + tennisKnockoutRows.length,
         publishedResults,
         pendingInvitations: PENDING_TEAM_INDICES.size,
       },

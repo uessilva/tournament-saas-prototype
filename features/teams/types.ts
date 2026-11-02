@@ -119,6 +119,16 @@ export type AccessHistoryEntry = {
   teams: string[];
 };
 
+export type EventEmailJob = {
+  id: string;
+  status: string;
+  attempts: number;
+  lastError: string | null;
+  createdAt: string;
+  recipient: string | null;
+  invitationId: string | null;
+};
+
 export type EventAccessData = {
   event: {
     id: string;
@@ -129,11 +139,13 @@ export type EventAccessData = {
   teams: EventTeamAccess[];
   invitations: EventInvitation[];
   history: AccessHistoryEntry[];
+  failedEmailJobs: EventEmailJob[];
   counts: {
     teams: number;
     managers: number;
     pendingEmailInvitations: number;
     activeLinks: number;
+    failedEmailJobs: number;
   };
 };
 

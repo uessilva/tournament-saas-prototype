@@ -96,6 +96,24 @@ export function matchSourceLabel(
     .replace("{slot}", String(source.bracketSlot));
 }
 
+export function matchScoreDetail(
+  match: Pick<
+    PublicMatch,
+    "scoreDetail" | "penaltyHome" | "penaltyAway" | "isWalkover"
+  >,
+  t: Translate,
+) {
+  if (match.scoreDetail) {
+    return match.scoreDetail;
+  }
+  if (match.penaltyHome != null && match.penaltyAway != null) {
+    return t("match.penaltyShort")
+      .replace("{home}", String(match.penaltyHome))
+      .replace("{away}", String(match.penaltyAway));
+  }
+  return match.isWalkover ? "W.O." : null;
+}
+
 export function matchSideName(
   teamName: string | null,
   source: PublicMatchSource | null,

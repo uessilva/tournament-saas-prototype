@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
-import { useFormStatus } from "react-dom";
 
 import { AppTopBar } from "@/components/app-top-bar";
 import { MatchCancellationPanel } from "@/components/admin/match-cancellation-panel";
@@ -15,6 +14,7 @@ import {
   RefreshIcon,
 } from "@/components/icons";
 import { MatchStatusBadge, SportTag } from "@/components/public/badges";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { useI18n } from "@/lib/i18n/client";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type {
@@ -35,33 +35,6 @@ import {
 } from "@/features/scoresheets/actions";
 
 const EMPTY: ScoresheetActionState = { status: "idle" };
-
-function SubmitButton({
-  label,
-  pendingLabel,
-  tone = "primary",
-  disabled = false,
-}: {
-  label: string;
-  pendingLabel: string;
-  tone?: "primary" | "dark" | "danger" | "quiet";
-  disabled?: boolean;
-}) {
-  const { pending } = useFormStatus();
-  const className =
-    tone === "dark"
-      ? "inline-flex items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green disabled:cursor-wait disabled:opacity-60"
-      : tone === "danger"
-        ? "inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-xs font-extrabold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-wait disabled:opacity-60"
-        : tone === "quiet"
-          ? "inline-flex items-center justify-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-[11px] font-extrabold text-muted transition-colors hover:border-green hover:text-green disabled:cursor-wait disabled:opacity-60"
-          : "inline-flex items-center justify-center gap-2 rounded-xl bg-green px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green-deep disabled:cursor-wait disabled:opacity-60";
-  return (
-    <button type="submit" disabled={pending || disabled} className={className}>
-      {pending ? pendingLabel : label}
-    </button>
-  );
-}
 
 function fieldDefault(field: ReviewFieldData) {
   return field.reviewedValue ?? field.normalizedValue ?? field.rawValue ?? "";
@@ -424,6 +397,7 @@ function ScoresheetReviewForms({
         )}
         <div className="mt-4 flex flex-wrap gap-2">
           <SubmitButton
+            icon={false}
             label={t("review.saveReview")}
             pendingLabel={t("review.saving")}
             tone="dark"
@@ -464,6 +438,7 @@ function ScoresheetReviewForms({
         ) : null}
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <SubmitButton
+            icon={false}
             label={t("review.confirmPublish")}
             pendingLabel={t("review.publishing")}
             disabled={published}
@@ -504,9 +479,10 @@ function ScoresheetReviewForms({
           )}
           <div className="mt-3">
             <SubmitButton
+              icon={false}
               label={t("review.rejectAction")}
               pendingLabel={t("review.rejecting")}
-              tone="danger"
+              tone="dangerOutline"
               disabled={published}
             />
           </div>
@@ -528,6 +504,7 @@ function ScoresheetReviewForms({
           )}
           <div className="mt-3">
             <SubmitButton
+              icon={false}
               label={t("review.retryAction")}
               pendingLabel={t("review.retrying")}
               tone="quiet"
@@ -710,6 +687,7 @@ function ManualEntryForm({
 
       <div className="mt-3">
         <SubmitButton
+          icon={false}
           label={t("review.manualPublish")}
           pendingLabel={t("review.publishing")}
           tone="dark"
@@ -907,9 +885,10 @@ function CorrectionForm({
       {state.status === "error" ? <ErrorNotice code={state.code} /> : null}
       <div className="mt-3">
         <SubmitButton
+          icon={false}
           label={t("review.correctionPublish")}
           pendingLabel={t("review.publishing")}
-          tone="danger"
+          tone="dangerOutline"
         />
       </div>
     </form>
@@ -953,9 +932,10 @@ function ReopenForm({ data }: { data: ReviewMatchDetail }) {
       {state.status === "error" ? <ErrorNotice code={state.code} /> : null}
       <div className="mt-3">
         <SubmitButton
+          icon={false}
           label={t("review.reopenAction")}
           pendingLabel={t("review.reopening")}
-          tone="danger"
+          tone="dangerOutline"
         />
       </div>
     </form>
@@ -1222,6 +1202,7 @@ function TennisResultForm({
 
       <div className="mt-3">
         <SubmitButton
+          icon={false}
           label={
             mode === "correction"
               ? t("review.correctionPublish")

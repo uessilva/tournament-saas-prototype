@@ -90,14 +90,22 @@ export async function completeJob(jobId: string) {
     .where(eq(jobs.id, jobId));
 }
 
-export async function failJob(job: Job, error: unknown) {
-  const exhausted = job.attempts >= job.maxAttempts;
+export async function failJob(
+  job: Job,
+  error: unknown,
+  options: { forceFailed?: boolean; recordAttempt?: boolean } = {},
+) {
+  const exhausted =
+    options.forceFailed === true || job.attempts >= job.maxAttempts;
   const backoffMs = Math.min(job.attempts * 30_000, 5 * 60 * 1000);
 
   await db
     .update(jobs)
     .set({
       status: exhausted ? "failed" : "pending",
+      ...(options.recordAttempt
+        ? { attempts: sql`${jobs.attempts} + 1` }
+        : {}),
       availableAt: new Date(Date.now() + backoffMs),
       lockedAt: null,
       lockedBy: null,

@@ -19,6 +19,7 @@ import {
   nextPowerOfTwo,
 } from "@/features/competitions/draw";
 import { effectiveDurationMinutes } from "@/features/matches/scheduling";
+import { footballWinnerTeamId } from "@/features/results/winner";
 import type {
   PublicMatch,
   PublicMatchSource,
@@ -135,6 +136,8 @@ function tennisScore(
     awayScore: String(awaySets),
     detail,
     winnerTeamId,
+    penaltyHome: null,
+    penaltyAway: null,
   };
 }
 
@@ -146,6 +149,8 @@ function scoreSummary(row: PublicMatchRow) {
         awayScore: null,
         detail: null,
         winnerTeamId: null,
+        penaltyHome: null,
+        penaltyAway: null,
       };
     }
 
@@ -157,34 +162,25 @@ function scoreSummary(row: PublicMatchRow) {
   }
 
   const isWalkover = row.footballWalkover ?? false;
-  const hasScore =
-    row.footballHomeScore != null && row.footballAwayScore != null;
-  const hasPenalties =
-    row.footballPenaltyHome != null && row.footballPenaltyAway != null;
 
   return {
     homeScore:
       row.footballHomeScore == null ? null : String(row.footballHomeScore),
     awayScore:
       row.footballAwayScore == null ? null : String(row.footballAwayScore),
-    detail: isWalkover
-      ? "W.O."
-      : hasPenalties
-        ? `pên. ${row.footballPenaltyHome}–${row.footballPenaltyAway}`
-        : null,
-    winnerTeamId:
-      row.footballWalkoverWinnerTeamId ??
-      (hasPenalties
-        ? row.footballPenaltyHome! > row.footballPenaltyAway!
-          ? row.homeTeamId
-          : row.awayTeamId
-        : !hasScore
-          ? null
-          : row.footballHomeScore! > row.footballAwayScore!
-            ? row.homeTeamId
-            : row.footballHomeScore! < row.footballAwayScore!
-              ? row.awayTeamId
-              : null),
+    detail: isWalkover ? "W.O." : null,
+    winnerTeamId: footballWinnerTeamId({
+      homeTeamId: row.homeTeamId,
+      awayTeamId: row.awayTeamId,
+      homeScore: row.footballHomeScore,
+      awayScore: row.footballAwayScore,
+      isWalkover,
+      walkoverWinnerTeamId: row.footballWalkoverWinnerTeamId,
+      penaltyHome: row.footballPenaltyHome,
+      penaltyAway: row.footballPenaltyAway,
+    }),
+    penaltyHome: row.footballPenaltyHome,
+    penaltyAway: row.footballPenaltyAway,
   };
 }
 
@@ -268,6 +264,8 @@ export function mapPublicMatch(row: PublicMatchRow): PublicMatch {
     homeScore: score.homeScore,
     awayScore: score.awayScore,
     scoreDetail: score.detail,
+    penaltyHome: score.penaltyHome,
+    penaltyAway: score.penaltyAway,
     winnerTeamId: score.winnerTeamId,
     isWalkover:
       row.sport === "tennis"

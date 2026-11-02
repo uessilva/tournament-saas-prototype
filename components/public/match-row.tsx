@@ -7,6 +7,7 @@ import { MatchStatusBadge, SportTag } from "@/components/public/badges";
 import { useI18n } from "@/lib/i18n/client";
 import {
   matchRoundLabel,
+  matchScoreDetail,
   matchSideName,
 } from "@/features/public/labels";
 import { addMinutes } from "@/features/matches/scheduling";
@@ -54,6 +55,7 @@ export function MatchRow({
           timezone,
         )
       : null;
+  const scoreDetail = matchScoreDetail(match, t);
 
   return (
     <article className="group border-b border-line/80 py-4 last:border-b-0">
@@ -112,12 +114,10 @@ export function MatchRow({
               {awayName}
             </span>
           </div>
-          {match.scoreDetail ? (
+          {scoreDetail ? (
             <p className="mt-1 text-xs font-medium text-muted">
-              {match.scoreDetail}
+              {scoreDetail}
             </p>
-          ) : match.isWalkover ? (
-            <p className="mt-1 text-xs font-medium text-muted">W.O.</p>
           ) : null}
         </div>
 

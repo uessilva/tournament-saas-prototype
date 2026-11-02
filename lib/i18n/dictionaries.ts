@@ -960,6 +960,8 @@ const ptBR = {
   "disputes.error.dispute_not_found": "Contestação não encontrada.",
   "disputes.error.already_closed":
     "Esta contestação já foi encerrada. Atualize a página para ver o histórico.",
+  "disputes.error.competition_cancelled":
+    "A competição está cancelada e a contestação está em somente leitura.",
   "disputes.error.action_failed": "Não foi possível concluir a ação.",
 
   "disputes.owner.backToDashboard": "Voltar ao painel do evento",
@@ -1361,6 +1363,44 @@ const ptBR = {
   "compAdmin.standingsEyebrow": "Prévia",
   "compAdmin.standingsTitle": "Classificação dos grupos",
   "compAdmin.standingsBody": "A mesma tabela que o público vê, calculada a partir das versões confirmadas atuais. Use os resultados publicados para conferir o avanço antes de uma correção.",
+  "competition.sport": "Esporte",
+  "compAdmin.configEyebrow": "Configuração",
+  "compAdmin.configTitle": "Regras da competição",
+  "compAdmin.configBody":
+    "Defina esporte, elegibilidade, limites de elenco e duração padrão. Mudanças de esporte ficam bloqueadas após a inscrição de equipes; regras de elegibilidade ficam travadas após a geração do torneio.",
+  "compAdmin.configFixErrors": "Revise os campos destacados da configuração.",
+  "compAdmin.sportLocked":
+    "O esporte não pode mudar depois que equipes ou inscritos existem.",
+  "compAdmin.configurationLocked":
+    "Esta configuração não pode mais mudar depois da geração do torneio ou de um resultado confirmado.",
+  "compAdmin.durationInvalid": "Informe uma duração entre 1 e 600 minutos.",
+  "compAdmin.configurationSaved": "Configuração da competição salva.",
+  "compAdmin.birthDateFrom": "Nascidos a partir de",
+  "compAdmin.birthDateTo": "Nascidos até",
+  "compAdmin.dateInvalid": "Informe uma data válida.",
+  "compAdmin.dateRangeInvalid":
+    "A data inicial precisa ser anterior ou igual à data final.",
+  "compAdmin.rosterMin": "Mínimo de participantes",
+  "compAdmin.rosterMax": "Máximo de participantes",
+  "compAdmin.rosterInvalid": "Informe um número inteiro entre 1 e 99.",
+  "compAdmin.rosterRangeInvalid":
+    "O mínimo não pode ser maior que o máximo.",
+  "compAdmin.eligibilityLocked":
+    "Elegibilidade e limites de elenco estão travados após a geração do torneio.",
+  "compAdmin.saveConfiguration": "Salvar configuração",
+  "compAdmin.configHint":
+    "As alterações valem para inscrições futuras e para a próxima geração.",
+  "match.penaltyShort": "pên. {home}–{away}",
+  "teamsAdmin.competitionCancelled":
+    "A competição destas equipes está cancelada e não aceita alterações de acesso.",
+  "teamsAdmin.failedEmailsEyebrow": "Falhas de e-mail",
+  "teamsAdmin.failedEmailsTitle": "E-mails que precisam de nova tentativa",
+  "teamsAdmin.failedEmailsBody":
+    "Mensagens de convite que não chegaram ao Mailpit. O convite continua válido; tente novamente depois de conferir o servidor local.",
+  "teamsAdmin.retryEmail": "Tentar novamente",
+  "teamsAdmin.emailRetriedNotice": "E-mail reenviado com sucesso.",
+  "teamsAdmin.emailRetryFailed":
+    "O e-mail ainda não pôde ser enviado. Confira o Mailpit e tente novamente.",
 } as const;
 
 export type Dictionary = Record<keyof typeof ptBR, string>;
@@ -2318,6 +2358,8 @@ const en: Dictionary = {
   "disputes.error.dispute_not_found": "Dispute not found.",
   "disputes.error.already_closed":
     "This dispute is already closed. Refresh the page to see its history.",
+  "disputes.error.competition_cancelled":
+    "The competition is cancelled and the dispute is read-only.",
   "disputes.error.action_failed": "The action could not be completed.",
 
   "disputes.owner.backToDashboard": "Back to the event dashboard",
@@ -2719,6 +2761,44 @@ const en: Dictionary = {
   "compAdmin.standingsEyebrow": "Preview",
   "compAdmin.standingsTitle": "Group standings",
   "compAdmin.standingsBody": "The same table the public sees, calculated from current confirmed versions. Use published results to check advancement before a correction.",
+  "competition.sport": "Sport",
+  "compAdmin.configEyebrow": "Configuration",
+  "compAdmin.configTitle": "Competition rules",
+  "compAdmin.configBody":
+    "Set the sport, eligibility, roster limits and default duration. Sport changes are blocked once teams or entrants exist; eligibility rules lock after tournament generation.",
+  "compAdmin.configFixErrors": "Review the highlighted configuration fields.",
+  "compAdmin.sportLocked":
+    "The sport cannot change after teams or entrants exist.",
+  "compAdmin.configurationLocked":
+    "This configuration can no longer change after tournament generation or a confirmed result.",
+  "compAdmin.durationInvalid": "Enter a duration between 1 and 600 minutes.",
+  "compAdmin.configurationSaved": "Competition configuration saved.",
+  "compAdmin.birthDateFrom": "Born from",
+  "compAdmin.birthDateTo": "Born until",
+  "compAdmin.dateInvalid": "Enter a valid date.",
+  "compAdmin.dateRangeInvalid":
+    "The start date must be on or before the end date.",
+  "compAdmin.rosterMin": "Minimum participants",
+  "compAdmin.rosterMax": "Maximum participants",
+  "compAdmin.rosterInvalid": "Enter a whole number between 1 and 99.",
+  "compAdmin.rosterRangeInvalid":
+    "The minimum cannot be greater than the maximum.",
+  "compAdmin.eligibilityLocked":
+    "Eligibility and roster limits are locked after tournament generation.",
+  "compAdmin.saveConfiguration": "Save configuration",
+  "compAdmin.configHint":
+    "Changes apply to future registrations and the next draw generation.",
+  "match.penaltyShort": "pens {home}–{away}",
+  "teamsAdmin.competitionCancelled":
+    "This team's competition is cancelled and does not accept access changes.",
+  "teamsAdmin.failedEmailsEyebrow": "Email failures",
+  "teamsAdmin.failedEmailsTitle": "Emails that need a retry",
+  "teamsAdmin.failedEmailsBody":
+    "Invitation messages that did not reach Mailpit. The invitation stays valid; retry after checking the local server.",
+  "teamsAdmin.retryEmail": "Retry",
+  "teamsAdmin.emailRetriedNotice": "Email sent successfully.",
+  "teamsAdmin.emailRetryFailed":
+    "The email still could not be sent. Check Mailpit and try again.",
 };
 
 export const dictionaries: Record<Locale, Dictionary> = {

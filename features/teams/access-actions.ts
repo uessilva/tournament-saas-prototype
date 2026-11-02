@@ -15,6 +15,7 @@ import {
   auditEvents,
   competitions,
   invitationTeams,
+  jobs,
   managerInvitations,
   teamManagers,
   teams,
@@ -26,6 +27,8 @@ import {
   INVITATION_COOKIE,
   INVITATION_COOKIE_MAX_AGE_SECONDS,
 } from "@/lib/invitations/tokens";
+import { completeJob, failJob, retryJob } from "@/lib/jobs/queue";
+import { processJob } from "@/lib/jobs/handlers";
 import { getInvitationViewByToken, redeemInvitation } from "@/features/teams/invitations";
 
 export type AccessActionState = {
@@ -56,7 +59,11 @@ function readTeamIds(formData: FormData) {
 
 async function validateTeams(eventId: string, teamIds: string[]) {
   const rows = await db
-    .select({ id: teams.id, name: teams.name })
+    .select({
+      id: teams.id,
+      name: teams.name,
+      competitionStatus: competitions.status,
+    })
     .from(teams)
     .innerJoin(competitions, eq(teams.competitionId, competitions.id))
     .where(
@@ -68,6 +75,16 @@ async function validateTeams(eventId: string, teamIds: string[]) {
   }
 
   return rows;
+}
+
+function hasCancelledCompetition(
+  rows: Array<{ competitionStatus: string }>,
+) {
+  return rows.some((row) => row.competitionStatus === "cancelled");
+}
+
+function cancelledCompetitionError(): AccessActionState {
+  return { status: "error", code: "competition_cancelled" };
 }
 
 async function appOrigin() {
@@ -125,6 +142,10 @@ export async function createEmailInvitationAction(
     return { status: "error", code: "teams_invalid" };
   }
 
+  if (hasCancelledCompetition(teamRows)) {
+    return cancelledCompetitionError();
+  }
+
   const { token, tokenHash } = createInvitationToken();
   const expiresAt = invitationExpiryFrom();
   const [invitation] = await db
@@ -162,19 +183,17 @@ export async function createEmailInvitationAction(
   );
 
   let emailSent = false;
-  try {
-    await sendInvitationEmail({
-      to: parsed.data.email,
-      eventName: event.name,
-      teamNames: teamRows.map((team) => team.name),
-      url: `${await appOrigin()}${invitationPath(token)}`,
-      expiresAt,
-    });
-    emailSent = true;
-    await db
-      .update(managerInvitations)
-      .set({ lastSentAt: new Date() })
-      .where(eq(managerInvitations.id, invitation.id));
+  const emailJob = await sendInvitationEmail({
+    to: parsed.data.email,
+    eventId: event.id,
+    invitationId: invitation.id,
+    eventName: event.name,
+    teamNames: teamRows.map((team) => team.name),
+    url: `${await appOrigin()}${invitationPath(token)}`,
+    expiresAt,
+  });
+  emailSent = emailJob.ok;
+  if (emailSent) {
     await db.insert(accessEvents).values({
       eventId: event.id,
       invitationId: invitation.id,
@@ -182,9 +201,9 @@ export async function createEmailInvitationAction(
       type: "invitation_email_sent",
       metadata: { email: parsed.data.email },
     });
-  } catch {
-    // The invitation remains valid so the Owner can copy the link or replace it.
   }
+  // On failure the invitation remains valid and the failed job stays visible
+  // for an Owner manual retry.
 
   await db.insert(auditEvents).values({
     eventId: event.id,
@@ -235,6 +254,10 @@ export async function createShareLinkAction(
 
   if (!teamRows) {
     return { status: "error", code: "teams_invalid" };
+  }
+
+  if (hasCancelledCompetition(teamRows)) {
+    return cancelledCompetitionError();
   }
 
   const { token, tokenHash } = createInvitationToken();
@@ -323,13 +346,22 @@ export async function replaceInvitationAction(
   }
 
   const existingTeams = await db
-    .select({ id: teams.id, name: teams.name })
+    .select({
+      id: teams.id,
+      name: teams.name,
+      competitionStatus: competitions.status,
+    })
     .from(invitationTeams)
     .innerJoin(teams, eq(invitationTeams.teamId, teams.id))
+    .innerJoin(competitions, eq(teams.competitionId, competitions.id))
     .where(eq(invitationTeams.invitationId, existing.id));
 
   if (!existingTeams.length) {
     return { status: "error", code: "action_failed" };
+  }
+
+  if (hasCancelledCompetition(existingTeams)) {
+    return cancelledCompetitionError();
   }
 
   const { token, tokenHash } = createInvitationToken();
@@ -410,19 +442,17 @@ export async function replaceInvitationAction(
 
   let emailSent = false;
   if (existing.kind === "email" && existing.email) {
-    try {
-      await sendInvitationEmail({
-        to: existing.email,
-        eventName: event.name,
-        teamNames: existingTeams.map((team) => team.name),
-        url: `${await appOrigin()}${invitationPath(token)}`,
-        expiresAt,
-      });
-      emailSent = true;
-      await db
-        .update(managerInvitations)
-        .set({ lastSentAt: new Date() })
-        .where(eq(managerInvitations.id, replacement.id));
+    const emailJob = await sendInvitationEmail({
+      to: existing.email,
+      eventId: event.id,
+      invitationId: replacement.id,
+      eventName: event.name,
+      teamNames: existingTeams.map((team) => team.name),
+      url: `${await appOrigin()}${invitationPath(token)}`,
+      expiresAt,
+    });
+    emailSent = emailJob.ok;
+    if (emailSent) {
       await db.insert(accessEvents).values({
         eventId: event.id,
         invitationId: replacement.id,
@@ -430,9 +460,8 @@ export async function replaceInvitationAction(
         type: "invitation_email_sent",
         metadata: { email: existing.email },
       });
-    } catch {
-      // Keep the replacement so the Owner can copy the link manually.
     }
+    // On failure the replacement remains copyable and retryable.
   }
 
   revalidatePath(`/admin/events/${event.id}/teams`);
@@ -485,10 +514,21 @@ export async function revokeInvitationAction(formData: FormData) {
   }
 
   const invitationTeamRows = await db
-    .select({ id: teams.id, name: teams.name })
+    .select({
+      id: teams.id,
+      name: teams.name,
+      competitionStatus: competitions.status,
+    })
     .from(invitationTeams)
     .innerJoin(teams, eq(invitationTeams.teamId, teams.id))
+    .innerJoin(competitions, eq(teams.competitionId, competitions.id))
     .where(eq(invitationTeams.invitationId, invitation.id));
+
+  if (hasCancelledCompetition(invitationTeamRows)) {
+    redirect(
+      `/admin/events/${event.id}/teams?error=competition-cancelled`,
+    );
+  }
 
   const now = new Date();
   await db
@@ -529,6 +569,72 @@ export async function revokeInvitationAction(formData: FormData) {
   redirect(`/admin/events/${event.id}/teams?notice=revoked`);
 }
 
+export async function retryEmailJobAction(formData: FormData) {
+  const parsed = z
+    .object({ eventId: z.string().uuid(), jobId: z.string().uuid() })
+    .safeParse({
+      eventId: formData.get("eventId"),
+      jobId: formData.get("jobId"),
+    });
+
+  if (!parsed.success) {
+    redirect("/admin?error=invalid-request");
+  }
+
+  const { user, event } = await requireEventOwner(parsed.data.eventId);
+  const [job] = await db
+    .select()
+    .from(jobs)
+    .where(
+      and(eq(jobs.id, parsed.data.jobId), eq(jobs.type, "email.send")),
+    )
+    .limit(1);
+
+  const payload = (job?.payload ?? {}) as Record<string, unknown>;
+  if (
+    !job ||
+    job.status !== "failed" ||
+    payload.eventId !== event.id
+  ) {
+    redirect(`/admin/events/${event.id}/teams?error=email-retry-failed`);
+  }
+
+  const retried = await retryJob(job.id);
+  if (!retried) {
+    redirect(`/admin/events/${event.id}/teams?error=email-retry-failed`);
+  }
+
+  try {
+    await processJob(retried);
+    await completeJob(retried.id);
+  } catch {
+    await failJob(
+      retried,
+      new Error("Email delivery failed. Check the local SMTP server and retry."),
+      { forceFailed: true, recordAttempt: true },
+    );
+    redirect(`/admin/events/${event.id}/teams?error=email-retry-failed`);
+  }
+
+  const invitationId =
+    typeof payload.invitationId === "string" ? payload.invitationId : null;
+  if (invitationId) {
+    await db.insert(accessEvents).values({
+      eventId: event.id,
+      invitationId,
+      actorUserId: user.id,
+      type: "invitation_email_sent",
+      metadata: {
+        email: typeof payload.to === "string" ? payload.to : null,
+        retried: true,
+      },
+    });
+  }
+
+  revalidatePath(`/admin/events/${event.id}/teams`);
+  redirect(`/admin/events/${event.id}/teams?notice=email-retried`);
+}
+
 export async function removeManagerAction(formData: FormData) {
   const parsed = z
     .object({
@@ -550,7 +656,11 @@ export async function removeManagerAction(formData: FormData) {
   const { teamId, userId } = parsed.data;
 
   const [team] = await db
-    .select({ id: teams.id, name: teams.name })
+    .select({
+      id: teams.id,
+      name: teams.name,
+      competitionStatus: competitions.status,
+    })
     .from(teams)
     .innerJoin(competitions, eq(teams.competitionId, competitions.id))
     .where(and(eq(teams.id, teamId), eq(competitions.eventId, event.id)))
@@ -558,6 +668,10 @@ export async function removeManagerAction(formData: FormData) {
 
   if (!team) {
     redirect(`/admin/events/${event.id}/teams?error=team-not-found`);
+  }
+
+  if (team.competitionStatus === "cancelled") {
+    redirect(`/admin/events/${event.id}/teams?error=competition-cancelled`);
   }
 
   const removed = await db
