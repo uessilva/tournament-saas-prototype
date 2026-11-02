@@ -288,6 +288,33 @@ export function InvitationAcceptView({
     );
   }
 
+  if (errorCode === "competition-cancelled") {
+    return shell(
+      <>
+        {summary}
+        <div
+          role="alert"
+          className="mt-5 rounded-2xl border border-orange/40 bg-soft-orange p-5 text-clay"
+        >
+          <div className="flex items-start gap-3">
+            <LockIcon className="mt-0.5 size-5 shrink-0" />
+            <div>
+              <h2 className="text-sm font-extrabold">
+                {t("invite.competitionCancelledTitle")}
+              </h2>
+              <p className="mt-1 text-sm leading-6">
+                {t("invite.competitionCancelledBody")}
+              </p>
+              <p className="mt-3 text-xs font-semibold">
+                {t("invite.contactOwner")}
+              </p>
+            </div>
+          </div>
+        </div>
+      </>,
+    );
+  }
+
   if (errorCode) {
     return shell(
       <>

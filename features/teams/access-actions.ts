@@ -29,6 +29,7 @@ import {
 } from "@/lib/invitations/tokens";
 import { completeJob, failJob, retryJob } from "@/lib/jobs/queue";
 import { processJob } from "@/lib/jobs/handlers";
+import { hydrateEmailJob } from "@/lib/jobs/sealing";
 import { getInvitationViewByToken, redeemInvitation } from "@/features/teams/invitations";
 
 export type AccessActionState = {
@@ -605,7 +606,7 @@ export async function retryEmailJobAction(formData: FormData) {
   }
 
   try {
-    await processJob(retried);
+    await processJob(hydrateEmailJob(retried));
     await completeJob(retried.id);
   } catch {
     await failJob(

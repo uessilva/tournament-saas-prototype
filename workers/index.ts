@@ -5,6 +5,7 @@ import { hostname } from "node:os";
 import { sqlClient } from "../lib/db/client";
 import { processJob } from "../lib/jobs/handlers";
 import { claimNextJob, completeJob, failJob } from "../lib/jobs/queue";
+import { hydrateEmailJob } from "../lib/jobs/sealing";
 
 const workerId = `summercup-${hostname()}-${process.pid}`;
 const POLL_INTERVAL_MS = 1_000;
@@ -38,7 +39,7 @@ async function main() {
     }
 
     try {
-      await processJob(job);
+      await processJob(hydrateEmailJob(job));
       await completeJob(job.id);
       console.log(`[worker] completed ${job.type} (${job.id}).`);
     } catch (error) {

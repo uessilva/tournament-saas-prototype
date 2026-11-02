@@ -45,24 +45,27 @@ export function deriveInvitationStatus(
 
 type InvitationTeamQuery = Pick<typeof db, "select">;
 
+type InvitationTeamRow = AccessTeamRef & {
+  competitionStatus: string;
+};
+
 async function loadInvitationTeamsWith(
   query: InvitationTeamQuery,
   invitationId: string,
-) {
-  const rows = await query
+): Promise<InvitationTeamRow[]> {
+  return query
     .select({
       id: teams.id,
       name: teams.name,
       sport: competitions.sport,
       competitionName: competitions.name,
+      competitionStatus: competitions.status,
     })
     .from(invitationTeams)
     .innerJoin(teams, eq(invitationTeams.teamId, teams.id))
     .innerJoin(competitions, eq(teams.competitionId, competitions.id))
     .where(eq(invitationTeams.invitationId, invitationId))
     .orderBy(teams.name);
-
-  return rows satisfies AccessTeamRef[];
 }
 
 async function loadInvitationTeams(invitationId: string) {
@@ -131,6 +134,7 @@ export type RedeemResult =
         | "expired"
         | "already_accepted"
         | "email_mismatch"
+        | "competition_cancelled"
         | "no_teams";
       invitedEmail?: string;
     };
@@ -215,6 +219,13 @@ export async function redeemInvitation(
 
     if (!teamRows.length) {
       return { ok: false, reason: "no_teams" };
+    }
+
+    // Credentials created before a Competition was cancelled must not grant
+    // new manager access. Existing accepted invitations keep their idempotent
+    // response above; this check only guards new acceptance.
+    if (teamRows.some((team) => team.competitionStatus === "cancelled")) {
+      return { ok: false, reason: "competition_cancelled" };
     }
 
     const alreadyManagerRows = await tx
