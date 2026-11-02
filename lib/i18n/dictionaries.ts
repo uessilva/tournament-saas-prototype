@@ -771,6 +771,103 @@ const ptBR = {
   "manageFixtures.emptyBody":
     "Os jogos aparecem aqui depois que o organizador gerar o sorteio da competição.",
 
+  "disputes.manager.title": "Contestações privadas",
+  "disputes.manager.none": "Nenhuma ativa",
+  "disputes.manager.privateHint":
+    "Visível ao organizador e às equipes deste jogo.",
+  "disputes.manager.activeTitle": "Contestação em análise",
+  "disputes.manager.duplicateBlocked":
+    "Uma nova contestação só pode ser aberta depois que o organizador responder.",
+  "disputes.manager.teamLabel": "Equipe contestante",
+  "disputes.manager.explanationLabel": "Explicação da contestação",
+  "disputes.manager.explanationPlaceholder":
+    "Descreva o que precisa ser revisto neste resultado publicado.",
+  "disputes.manager.explanationHint":
+    "Obrigatória. O texto fica privado e não altera o resultado público.",
+  "disputes.manager.openAction": "Abrir contestação",
+  "disputes.manager.opening": "Enviando…",
+  "disputes.manager.openedNotice":
+    "Contestação enviada. O resultado público não foi alterado.",
+  "disputes.manager.publicUnaffected":
+    "Abrir uma contestação não despublica, altera nem sinaliza o resultado público.",
+  "disputes.manager.historyTitle": "Histórico de contestações",
+  "disputes.status.open": "Aberta",
+  "disputes.status.resolved": "Acatada",
+  "disputes.status.dismissed": "Improcedente",
+  "disputes.unknownUser": "Pessoa não identificada",
+  "disputes.responseLabel": "Resposta do organizador",
+  "disputes.correctionLinked": "Correção vinculada: versão {version}",
+  "disputes.error.invalid_input": "Revise os campos destacados.",
+  "disputes.error.unauthorized": "Entre novamente para continuar.",
+  "disputes.error.match_not_found": "Jogo não encontrado.",
+  "disputes.error.requires_published_match":
+    "Só é possível abrir uma contestação em um jogo publicado.",
+  "disputes.error.forbidden":
+    "Apenas o organizador e os gerentes das equipes envolvidas podem acessar esta contestação.",
+  "disputes.error.duplicate_active":
+    "Já existe uma contestação ativa para este jogo. Aguarde a resposta do organizador.",
+  "disputes.error.explanation_too_short":
+    "Descreva a contestação com pelo menos 10 caracteres.",
+  "disputes.error.explanation_too_long":
+    "A explicação deve ter no máximo 4.000 caracteres.",
+  "disputes.error.response_too_short":
+    "Escreva uma resposta com pelo menos 10 caracteres.",
+  "disputes.error.response_too_long":
+    "A resposta deve ter no máximo 4.000 caracteres.",
+  "disputes.error.invalid_correction":
+    "Escolha uma versão de correção posterior, com motivo registrado.",
+  "disputes.error.dispute_not_found": "Contestação não encontrada.",
+  "disputes.error.already_closed":
+    "Esta contestação já foi encerrada. Atualize a página para ver o histórico.",
+  "disputes.error.action_failed": "Não foi possível concluir a ação.",
+
+  "disputes.owner.backToDashboard": "Voltar ao painel do evento",
+  "disputes.owner.eyebrow": "Área privada do organizador",
+  "disputes.owner.title": "Contestações privadas",
+  "disputes.owner.body":
+    "Analise contestações abertas por gerentes das equipes envolvidas. As explicações e respostas ficam restritas a você e às equipes do jogo, e o resultado público só muda por um fluxo de correção separado.",
+  "disputes.owner.openCount": "contestações abertas",
+  "disputes.owner.queueEyebrow": "Fila privada",
+  "disputes.owner.queueTitle": "Aguardando decisão",
+  "disputes.owner.queueEmptyTitle": "Nenhuma contestação aberta",
+  "disputes.owner.queueEmptyBody":
+    "Novas contestações de gerentes das equipes aparecem aqui. O histórico abaixo permanece disponível.",
+  "disputes.owner.historyEyebrow": "Registro",
+  "disputes.owner.historyTitle": "Histórico de contestações",
+  "disputes.owner.historyEmpty":
+    "Nenhuma contestação foi aberta para este evento ainda.",
+  "disputes.owner.openedBy": "Aberta por",
+  "disputes.owner.teamLabel": "Equipe contestante",
+  "disputes.owner.resolutionLabel": "Decisão",
+  "disputes.owner.responseLabel": "Resposta obrigatória",
+  "disputes.owner.responsePlaceholder":
+    "Explique a decisão ao gerente que abriu a contestação.",
+  "disputes.owner.responseHint":
+    "Obrigatória. Visível apenas ao organizador e aos gerentes das equipes envolvidas.",
+  "disputes.owner.correctionLabel": "Correção vinculada (opcional)",
+  "disputes.owner.correctionNone": "Sem correção vinculada",
+  "disputes.owner.correctionOption": "Versão {version} — {reason}",
+  "disputes.owner.correctionHint":
+    "Opcional. Vincule uma correção já registrada; esta ação não cria nem altera resultados.",
+  "disputes.owner.correctionUnavailable":
+    "Nenhuma versão de correção posterior está disponível para este jogo. As correções de resultado são um fluxo separado e, quando existirem, poderão ser vinculadas aqui. Nenhuma correção é criada automaticamente.",
+  "disputes.owner.saveDecision": "Registrar decisão",
+  "disputes.owner.saving": "Salvando…",
+  "disputes.owner.savedNotice":
+    "Decisão registrada. O histórico permanece disponível.",
+  "disputes.owner.activityEyebrow": "Atividade",
+  "disputes.owner.activityTitle": "Atividade recente",
+  "disputes.owner.activityBody":
+    "Abertura, decisão e encerramento registrados na auditoria do evento.",
+  "disputes.owner.activityEmpty": "Nenhuma atividade de contestação ainda.",
+  "disputes.owner.privacyTitle": "Conteúdo privado",
+  "disputes.owner.privacyBody":
+    "Textos de contestação e resposta nunca aparecem nas páginas públicas. Outros gerentes também não conseguem lê-los.",
+  "disputes.owner.viewPublicResults": "Ver resultados públicos",
+  "disputes.activity.dispute.opened": "Contestação aberta",
+  "disputes.activity.dispute.resolved": "Contestação acatada",
+  "disputes.activity.dispute.dismissed": "Contestação julgada improcedente",
+
   "notFound.title": "Página não encontrada",
   "notFound.body": "O endereço pode estar incorreto ou o conteúdo foi removido.",
   "notFound.back": "Voltar à Summer Cup",
@@ -793,6 +890,12 @@ const ptBR = {
   "resultSource.manual": "Entrada manual",
   "resultSource.walkover": "W.O.",
   "admin.reviewQueue": "Revisar resultados",
+  "admin.disputes": "Contestações",
+  "admin.openDisputes": "contestações abertas",
+  "admin.disputeCardTitle": "Contestações privadas",
+  "admin.disputeCardBody":
+    "Questões levantadas por gerentes das equipes. O conteúdo e as respostas ficam restritos ao organizador e às equipes envolvidas.",
+  "admin.openDisputesAction": "Abrir fila de contestações",
 
   "results.eyebrow": "Resultados oficiais",
   "results.title": "Resultados publicados",
@@ -1802,6 +1905,103 @@ const en: Dictionary = {
   "manageFixtures.emptyBody":
     "Fixtures appear here after the organiser generates the competition draw.",
 
+  "disputes.manager.title": "Private disputes",
+  "disputes.manager.none": "None active",
+  "disputes.manager.privateHint":
+    "Visible to the organiser and the teams in this match.",
+  "disputes.manager.activeTitle": "Dispute under review",
+  "disputes.manager.duplicateBlocked":
+    "A new dispute can only be opened after the organiser responds.",
+  "disputes.manager.teamLabel": "Disputing team",
+  "disputes.manager.explanationLabel": "Dispute explanation",
+  "disputes.manager.explanationPlaceholder":
+    "Describe what needs to be reviewed in this published result.",
+  "disputes.manager.explanationHint":
+    "Required. The text stays private and does not change the public result.",
+  "disputes.manager.openAction": "Open dispute",
+  "disputes.manager.opening": "Sending…",
+  "disputes.manager.openedNotice":
+    "Dispute sent. The public result was not changed.",
+  "disputes.manager.publicUnaffected":
+    "Opening a dispute does not unpublish, change or flag the public result.",
+  "disputes.manager.historyTitle": "Dispute history",
+  "disputes.status.open": "Open",
+  "disputes.status.resolved": "Upheld",
+  "disputes.status.dismissed": "Dismissed",
+  "disputes.unknownUser": "Unidentified person",
+  "disputes.responseLabel": "Organiser response",
+  "disputes.correctionLinked": "Linked correction: version {version}",
+  "disputes.error.invalid_input": "Review the highlighted fields.",
+  "disputes.error.unauthorized": "Sign in again to continue.",
+  "disputes.error.match_not_found": "Match not found.",
+  "disputes.error.requires_published_match":
+    "A dispute can only be opened on a published match.",
+  "disputes.error.forbidden":
+    "Only the organiser and the managers of the involved teams can access this dispute.",
+  "disputes.error.duplicate_active":
+    "This match already has an active dispute. Wait for the organiser to respond.",
+  "disputes.error.explanation_too_short":
+    "Describe the dispute with at least 10 characters.",
+  "disputes.error.explanation_too_long":
+    "The explanation must be 4,000 characters or fewer.",
+  "disputes.error.response_too_short":
+    "Write a response with at least 10 characters.",
+  "disputes.error.response_too_long":
+    "The response must be 4,000 characters or fewer.",
+  "disputes.error.invalid_correction":
+    "Choose a later correction version with a recorded reason.",
+  "disputes.error.dispute_not_found": "Dispute not found.",
+  "disputes.error.already_closed":
+    "This dispute is already closed. Refresh the page to see its history.",
+  "disputes.error.action_failed": "The action could not be completed.",
+
+  "disputes.owner.backToDashboard": "Back to the event dashboard",
+  "disputes.owner.eyebrow": "Private organiser area",
+  "disputes.owner.title": "Private disputes",
+  "disputes.owner.body":
+    "Review disputes opened by managers of the involved teams. Explanations and responses stay restricted to you and the teams in the match, and the public result only changes through a separate correction flow.",
+  "disputes.owner.openCount": "open disputes",
+  "disputes.owner.queueEyebrow": "Private queue",
+  "disputes.owner.queueTitle": "Awaiting a decision",
+  "disputes.owner.queueEmptyTitle": "No open disputes",
+  "disputes.owner.queueEmptyBody":
+    "New disputes from team managers appear here. The history below remains available.",
+  "disputes.owner.historyEyebrow": "Record",
+  "disputes.owner.historyTitle": "Dispute history",
+  "disputes.owner.historyEmpty":
+    "No disputes have been opened for this event yet.",
+  "disputes.owner.openedBy": "Opened by",
+  "disputes.owner.teamLabel": "Disputing team",
+  "disputes.owner.resolutionLabel": "Decision",
+  "disputes.owner.responseLabel": "Required response",
+  "disputes.owner.responsePlaceholder":
+    "Explain the decision to the manager who opened the dispute.",
+  "disputes.owner.responseHint":
+    "Required. Visible only to the organiser and the managers of the involved teams.",
+  "disputes.owner.correctionLabel": "Linked correction (optional)",
+  "disputes.owner.correctionNone": "No linked correction",
+  "disputes.owner.correctionOption": "Version {version} — {reason}",
+  "disputes.owner.correctionHint":
+    "Optional. Link an existing recorded correction; this action does not create or change results.",
+  "disputes.owner.correctionUnavailable":
+    "No later correction version is available for this match. Result corrections are a separate flow and, when they exist, can be linked here. No correction is created automatically.",
+  "disputes.owner.saveDecision": "Record decision",
+  "disputes.owner.saving": "Saving…",
+  "disputes.owner.savedNotice":
+    "Decision recorded. The history remains available.",
+  "disputes.owner.activityEyebrow": "Activity",
+  "disputes.owner.activityTitle": "Recent activity",
+  "disputes.owner.activityBody":
+    "Opening, decision and closure recorded in the event audit trail.",
+  "disputes.owner.activityEmpty": "No dispute activity yet.",
+  "disputes.owner.privacyTitle": "Private content",
+  "disputes.owner.privacyBody":
+    "Dispute and response text never appears on public pages. Other managers cannot read it either.",
+  "disputes.owner.viewPublicResults": "View public results",
+  "disputes.activity.dispute.opened": "Dispute opened",
+  "disputes.activity.dispute.resolved": "Dispute upheld",
+  "disputes.activity.dispute.dismissed": "Dispute dismissed",
+
   "notFound.title": "Page not found",
   "notFound.body": "The address may be incorrect or the content was removed.",
   "notFound.back": "Back to the Summer Cup",
@@ -1824,6 +2024,12 @@ const en: Dictionary = {
   "resultSource.manual": "Manual entry",
   "resultSource.walkover": "Walkover",
   "admin.reviewQueue": "Review results",
+  "admin.disputes": "Disputes",
+  "admin.openDisputes": "open disputes",
+  "admin.disputeCardTitle": "Private disputes",
+  "admin.disputeCardBody":
+    "Issues raised by team managers. Content and responses are restricted to the organiser and the involved teams.",
+  "admin.openDisputesAction": "Open dispute queue",
 
   "results.eyebrow": "Official results",
   "results.title": "Published results",
