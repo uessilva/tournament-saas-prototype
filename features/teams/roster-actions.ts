@@ -168,6 +168,10 @@ export async function addParticipantAction(
     return { status: "error", code: "team_not_found" };
   }
 
+  if (context.team.status === "cancelled") {
+    return { status: "error", code: "competition_cancelled" };
+  }
+
   if (!context.registration.open) {
     return { status: "error", code: "registration_closed" };
   }
@@ -286,6 +290,10 @@ export async function updateParticipantAction(
     return { status: "error", code: "team_not_found" };
   }
 
+  if (context.team.status === "cancelled") {
+    return { status: "error", code: "competition_cancelled" };
+  }
+
   if (!context.registration.open) {
     return { status: "error", code: "registration_closed" };
   }
@@ -384,6 +392,10 @@ export async function removeParticipantAction(
 
   if (!context) {
     return { status: "error", code: "team_not_found" };
+  }
+
+  if (context.team.status === "cancelled") {
+    return { status: "error", code: "competition_cancelled" };
   }
 
   if (!context.registration.open) {

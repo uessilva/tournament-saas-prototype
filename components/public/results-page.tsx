@@ -64,6 +64,12 @@ export function ResultsPage({
   const activeCompetition = data.competitions.find(
     (competition) => competition.slug === data.activeCompetitionSlug,
   );
+  const cancelledCompetitions = data.competitions.filter(
+    (competition) =>
+      competition.status === "cancelled" &&
+      (!data.activeCompetitionSlug ||
+        competition.slug === data.activeCompetitionSlug),
+  );
 
   return (
     <div className="min-h-screen">
@@ -123,6 +129,28 @@ export function ResultsPage({
             </Link>
           ))}
         </nav>
+
+        {cancelledCompetitions.length ? (
+          <div className="mt-6 space-y-3">
+            {cancelledCompetitions.map((competition) => (
+              <div
+                key={competition.id}
+                role="status"
+                className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+              >
+                <p className="font-extrabold">
+                  {competition.name} · {t("competition.cancelledTitle")}
+                </p>
+                <p className="mt-1 leading-6">
+                  {competition.publicNote ?? t("competition.cancellationNote")}
+                </p>
+                <p className="mt-1 text-xs font-semibold text-red-700">
+                  {t("competition.cancelledReadOnly")}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         {groups.length ? (
           <div className="mt-8 space-y-7">

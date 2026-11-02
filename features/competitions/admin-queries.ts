@@ -170,6 +170,8 @@ export async function getAdminCompetitionData(
       drawSeed: competition.drawSeed,
       drawGeneratedAt: competition.drawGeneratedAt?.toISOString() ?? null,
       status: competition.status,
+      publicNote: competition.publicNote,
+      cancelledAt: competition.cancelledAt?.toISOString() ?? null,
     },
     entrants,
     draw,

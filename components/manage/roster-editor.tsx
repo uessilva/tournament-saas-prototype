@@ -25,6 +25,8 @@ function errorKey(state: RosterActionState): DictionaryKey | null {
   switch (state.code) {
     case "registration_closed":
       return "manage.registrationClosedEdit";
+    case "competition_cancelled":
+      return "manage.competitionCancelled";
     case "tennis_single_participant":
       return "manage.tennisSingleBlocked";
     case "roster_maximum":

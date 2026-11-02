@@ -27,6 +27,7 @@ export type ReviewQueueItem = {
   competitionId: string;
   competitionName: string;
   competitionSlug: string;
+  competitionStatus: string;
   homeTeamName: string | null;
   awayTeamName: string | null;
   activeScoresheet: {
@@ -56,6 +57,7 @@ export type ReviewQueueData = {
     awaiting: number;
     failed: number;
     published: number;
+    cancelled: number;
   };
 };
 
@@ -96,7 +98,13 @@ export async function getReviewQueue(
     return {
       event,
       items: [],
-      counts: { pending: 0, awaiting: 0, failed: 0, published: 0 },
+      counts: {
+        pending: 0,
+        awaiting: 0,
+        failed: 0,
+        published: 0,
+        cancelled: 0,
+      },
     };
   }
 
@@ -173,6 +181,7 @@ export async function getReviewQueue(
       competitionId: match.competition.id,
       competitionName: match.competition.name,
       competitionSlug: match.competition.slug,
+      competitionStatus: match.competition.status,
       homeTeamName:
         match.entries.find((entry) => entry.side === "home")?.team?.name ??
         null,
@@ -209,21 +218,36 @@ export async function getReviewQueue(
     counts: {
       pending: items.filter(
         (item) =>
-          item.activeScoresheet?.status === "needs_review" ||
-          item.activeScoresheet?.status === "processing" ||
-          item.activeScoresheet?.status === "uploaded",
+          item.matchStatus !== "cancelled" &&
+          item.competitionStatus !== "cancelled" &&
+          (item.activeScoresheet?.status === "needs_review" ||
+            item.activeScoresheet?.status === "processing" ||
+            item.activeScoresheet?.status === "uploaded"),
       ).length,
       awaiting: items.filter(
         (item) =>
-          !item.activeScoresheet && item.matchStatus !== "published",
+          !item.activeScoresheet &&
+          item.matchStatus !== "published" &&
+          item.matchStatus !== "cancelled" &&
+          item.competitionStatus !== "cancelled",
       ).length,
       failed: items.filter(
         (item) =>
-          item.activeScoresheet?.status === "extraction_failed" ||
-          item.activeScoresheet?.status === "rejected",
+          item.matchStatus !== "cancelled" &&
+          item.competitionStatus !== "cancelled" &&
+          (item.activeScoresheet?.status === "extraction_failed" ||
+            item.activeScoresheet?.status === "rejected"),
       ).length,
-      published: items.filter((item) => item.matchStatus === "published")
-        .length,
+      published: items.filter(
+        (item) =>
+          item.matchStatus === "published" &&
+          item.competitionStatus !== "cancelled",
+      ).length,
+      cancelled: items.filter(
+        (item) =>
+          item.matchStatus === "cancelled" ||
+          item.competitionStatus === "cancelled",
+      ).length,
     },
   };
 }
@@ -283,6 +307,8 @@ export type ReviewMatchDetail = {
     name: string;
     slug: string;
     sport: "football" | "tennis";
+    status: string;
+    publicNote: string | null;
   };
   match: {
     id: string;
@@ -291,6 +317,8 @@ export type ReviewMatchDetail = {
     status: string;
     startsAt: string | null;
     venueName: string | null;
+    cancelledAt: string | null;
+    cancellationReason: string | null;
     homeTeamId: string | null;
     awayTeamId: string | null;
     homeTeamName: string | null;
@@ -453,6 +481,8 @@ export async function getReviewMatchDetail(
       name: match.competition.name,
       slug: match.competition.slug,
       sport: match.competition.sport,
+      status: match.competition.status,
+      publicNote: match.competition.publicNote,
     },
     match: {
       id: match.id,
@@ -461,6 +491,8 @@ export async function getReviewMatchDetail(
       status: match.status,
       startsAt: toIso(match.startsAt),
       venueName: match.venue?.name ?? null,
+      cancelledAt: toIso(match.cancelledAt),
+      cancellationReason: match.cancellationReason,
       homeTeamId:
         match.entries.find((entry) => entry.side === "home")?.teamId ?? null,
       awayTeamId:

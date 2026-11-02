@@ -102,6 +102,7 @@ export async function getTeamRoster(
       sport: team.sport,
       registrationState: team.registrationState,
       registrationOpen: registration.open,
+      cancelled: team.status === "cancelled",
       registrationClosedByDeadline: registration.closedByDeadline,
       registrationDeadline: team.registrationDeadline?.toISOString() ?? null,
       drawGeneratedAt: team.drawGeneratedAt?.toISOString() ?? null,

@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -106,6 +106,7 @@ export async function getCompetitionPage(
         eq(matches.competitionId, competition.id),
         eq(matches.status, "published"),
         eq(matches.isBye, false),
+        isNull(matches.cancelledAt),
       ),
     )
     .orderBy(sql`${matches.startsAt} desc nulls last`);

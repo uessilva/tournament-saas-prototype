@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { competitions, events, matches } from "@/lib/db/schema";
@@ -25,6 +25,8 @@ export async function getResultsPage(
       name: competitions.name,
       slug: competitions.slug,
       sport: competitions.sport,
+      status: competitions.status,
+      publicNote: competitions.publicNote,
     })
     .from(competitions)
     .where(eq(competitions.eventId, event.id))
@@ -42,6 +44,7 @@ export async function getResultsPage(
         eq(competitions.eventId, event.id),
         eq(matches.status, "published"),
         eq(matches.isBye, false),
+        isNull(matches.cancelledAt),
       ),
     )
     .orderBy(sql`${matches.startsAt} desc nulls last`, asc(matches.matchNumber));
@@ -64,6 +67,8 @@ export async function getResultsPage(
       name: competition.name,
       slug: competition.slug,
       sport: competition.sport,
+      status: competition.status,
+      publicNote: competition.publicNote,
       resultCount: allResults.filter(
         (match) => match.competitionId === competition.id,
       ).length,

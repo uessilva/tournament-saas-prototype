@@ -44,6 +44,7 @@ function Feedback({ state }: { state: DrawActionState }) {
       invalid_qualifiers: "draw.errorQualifierCount",
       invalid_swap: "draw.errorSwap",
       draw_locked: "draw.errorLocked",
+      cancelled_match_exists: "draw.errorCancelledMatch",
       competition_locked: "draw.errorCompetitionLocked",
       unsupported_format: "draw.errorFormat",
       action_failed: "draw.errorFailed",
@@ -168,7 +169,8 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
     { length: Math.max(0, maxGroups - 1) },
     (_, index) => index + 2,
   );
-  const canEdit = draw.canEdit;
+  const cancelled = data.competition.status === "cancelled";
+  const canEdit = draw.canEdit && !cancelled;
   const validationErrors = draw.validationErrors;
   const registrationOpen = data.competition.registrationOpen;
 
@@ -193,7 +195,12 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
         </span>
       </div>
 
-      {draw.confirmedResultExists ? (
+      {cancelled ? (
+        <p className="mt-4 flex items-start gap-2 rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700">
+          <LockIcon className="mt-0.5 size-4 shrink-0" />
+          {t("compLifecycle.mutationsBlocked")}
+        </p>
+      ) : draw.confirmedResultExists ? (
         <p className="mt-4 flex items-start gap-2 rounded-xl bg-soft-orange p-3 text-xs font-bold text-clay">
           <LockIcon className="mt-0.5 size-4 shrink-0" />
           {t("draw.lockedNotice")}

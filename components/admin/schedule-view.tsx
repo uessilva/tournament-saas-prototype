@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { AppTopBar } from "@/components/app-top-bar";
+import { MatchCancellationPanel } from "@/components/admin/match-cancellation-panel";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -43,6 +44,8 @@ const fieldErrorKeys: Record<string, DictionaryKey> = {
   venue_conflict: "schedule.errorVenueOverlap",
   venue_name_invalid: "schedule.venueNameInvalid",
   venue_exists: "schedule.venueExists",
+  competition_cancelled: "compLifecycle.mutationsBlocked",
+  match_cancelled: "matchCancel.cancelledTitle",
 };
 
 function SubmitButton({
@@ -51,12 +54,14 @@ function SubmitButton({
   tone = "primary",
   name,
   value,
+  disabled = false,
 }: {
   label: string;
   pendingLabel: string;
   tone?: "primary" | "quiet";
   name?: string;
   value?: string;
+  disabled?: boolean;
 }) {
   const { pending } = useFormStatus();
   const className =
@@ -69,7 +74,7 @@ function SubmitButton({
       type="submit"
       name={name}
       value={value}
-      disabled={pending}
+      disabled={pending || disabled}
       className={className}
     >
       {pending ? pendingLabel : label}
@@ -186,6 +191,7 @@ function MatchScheduleCard({
   timezone,
   venues,
   defaultDurationMinutes,
+  competitionStatus,
 }: {
   match: ScheduleMatch;
   eventId: string;
@@ -193,8 +199,12 @@ function MatchScheduleCard({
   timezone: string;
   venues: ScheduleVenue[];
   defaultDurationMinutes: number;
+  competitionStatus: string;
 }) {
   const { t } = useI18n();
+  const competitionCancelled = competitionStatus === "cancelled";
+  const formLocked =
+    competitionCancelled || match.status === "cancelled";
   const [state, action] = useActionState(
     updateMatchScheduleAction,
     EMPTY_STATE,
@@ -295,9 +305,10 @@ function MatchScheduleCard({
               name="startsAt"
               type="datetime-local"
               defaultValue={draft?.startsAt ?? match.startsAtInput ?? ""}
+              disabled={formLocked}
               aria-invalid={Boolean(startError)}
               aria-describedby={describedBy || undefined}
-              className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold focus:border-green focus:bg-white focus:outline-none"
+              className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold focus:border-green focus:bg-white focus:outline-none disabled:opacity-60"
             />
             <p className="mt-1 text-[10px] font-medium text-muted">
               {t("schedule.startHint")}
@@ -319,6 +330,7 @@ function MatchScheduleCard({
               id={`match-${match.id}-venue`}
               name="venueId"
               defaultValue={draft?.venueId ?? match.venueId ?? ""}
+              disabled={formLocked}
               aria-invalid={Boolean(venueError)}
               aria-describedby={
                 [
@@ -362,6 +374,7 @@ function MatchScheduleCard({
                 draft?.durationMinutes ??
                 (match.durationOverrideMinutes ?? "")
               }
+              disabled={formLocked}
               placeholder={t("schedule.durationPlaceholder").replace(
                 "{minutes}",
                 String(defaultDurationMinutes),
@@ -407,6 +420,7 @@ function MatchScheduleCard({
           <SubmitButton
             label={t("schedule.save")}
             pendingLabel={t("schedule.saving")}
+            disabled={formLocked}
           />
           {match.startsAt ? (
             <SubmitButton
@@ -415,6 +429,7 @@ function MatchScheduleCard({
               tone="quiet"
               name="intent"
               value="clear"
+              disabled={formLocked}
             />
           ) : null}
           <Link
@@ -426,6 +441,15 @@ function MatchScheduleCard({
           </Link>
         </div>
       </form>
+
+      <MatchCancellationPanel
+        eventId={eventId}
+        matchId={match.id}
+        matchStatus={match.status}
+        cancellationReason={match.cancellationReason}
+        competitionCancelled={competitionCancelled}
+        compact
+      />
     </article>
   );
 }
@@ -739,6 +763,14 @@ export function ScheduleView({
                             String(competition.defaultMatchDurationMinutes),
                           )}
                       </span>
+                      {competition.status === "cancelled" ? (
+                        <p className="basis-full rounded-lg bg-red-50 px-3 py-2 text-[11px] font-bold text-red-700">
+                          {t("compLifecycle.competitionCancelledSchedule")}
+                          {competition.publicNote
+                            ? ` ${t("competition.publicNote")}: ${competition.publicNote}`
+                            : ""}
+                        </p>
+                      ) : null}
                     </div>
                     {matches.map((match) => (
                       <MatchScheduleCard
@@ -751,6 +783,7 @@ export function ScheduleView({
                         defaultDurationMinutes={
                           competition.defaultMatchDurationMinutes
                         }
+                        competitionStatus={competition.status}
                       />
                     ))}
                   </div>

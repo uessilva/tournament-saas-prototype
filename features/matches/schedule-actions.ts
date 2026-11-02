@@ -133,6 +133,7 @@ async function loadScheduledMatches(
       id: matches.id,
       matchNumber: matches.matchNumber,
       competitionName: competitions.name,
+      competitionStatus: competitions.status,
       startsAt: matches.startsAt,
       durationMinutes: matches.durationMinutes,
       defaultDurationMinutes: competitions.defaultMatchDurationMinutes,
@@ -168,7 +169,11 @@ async function loadScheduledMatches(
 
   const scheduled: ScheduleExistingMatch[] = [];
   for (const row of rows) {
-    if (row.isBye || row.status === "cancelled") {
+    if (
+      row.isBye ||
+      row.status === "cancelled" ||
+      row.competitionStatus === "cancelled"
+    ) {
       continue;
     }
     const duration = effectiveDurationMinutes(
@@ -330,6 +335,8 @@ export async function updateMatchScheduleAction(
           id: matches.id,
           matchNumber: matches.matchNumber,
           competitionName: competitions.name,
+          competitionStatus: competitions.status,
+          status: matches.status,
           defaultDurationMinutes: competitions.defaultMatchDurationMinutes,
         })
         .from(matches)
@@ -341,6 +348,14 @@ export async function updateMatchScheduleAction(
 
       if (!match) {
         throw new ScheduleActionError("action_failed");
+      }
+
+      if (match.competitionStatus === "cancelled") {
+        throw new ScheduleActionError("competition_cancelled");
+      }
+
+      if (match.status === "cancelled") {
+        throw new ScheduleActionError("match_cancelled");
       }
 
       let startsAt: Date | null = null;

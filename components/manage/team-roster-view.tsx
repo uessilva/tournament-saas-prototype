@@ -12,6 +12,7 @@ import {
 } from "@/components/icons";
 import { RosterEditor } from "@/components/manage/roster-editor";
 import {
+  CompetitionStatusBadge,
   RegistrationBadge,
   SportTag,
 } from "@/components/public/badges";
@@ -26,7 +27,9 @@ export function TeamRosterView({
   user: { name: string | null; email: string | null };
 }) {
   const { t, formatDate, formatDateTime } = useI18n();
-  const registrationOpen = data.competition.registrationOpen;
+  const competitionCancelled = data.competition.cancelled;
+  const registrationOpen =
+    data.competition.registrationOpen && !competitionCancelled;
   const rosterLimit =
     data.competition.rosterMin != null && data.competition.rosterMax != null
       ? t("competition.rosterLimitValue")
@@ -80,6 +83,9 @@ export function TeamRosterView({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <SportTag sport={data.competition.sport} />
+              {competitionCancelled ? (
+                <CompetitionStatusBadge status="cancelled" />
+              ) : null}
               <RegistrationBadge
                 state={registrationOpen ? "open" : "closed"}
               />
@@ -102,6 +108,15 @@ export function TeamRosterView({
             <ArrowUpRightIcon className="size-3.5" />
           </Link>
         </header>
+
+        {competitionCancelled ? (
+          <div
+            role="alert"
+            className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800"
+          >
+            {t("manage.competitionCancelled")}
+          </div>
+        ) : null}
 
         <section className="mt-6 grid gap-4 md:grid-cols-[1.3fr_0.7fr]">
           <div className="surface p-5">

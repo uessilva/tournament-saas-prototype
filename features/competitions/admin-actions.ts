@@ -40,6 +40,10 @@ async function loadCompetition(eventId: string, competitionId: string) {
   return { user, event, competition };
 }
 
+function cancelledCompetitionError(): CompetitionAdminActionState {
+  return { status: "error", code: "competition_cancelled" };
+}
+
 function revalidateCompetition(eventId: string, competitionId: string) {
   revalidatePath(`/admin/events/${eventId}/competitions/${competitionId}`);
   revalidatePath(`/admin/events/${eventId}`);
@@ -82,6 +86,10 @@ export async function closeRegistrationAction(
     return { status: "error", code: "action_failed" };
   }
 
+  if (context.competition.status === "cancelled") {
+    return cancelledCompetitionError();
+  }
+
   await db
     .update(competitions)
     .set({
@@ -119,6 +127,10 @@ export async function openRegistrationAction(
 
   if (!context) {
     return { status: "error", code: "action_failed" };
+  }
+
+  if (context.competition.status === "cancelled") {
+    return cancelledCompetitionError();
   }
 
   if (context.competition.drawGeneratedAt) {
@@ -170,6 +182,10 @@ export async function saveDeadlineAction(
     return { status: "error", code: "action_failed" };
   }
 
+  if (context.competition.status === "cancelled") {
+    return cancelledCompetitionError();
+  }
+
   let deadline: Date | null = null;
   if (rawDeadline) {
     deadline = zonedDateTimeToUtc(rawDeadline, context.event.timezone);
@@ -218,6 +234,10 @@ export async function extendDeadlineAction(
     return { status: "error", code: "action_failed" };
   }
 
+  if (context.competition.status === "cancelled") {
+    return cancelledCompetitionError();
+  }
+
   const now = new Date();
   const base =
     context.competition.registrationDeadline &&
@@ -258,6 +278,10 @@ export async function clearDeadlineAction(
 
   if (!context) {
     return { status: "error", code: "action_failed" };
+  }
+
+  if (context.competition.status === "cancelled") {
+    return cancelledCompetitionError();
   }
 
   await db
