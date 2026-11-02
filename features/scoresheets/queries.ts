@@ -7,6 +7,7 @@ import {
   extractedFields,
   jobs,
   matches,
+  participantStatistics,
   resultVersions,
   scoresheets,
   users,
@@ -28,6 +29,7 @@ export type ReviewQueueItem = {
   competitionName: string;
   competitionSlug: string;
   competitionStatus: string;
+  sport: "football" | "tennis";
   homeTeamName: string | null;
   awayTeamName: string | null;
   activeScoresheet: {
@@ -90,11 +92,11 @@ export async function getReviewQueue(
     .where(eq(competitions.eventId, event.id))
     .orderBy(asc(competitions.sortOrder));
 
-  const footballIds = competitionRows
-    .filter((competition) => competition.sport === "football")
-    .map((competition) => competition.id);
+  const competitionIds = competitionRows.map(
+    (competition) => competition.id,
+  );
 
-  if (!footballIds.length) {
+  if (!competitionIds.length) {
     return {
       event,
       items: [],
@@ -110,7 +112,7 @@ export async function getReviewQueue(
 
   const matchRows = await db.query.matches.findMany({
     where: and(
-      inArray(matches.competitionId, footballIds),
+      inArray(matches.competitionId, competitionIds),
       eq(matches.isBye, false),
     ),
     with: {
@@ -182,6 +184,7 @@ export async function getReviewQueue(
       competitionName: match.competition.name,
       competitionSlug: match.competition.slug,
       competitionStatus: match.competition.status,
+      sport: match.competition.sport,
       homeTeamName:
         match.entries.find((entry) => entry.side === "home")?.team?.name ??
         null,
@@ -340,6 +343,19 @@ export type ReviewMatchDetail = {
     isWalkover: boolean;
     penaltyHome: number | null;
     penaltyAway: number | null;
+    tennisWinnerTeamId: string | null;
+    tennisSets: Array<{
+      home: number;
+      away: number;
+      tiebreakHome?: number;
+      tiebreakAway?: number;
+    }> | null;
+    notes: string | null;
+    statistics: Array<{
+      teamId: string;
+      aces: number;
+      doubleFaults: number;
+    }>;
   }>;
 };
 
@@ -359,7 +375,10 @@ export async function getReviewMatchDetail(
       },
       resultVersions: {
         orderBy: [desc(resultVersions.version)],
-        with: { footballResult: true },
+        with: {
+          footballResult: true,
+          tennisResult: true,
+        },
       },
     },
   });
@@ -392,6 +411,32 @@ export async function getReviewMatchDetail(
   );
 
   const sheetIds = match.scoresheets.map((sheet) => sheet.id);
+  const versionIds = match.resultVersions.map((version) => version.id);
+  const statisticRows = versionIds.length
+    ? await db
+        .select({
+          resultVersionId: participantStatistics.resultVersionId,
+          teamId: participantStatistics.teamId,
+          aces: participantStatistics.aces,
+          doubleFaults: participantStatistics.doubleFaults,
+        })
+        .from(participantStatistics)
+        .where(inArray(participantStatistics.resultVersionId, versionIds))
+    : [];
+  const statisticsByVersion = new Map<
+    string,
+    Array<{ teamId: string; aces: number; doubleFaults: number }>
+  >();
+  for (const statistic of statisticRows) {
+    const list = statisticsByVersion.get(statistic.resultVersionId) ?? [];
+    list.push({
+      teamId: statistic.teamId,
+      aces: statistic.aces,
+      doubleFaults: statistic.doubleFaults,
+    });
+    statisticsByVersion.set(statistic.resultVersionId, list);
+  }
+
   const jobRows = sheetIds.length
     ? (await db
         .select()
@@ -521,9 +566,19 @@ export async function getReviewMatchDetail(
         (version.metadata as Record<string, unknown> | null) ?? null,
       homeScore: version.footballResult?.homeScore ?? null,
       awayScore: version.footballResult?.awayScore ?? null,
-      isWalkover: version.footballResult?.isWalkover ?? false,
+      isWalkover:
+        version.footballResult?.isWalkover ??
+        version.tennisResult?.isWalkover ??
+        false,
       penaltyHome: version.footballResult?.penaltyHome ?? null,
       penaltyAway: version.footballResult?.penaltyAway ?? null,
+      tennisWinnerTeamId: version.tennisResult?.winnerTeamId ?? null,
+      tennisSets: version.tennisResult?.sets ?? null,
+      notes:
+        version.tennisResult?.notes ??
+        version.footballResult?.notes ??
+        null,
+      statistics: statisticsByVersion.get(version.id) ?? [],
     })),
   };
 }

@@ -97,7 +97,7 @@ function QueueCard({
   return (
     <article className="border-b border-line/80 py-4 last:border-b-0">
       <div className="flex flex-wrap items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted">
-        <SportTag sport="football" />
+        <SportTag sport={item.sport} />
         <span>#{item.matchNumber}</span>
         <span>{item.competitionName}</span>
         {item.startsAt ? (

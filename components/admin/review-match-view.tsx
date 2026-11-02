@@ -24,6 +24,7 @@ import type {
 } from "@/features/scoresheets/queries";
 import {
   confirmScoresheetAction,
+  correctTennisResultAction,
   manualResultAction,
   rejectScoresheetAction,
   retryExtractionAction,
@@ -604,6 +605,279 @@ function ManualEntryForm({
   );
 }
 
+function tennisSetScoreLabel(
+  sets: Array<{
+    home: number;
+    away: number;
+    tiebreakHome?: number;
+    tiebreakAway?: number;
+  }> | null,
+) {
+  if (!sets?.length) {
+    return "—";
+  }
+  return sets
+    .map((set) => {
+      const tiebreak =
+        set.tiebreakHome != null && set.tiebreakAway != null
+          ? ` (${set.tiebreakHome}–${set.tiebreakAway})`
+          : "";
+      return `${set.home}–${set.away}${tiebreak}`;
+    })
+    .join(" · ");
+}
+
+function tennisSetsWon(
+  sets: Array<{ home: number; away: number }> | null,
+) {
+  let home = 0;
+  let away = 0;
+  for (const set of sets ?? []) {
+    if (set.home > set.away) home += 1;
+    if (set.away > set.home) away += 1;
+  }
+  return { home, away };
+}
+
+function TennisResultForm({
+  data,
+  mode,
+}: {
+  data: ReviewMatchDetail;
+  mode: "manual" | "correction";
+}) {
+  const { t } = useI18n();
+  const [state, action] = useActionState(
+    mode === "correction" ? correctTennisResultAction : manualResultAction,
+    EMPTY,
+  );
+  const current = data.resultVersions.find((version) => version.isCurrent);
+  const sets = current?.tennisSets ?? [];
+  const homeStats = current?.statistics.find(
+    (stat) => stat.teamId === data.match.homeTeamId,
+  );
+  const awayStats = current?.statistics.find(
+    (stat) => stat.teamId === data.match.awayTeamId,
+  );
+  const [walkover, setWalkover] = useState(Boolean(current?.isWalkover));
+  const walkoverWinner =
+    current?.tennisWinnerTeamId === data.match.homeTeamId
+      ? "home"
+      : current?.tennisWinnerTeamId === data.match.awayTeamId
+        ? "away"
+        : "";
+
+  return (
+    <form action={action} className="surface p-4 sm:p-5">
+      <input type="hidden" name="eventId" value={data.event.id} />
+      <input type="hidden" name="matchId" value={data.match.id} />
+      <p className="eyebrow text-clay">
+        {mode === "correction"
+          ? t("review.correctionEyebrow")
+          : t("review.manualEyebrow")}
+      </p>
+      <h2 className="display-title mt-1 text-2xl">
+        {mode === "correction"
+          ? t("review.correctionTitle")
+          : t("review.tennisManualTitle")}
+      </h2>
+      <p className="mt-1 text-xs leading-5 text-muted">
+        {mode === "correction"
+          ? t("review.correctionBody")
+          : t("review.tennisManualBody")}
+      </p>
+
+      {mode === "correction" ? (
+        <div className="mt-4">
+          <label
+            htmlFor={`correction-reason-${data.match.id}`}
+            className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted"
+          >
+            {t("review.correctionReason")}
+          </label>
+          <textarea
+            id={`correction-reason-${data.match.id}`}
+            name="reason"
+            required
+            minLength={3}
+            rows={2}
+            className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-green"
+          />
+        </div>
+      ) : null}
+
+      <fieldset className="mt-4 space-y-3" disabled={walkover}>
+        <legend className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted">
+          {t("review.tennisSets")}
+        </legend>
+        {[0, 1, 2].map((index) => {
+          const set = sets[index];
+          return (
+            <div
+              key={index}
+              className="grid grid-cols-2 gap-2 rounded-xl border border-line bg-paper/60 p-3 sm:grid-cols-4"
+            >
+              <p className="col-span-2 text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted sm:col-span-4">
+                {t("review.tennisSet").replace("{number}", String(index + 1))}
+              </p>
+              {(
+                [
+                  ["Home", t("review.homeSide"), set?.home],
+                  ["Away", t("review.awaySide"), set?.away],
+                  ["TiebreakHome", t("review.tennisTiebreakHome"), set?.tiebreakHome],
+                  ["TiebreakAway", t("review.tennisTiebreakAway"), set?.tiebreakAway],
+                ] as const
+              ).map(([name, label, value]) => (
+                <div key={name}>
+                  <label
+                    htmlFor={`${mode}-${name}-${index}-${data.match.id}`}
+                    className="text-[9px] font-extrabold uppercase tracking-[0.08em] text-muted"
+                  >
+                    {label}
+                  </label>
+                  <input
+                    id={`${mode}-${name}-${index}-${data.match.id}`}
+                    name={`set${index + 1}${name}`}
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={name.startsWith("Tiebreak") ? 30 : 7}
+                    defaultValue={value ?? ""}
+                    className="mt-1 w-full rounded-lg border border-line bg-white px-2 py-2 font-mono text-sm font-bold outline-none focus:border-green disabled:bg-cream"
+                  />
+                </div>
+              ))}
+            </div>
+          );
+        })}
+        <p className="text-[10px] font-semibold text-muted">
+          {t("review.tennisSetsHint")}
+        </p>
+      </fieldset>
+
+      <label className="mt-3 flex items-center gap-2 text-xs font-bold">
+        <input
+          type="checkbox"
+          name="isWalkover"
+          value="true"
+          checked={walkover}
+          onChange={(event) => setWalkover(event.target.checked)}
+          className="size-4 accent-clay"
+        />
+        {t("review.manualWalkover")}
+      </label>
+
+      {walkover ? (
+        <div className="mt-3">
+          <label
+            htmlFor={`tennis-winner-${mode}-${data.match.id}`}
+            className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted"
+          >
+            {t("review.manualWalkoverWinner")}
+          </label>
+          <select
+            id={`tennis-winner-${mode}-${data.match.id}`}
+            name="walkoverWinner"
+            required
+            defaultValue={walkoverWinner}
+            className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm font-bold outline-none focus:border-green"
+          >
+            <option value="">{t("review.noWinner")}</option>
+            <option value="home">
+              {data.match.homeTeamName ?? t("review.homeSide")}
+            </option>
+            <option value="away">
+              {data.match.awayTeamName ?? t("review.awaySide")}
+            </option>
+          </select>
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {(
+          [
+            ["homeAces", t("review.tennisHomeAces"), homeStats?.aces],
+            ["awayAces", t("review.tennisAwayAces"), awayStats?.aces],
+            [
+              "homeDoubleFaults",
+              t("review.tennisHomeDoubleFaults"),
+              homeStats?.doubleFaults,
+            ],
+            [
+              "awayDoubleFaults",
+              t("review.tennisAwayDoubleFaults"),
+              awayStats?.doubleFaults,
+            ],
+          ] as const
+        ).map(([name, label, value]) => (
+          <div key={name}>
+            <label
+              htmlFor={`${mode}-${name}-${data.match.id}`}
+              className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted"
+            >
+              {label}
+            </label>
+            <input
+              id={`${mode}-${name}-${data.match.id}`}
+              name={name}
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={100}
+              defaultValue={value ?? 0}
+              disabled={walkover}
+              className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 font-mono text-sm font-bold outline-none focus:border-green disabled:bg-cream"
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3">
+        <label
+          htmlFor={`tennis-notes-${mode}-${data.match.id}`}
+          className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted"
+        >
+          {t("review.manualNotes")}
+        </label>
+        <textarea
+          id={`tennis-notes-${mode}-${data.match.id}`}
+          name="notes"
+          rows={2}
+          defaultValue={current?.notes ?? ""}
+          className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-green"
+        />
+      </div>
+
+      <label className="mt-4 flex items-start gap-2 rounded-xl border border-clay/30 bg-soft-orange p-3 text-xs font-bold text-clay">
+        <input
+          type="checkbox"
+          name="explicitConfirmation"
+          value="true"
+          required
+          className="mt-0.5 size-4 shrink-0 accent-clay"
+        />
+        {mode === "correction"
+          ? t("review.correctionConfirmation")
+          : t("review.manualConfirmation")}
+      </label>
+
+      {state.status === "error" ? <ErrorNotice code={state.code} /> : null}
+
+      <div className="mt-3">
+        <SubmitButton
+          label={
+            mode === "correction"
+              ? t("review.correctionPublish")
+              : t("review.manualPublish")
+          }
+          pendingLabel={t("review.publishing")}
+          tone="dark"
+        />
+      </div>
+    </form>
+  );
+}
+
 export function ReviewMatchView({
   data,
   user,
@@ -617,9 +891,11 @@ export function ReviewMatchView({
   const published = data.match.status === "published";
   const matchCancelled = data.match.status === "cancelled";
   const competitionCancelled = data.competition.status === "cancelled";
+  const isTennis = data.competition.sport === "tennis";
   const active =
     data.scoresheets.find((sheet) => sheet.isActive) ?? data.scoresheets[0];
   const currentResult = data.resultVersions.find((version) => version.isCurrent);
+  const currentSets = tennisSetsWon(currentResult?.tennisSets ?? null);
   const canReview =
     active != null &&
     ["uploaded", "processing", "needs_review", "extraction_failed", "rejected"].includes(
@@ -742,8 +1018,11 @@ export function ReviewMatchView({
                 </p>
               </div>
               <p className="score-numeral text-4xl font-semibold">
-                {currentResult.homeScore}–{currentResult.awayScore}
-                {currentResult.penaltyHome != null &&
+                {isTennis
+                  ? `${currentSets.home}–${currentSets.away}`
+                  : `${currentResult.homeScore}–${currentResult.awayScore}`}
+                {!isTennis &&
+                currentResult.penaltyHome != null &&
                 currentResult.penaltyAway != null ? (
                   <span className="ml-2 text-sm text-white/60">
                     ({currentResult.penaltyHome}–{currentResult.penaltyAway})
@@ -751,6 +1030,12 @@ export function ReviewMatchView({
                 ) : null}
               </p>
             </div>
+            {isTennis ? (
+              <p className="text-xs font-semibold text-white/70">
+                {tennisSetScoreLabel(currentResult.tennisSets)}
+                {currentResult.isWalkover ? " · W.O." : ""}
+              </p>
+            ) : null}
           </section>
         ) : null}
 
@@ -827,7 +1112,15 @@ export function ReviewMatchView({
             ) : null}
 
             {!published && !matchCancelled && !competitionCancelled ? (
-              <ManualEntryForm data={data} published={published} />
+              isTennis ? (
+                <TennisResultForm data={data} mode="manual" />
+              ) : (
+                <ManualEntryForm data={data} published={published} />
+              )
+            ) : null}
+
+            {published && isTennis ? (
+              <TennisResultForm data={data} mode="correction" />
             ) : null}
 
             {published && active ? (
@@ -945,7 +1238,9 @@ export function ReviewMatchView({
                           ) : null}
                         </span>
                         <span className="score-numeral text-lg font-semibold">
-                          {version.homeScore}–{version.awayScore}
+                          {version.tennisSets
+                            ? tennisSetScoreLabel(version.tennisSets)
+                            : `${version.homeScore}–${version.awayScore}`}
                           {version.isWalkover ? " W.O." : ""}
                         </span>
                       </div>

@@ -14,6 +14,10 @@ import {
   publicMatchQueryForTeams,
 } from "@/features/public/matches";
 import type { PublicMatch } from "@/features/public/types";
+import {
+  getDisputesForMatches,
+  type DisputeRecord,
+} from "@/features/disputes/queries";
 
 export type ManagerFixtureTeam = {
   id: string;
@@ -44,6 +48,7 @@ export type ManagerFixturesData = {
   teams: ManagerFixtureTeam[];
   fixtures: PublicMatch[];
   scoresheetsByMatch: Record<string, ManagerScoresheetSummary[]>;
+  disputesByMatch: Record<string, DisputeRecord[]>;
 };
 
 export async function getManagerFixtures(
@@ -72,7 +77,12 @@ export async function getManagerFixtures(
     .orderBy(asc(teams.name));
 
   if (!teamRows.length) {
-    return { teams: [], fixtures: [], scoresheetsByMatch: {} };
+    return {
+      teams: [],
+      fixtures: [],
+      scoresheetsByMatch: {},
+      disputesByMatch: {},
+    };
   }
 
   const rows = await publicMatchQueryForTeams(
@@ -116,9 +126,18 @@ export async function getManagerFixtures(
     scoresheetsByMatch[sheet.matchId] = list;
   }
 
+  const disputeRows = await getDisputesForMatches(matchIds);
+  const disputesByMatch: Record<string, DisputeRecord[]> = {};
+  for (const dispute of disputeRows) {
+    const list = disputesByMatch[dispute.matchId] ?? [];
+    list.push(dispute);
+    disputesByMatch[dispute.matchId] = list;
+  }
+
   return {
     teams: teamRows,
     fixtures,
     scoresheetsByMatch,
+    disputesByMatch,
   };
 }

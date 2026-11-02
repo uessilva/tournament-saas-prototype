@@ -258,7 +258,7 @@ export function mapPublicMatch(row: PublicMatchRow): PublicMatch {
       row.sport === "tennis"
         ? (row.tennisWalkover ?? false)
         : (row.footballWalkover ?? false),
-    isCancelled: row.status === "cancelled",
+    isCancelled: row.status === "cancelled" || row.cancelledAt != null,
     sets: row.tennisSets ?? null,
   };
 }

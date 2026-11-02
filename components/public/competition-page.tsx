@@ -37,6 +37,20 @@ function Signed(value: number) {
   return value > 0 ? `+${value}` : String(value);
 }
 
+function TiebreakBadge({
+  reason,
+  t,
+}: {
+  reason: string;
+  t: (key: DictionaryKey) => string;
+}) {
+  return (
+    <span className="ml-1.5 inline-flex rounded-full bg-soft-orange px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.06em] text-clay">
+      {t(`standings.tiebreak.${reason}` as DictionaryKey)}
+    </span>
+  );
+}
+
 export function CompetitionPage({
   data,
   signedIn,
@@ -224,6 +238,14 @@ export function CompetitionPage({
                     : t("competition.footballStandingsNote")}
                 </p>
               </div>
+              {isTennis ? (
+                <p className="mt-3 rounded-xl bg-cream px-3 py-2 text-[11px] font-semibold text-muted">
+                  {t("competition.seededDrawNote").replace(
+                    "{seed}",
+                    competition.drawSeed ?? "—",
+                  )}
+                </p>
+              ) : null}
 
               {isTennis && data.groups.length ? (
                 <div className="mt-6 grid gap-8">
@@ -281,6 +303,12 @@ export function CompetitionPage({
                                 </td>
                                 <td className="py-2.5 pr-2 font-bold">
                                   {row.teamName}
+                                  {row.tiebreakReason ? (
+                                    <TiebreakBadge
+                                      reason={row.tiebreakReason}
+                                      t={t}
+                                    />
+                                  ) : null}
                                 </td>
                                 <td className="py-2.5 pr-2 text-center">
                                   {row.played}
@@ -323,6 +351,70 @@ export function CompetitionPage({
                 </div>
               )}
             </section>
+
+            {isTennis ? (
+              <section id="leaders" className="surface p-5 sm:p-7">
+                <div>
+                  <p className="eyebrow text-clay">{t("home.leadersEyebrow")}</p>
+                  <h2 className="display-title mt-2 text-3xl">
+                    {t("competition.leadersTitle")}
+                  </h2>
+                  <p className="mt-1 text-xs leading-5 text-muted">
+                    {t("competition.leadersBody")}
+                  </p>
+                </div>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  {(
+                    [
+                      [t("leaders.aces"), data.leaders.aces],
+                      [t("leaders.doubleFaults"), data.leaders.doubleFaults],
+                    ] as const
+                  ).map(([title, rows]) => (
+                    <div
+                      key={title}
+                      className="rounded-2xl border border-line bg-paper/70 p-4"
+                    >
+                      <p className="eyebrow text-muted">{title}</p>
+                      {rows.length ? (
+                        <ol className="mt-3 space-y-2.5">
+                          {rows.map((row, index) => (
+                            <li
+                              key={row.participantId}
+                              className="flex items-center gap-3"
+                            >
+                              <span
+                                className={`grid size-6 shrink-0 place-items-center rounded-full text-[10px] font-extrabold ${
+                                  index === 0
+                                    ? "bg-clay text-white"
+                                    : "bg-cream text-muted"
+                                }`}
+                              >
+                                {index + 1}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-bold">
+                                  {row.name}
+                                </span>
+                                <span className="block truncate text-[10px] font-medium text-muted">
+                                  {row.teamName}
+                                </span>
+                              </span>
+                              <span className="score-numeral text-lg font-semibold">
+                                {row.total}
+                              </span>
+                            </li>
+                          ))}
+                        </ol>
+                      ) : (
+                        <p className="mt-3 text-xs leading-5 text-muted">
+                          {t("home.noStats")}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <section id="fixtures" className="surface p-5 sm:p-7">
               <div>

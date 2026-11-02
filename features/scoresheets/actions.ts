@@ -21,13 +21,27 @@ import { completeJob, enqueueJob, failJob } from "@/lib/jobs/queue";
 import { processJob } from "@/lib/jobs/handlers";
 import { assertDemoMode, isDemoMode } from "@/lib/demo-mode";
 import { scoresheetStorageKey, storage } from "@/lib/storage";
-import { buildDemoScoresheetPdf, FOOTBALL_TEMPLATE_VERSION, scoresheetIdentityForMatch, type FootballScoresheetInput } from "./template";
+import {
+  buildDemoScoresheetPdf,
+  buildDemoTennisScoresheetPdf,
+  scoresheetIdentityForMatch,
+  scoresheetTemplateVersion,
+  type FootballScoresheetInput,
+} from "./template";
 import {
   publishFootballResult,
   ResultPublicationError,
   validateFootballResult,
   type FootballResultInput,
 } from "@/features/results/publication";
+import {
+  publishTennisResult,
+  TennisPublicationError,
+} from "@/features/results/tennis-publication";
+import {
+  validateTennisResult,
+  type TennisResultInput,
+} from "@/features/results/tennis-result";
 
 export type ScoresheetActionState = {
   status: "idle" | "success" | "error";
@@ -151,6 +165,100 @@ function footballTemplateInput(context: MatchContext): FootballScoresheetInput {
   };
 }
 
+function numericFormValue(formData: FormData, key: string) {
+  const raw = String(formData.get(key) ?? "").trim();
+  return raw.length ? Number(raw) : null;
+}
+
+function tennisSetsFromFields(formData: FormData): TennisResultInput["sets"] {
+  return [1, 2, 3]
+    .map((number) => {
+      const home = numberField(formData, `result_set${number}_home`);
+      const away = numberField(formData, `result_set${number}_away`);
+      const tiebreakHome = numberField(
+        formData,
+        `result_set${number}_tiebreak_home`,
+      );
+      const tiebreakAway = numberField(
+        formData,
+        `result_set${number}_tiebreak_away`,
+      );
+      if (home == null && away == null) {
+        return null;
+      }
+      return {
+        home: home ?? -1,
+        away: away ?? -1,
+        ...(tiebreakHome != null ? { tiebreakHome } : {}),
+        ...(tiebreakAway != null ? { tiebreakAway } : {}),
+      };
+    })
+    .filter((set): set is NonNullable<typeof set> => set != null);
+}
+
+function tennisResultFromFields(formData: FormData): TennisResultInput {
+  const winner = fieldValueFromForm(formData, "result_walkover_winner");
+  return {
+    sets: tennisSetsFromFields(formData),
+    isWalkover: fieldValueFromForm(formData, "result_walkover") === "true",
+    walkoverWinnerSide:
+      winner === "home" || winner === "away" ? winner : null,
+    homeAces: numberField(formData, "result_home_aces"),
+    awayAces: numberField(formData, "result_away_aces"),
+    homeDoubleFaults: numberField(formData, "result_home_double_faults"),
+    awayDoubleFaults: numberField(formData, "result_away_double_faults"),
+    notes: fieldValueFromForm(formData, "result_notes") || null,
+  };
+}
+
+function tennisSetsFromManualForm(formData: FormData): TennisResultInput["sets"] {
+  return [1, 2, 3]
+    .map((number) => {
+      const home = numericFormValue(formData, `set${number}Home`);
+      const away = numericFormValue(formData, `set${number}Away`);
+      const tiebreakHome = numericFormValue(formData, `set${number}TiebreakHome`);
+      const tiebreakAway = numericFormValue(formData, `set${number}TiebreakAway`);
+      if (home == null && away == null) {
+        return null;
+      }
+      return {
+        home: home ?? -1,
+        away: away ?? -1,
+        ...(tiebreakHome != null ? { tiebreakHome } : {}),
+        ...(tiebreakAway != null ? { tiebreakAway } : {}),
+      };
+    })
+    .filter((set): set is NonNullable<typeof set> => set != null);
+}
+
+function tennisResultFromManualForm(formData: FormData): TennisResultInput {
+  const winner = String(formData.get("walkoverWinner") ?? "");
+  return {
+    sets: tennisSetsFromManualForm(formData),
+    isWalkover: formData.get("isWalkover") === "true",
+    walkoverWinnerSide:
+      winner === "home" || winner === "away" ? winner : null,
+    homeAces: numericFormValue(formData, "homeAces"),
+    awayAces: numericFormValue(formData, "awayAces"),
+    homeDoubleFaults: numericFormValue(formData, "homeDoubleFaults"),
+    awayDoubleFaults: numericFormValue(formData, "awayDoubleFaults"),
+    notes: String(formData.get("notes") ?? "").trim() || null,
+  };
+}
+
+function isPublicationError(error: unknown) {
+  return (
+    error instanceof ResultPublicationError ||
+    error instanceof TennisPublicationError
+  );
+}
+
+function publicationErrorCode(error: unknown) {
+  return isPublicationError(error)
+    ? (error as ResultPublicationError | TennisPublicationError).code
+    : "action_failed";
+}
+
 async function processUploadedScoresheet(scoresheetId: string) {
   const job = await enqueueJob({
     type: "scoresheet.extract",
@@ -227,10 +335,16 @@ export async function uploadScoresheetAction(
       return { status: "error", code: "demo_disabled" };
     }
     assertDemoMode();
-    bytes = await buildDemoScoresheetPdf(
-      footballTemplateInput(context),
-      intent === "demo_scan" ? "scan" : "digital",
-    );
+    bytes =
+      context.competition.sport === "tennis"
+        ? await buildDemoTennisScoresheetPdf(
+            footballTemplateInput(context),
+            intent === "demo_scan" ? "scan" : "digital",
+          )
+        : await buildDemoScoresheetPdf(
+            footballTemplateInput(context),
+            intent === "demo_scan" ? "scan" : "digital",
+          );
     filename =
       intent === "demo_scan"
         ? "demo-scan-scoresheet.pdf"
@@ -261,7 +375,10 @@ export async function uploadScoresheetAction(
   }
 
   const scoresheetId = randomUUID();
-  const identity = scoresheetIdentityForMatch(context.match.id);
+  const identity = scoresheetIdentityForMatch(
+    context.match.id,
+    context.competition.sport,
+  );
   const storageKey = scoresheetStorageKey(
     context.event.id,
     context.match.id,
@@ -280,7 +397,7 @@ export async function uploadScoresheetAction(
       originalFilename: filename,
       mimeType,
       sizeBytes: bytes.byteLength,
-      templateVersion: FOOTBALL_TEMPLATE_VERSION,
+      templateVersion: scoresheetTemplateVersion(context.competition.sport),
       qrSheetId: identity.sheetId,
       pageCount: 1,
       status: "uploaded",
@@ -476,38 +593,60 @@ export async function confirmScoresheetAction(
     return { status: "error", code: "match_not_playable" };
   }
 
-  const walkover = fieldValueFromForm(formData, "result_walkover") === "true";
-  const winner = fieldValueFromForm(formData, "result_walkover_winner");
-  const walkoverWinnerSide: "home" | "away" | null =
-    winner === "home" || winner === "away" ? winner : null;
-  const result: FootballResultInput = {
-    homeScore: numberField(formData, "result_home_goals") ?? -1,
-    awayScore: numberField(formData, "result_away_goals") ?? -1,
-    isWalkover: walkover,
-    walkoverWinnerSide,
-    penaltyHome: numberField(formData, "result_home_penalty"),
-    penaltyAway: numberField(formData, "result_away_penalty"),
-    notes: fieldValueFromForm(formData, "result_notes") || null,
-  };
+  const isTennis = context.competition.sport === "tennis";
+  let footballResult: FootballResultInput | null = null;
+  let tennisResult: TennisResultInput | null = null;
 
-  if (walkover) {
-    result.homeScore = result.walkoverWinnerSide === "home" ? 3 : 0;
-    result.awayScore = result.walkoverWinnerSide === "away" ? 3 : 0;
-    result.penaltyHome = null;
-    result.penaltyAway = null;
-  }
-
-  const validation = validateFootballResult(result, {
-    stage: context.match.stage,
-    homeTeamId: context.homeTeamId,
-    awayTeamId: context.awayTeamId,
-  });
-
-  if (!validation.valid) {
-    return {
-      status: "error",
-      code: validation.errors[0] ?? "invalid_result",
+  if (isTennis) {
+    tennisResult = tennisResultFromFields(formData);
+    const validation = validateTennisResult(tennisResult, {
+      stage: context.match.stage,
+      homeTeamId: context.homeTeamId,
+      awayTeamId: context.awayTeamId,
+    });
+    if (!validation.valid) {
+      return {
+        status: "error",
+        code: validation.errors[0] ?? "invalid_result",
+      };
+    }
+  } else {
+    const walkover =
+      fieldValueFromForm(formData, "result_walkover") === "true";
+    const winner = fieldValueFromForm(formData, "result_walkover_winner");
+    const walkoverWinnerSide: "home" | "away" | null =
+      winner === "home" || winner === "away" ? winner : null;
+    footballResult = {
+      homeScore: numberField(formData, "result_home_goals") ?? -1,
+      awayScore: numberField(formData, "result_away_goals") ?? -1,
+      isWalkover: walkover,
+      walkoverWinnerSide,
+      penaltyHome: numberField(formData, "result_home_penalty"),
+      penaltyAway: numberField(formData, "result_away_penalty"),
+      notes: fieldValueFromForm(formData, "result_notes") || null,
     };
+
+    if (walkover) {
+      footballResult.homeScore =
+        footballResult.walkoverWinnerSide === "home" ? 3 : 0;
+      footballResult.awayScore =
+        footballResult.walkoverWinnerSide === "away" ? 3 : 0;
+      footballResult.penaltyHome = null;
+      footballResult.penaltyAway = null;
+    }
+
+    const validation = validateFootballResult(footballResult, {
+      stage: context.match.stage,
+      homeTeamId: context.homeTeamId,
+      awayTeamId: context.awayTeamId,
+    });
+
+    if (!validation.valid) {
+      return {
+        status: "error",
+        code: validation.errors[0] ?? "invalid_result",
+      };
+    }
   }
 
   try {
@@ -519,26 +658,38 @@ export async function confirmScoresheetAction(
         formData,
       );
 
-      const published = await publishFootballResult(tx, {
-        matchId: context.match.id,
-        source: "scoresheet",
-        result,
-        actorUserId: user.id,
-        reviewerUserId: user.id,
-        scoresheetId: sheet.id,
-        metadata: {
-          extractionSource: sheet.extractionSource,
-          sheetId: sheet.qrSheetId,
-          templateVersion: sheet.templateVersion,
-          reviewerEdits: saved.edits,
-          reviewedFieldValues: Object.fromEntries(
-            saved.fields.map((field) => [
-              field.fieldKey,
-              fieldValueFromForm(formData, field.fieldKey),
-            ]),
-          ),
-        },
-      });
+      const metadata = {
+        extractionSource: sheet.extractionSource,
+        sheetId: sheet.qrSheetId,
+        templateVersion: sheet.templateVersion,
+        reviewerEdits: saved.edits,
+        reviewedFieldValues: Object.fromEntries(
+          saved.fields.map((field) => [
+            field.fieldKey,
+            fieldValueFromForm(formData, field.fieldKey),
+          ]),
+        ),
+      };
+
+      const published = isTennis
+        ? await publishTennisResult(tx, {
+            matchId: context.match.id,
+            source: "scoresheet",
+            result: tennisResult!,
+            actorUserId: user.id,
+            reviewerUserId: user.id,
+            scoresheetId: sheet.id,
+            metadata,
+          })
+        : await publishFootballResult(tx, {
+            matchId: context.match.id,
+            source: "scoresheet",
+            result: footballResult!,
+            actorUserId: user.id,
+            reviewerUserId: user.id,
+            scoresheetId: sheet.id,
+            metadata,
+          });
 
       await tx
         .update(extractedFields)
@@ -578,8 +729,8 @@ export async function confirmScoresheetAction(
       });
     });
   } catch (error) {
-    if (error instanceof ResultPublicationError) {
-      return { status: "error", code: error.code };
+    if (isPublicationError(error)) {
+      return { status: "error", code: publicationErrorCode(error) };
     }
     throw error;
   }
@@ -750,32 +901,54 @@ export async function manualResultAction(
     return { status: "error", code: "match_not_playable" };
   }
 
-  const walkover = formData.get("isWalkover") === "true";
-  const winner = String(formData.get("walkoverWinner") ?? "");
-  const rawHome = Number(formData.get("homeScore") ?? "");
-  const rawAway = Number(formData.get("awayScore") ?? "");
-  const penaltyHomeRaw = String(formData.get("penaltyHome") ?? "").trim();
-  const penaltyAwayRaw = String(formData.get("penaltyAway") ?? "").trim();
+  const isTennis = context.competition.sport === "tennis";
+  let footballResult: FootballResultInput | null = null;
+  let tennisResult: TennisResultInput | null = null;
 
-  const walkoverWinnerSide: "home" | "away" | null =
-    winner === "home" || winner === "away" ? winner : null;
-  const result: FootballResultInput = {
-    homeScore: walkover && winner === "home" ? 3 : walkover ? 0 : rawHome,
-    awayScore: walkover && winner === "away" ? 3 : walkover ? 0 : rawAway,
-    isWalkover: walkover,
-    walkoverWinnerSide,
-    penaltyHome: penaltyHomeRaw ? Number(penaltyHomeRaw) : null,
-    penaltyAway: penaltyAwayRaw ? Number(penaltyAwayRaw) : null,
-    notes: String(formData.get("notes") ?? "").trim() || null,
-  };
+  if (isTennis) {
+    tennisResult = tennisResultFromManualForm(formData);
+    const validation = validateTennisResult(tennisResult, {
+      stage: context.match.stage,
+      homeTeamId: context.homeTeamId,
+      awayTeamId: context.awayTeamId,
+    });
+    if (!validation.valid) {
+      return {
+        status: "error",
+        code: validation.errors[0] ?? "invalid_result",
+      };
+    }
+  } else {
+    const walkover = formData.get("isWalkover") === "true";
+    const winner = String(formData.get("walkoverWinner") ?? "");
+    const rawHome = Number(formData.get("homeScore") ?? "");
+    const rawAway = Number(formData.get("awayScore") ?? "");
+    const penaltyHomeRaw = String(formData.get("penaltyHome") ?? "").trim();
+    const penaltyAwayRaw = String(formData.get("penaltyAway") ?? "").trim();
 
-  const validation = validateFootballResult(result, {
-    stage: context.match.stage,
-    homeTeamId: context.homeTeamId,
-    awayTeamId: context.awayTeamId,
-  });
-  if (!validation.valid) {
-    return { status: "error", code: validation.errors[0] ?? "invalid_result" };
+    const walkoverWinnerSide: "home" | "away" | null =
+      winner === "home" || winner === "away" ? winner : null;
+    footballResult = {
+      homeScore: walkover && winner === "home" ? 3 : walkover ? 0 : rawHome,
+      awayScore: walkover && winner === "away" ? 3 : walkover ? 0 : rawAway,
+      isWalkover: walkover,
+      walkoverWinnerSide,
+      penaltyHome: penaltyHomeRaw ? Number(penaltyHomeRaw) : null,
+      penaltyAway: penaltyAwayRaw ? Number(penaltyAwayRaw) : null,
+      notes: String(formData.get("notes") ?? "").trim() || null,
+    };
+
+    const validation = validateFootballResult(footballResult, {
+      stage: context.match.stage,
+      homeTeamId: context.homeTeamId,
+      awayTeamId: context.awayTeamId,
+    });
+    if (!validation.valid) {
+      return {
+        status: "error",
+        code: validation.errors[0] ?? "invalid_result",
+      };
+    }
   }
 
   try {
@@ -805,14 +978,24 @@ export async function manualResultAction(
           .where(eq(scoresheets.id, activeSheet.id));
       }
 
-      const published = await publishFootballResult(tx, {
-        matchId: context.match.id,
-        source: "manual",
-        result,
-        actorUserId: user.id,
-        reviewerUserId: user.id,
-        metadata: { entryMode: "manual", explicitConfirmation: true },
-      });
+      const metadata = { entryMode: "manual", explicitConfirmation: true };
+      const published = isTennis
+        ? await publishTennisResult(tx, {
+            matchId: context.match.id,
+            source: "manual",
+            result: tennisResult!,
+            actorUserId: user.id,
+            reviewerUserId: user.id,
+            metadata,
+          })
+        : await publishFootballResult(tx, {
+            matchId: context.match.id,
+            source: "manual",
+            result: footballResult!,
+            actorUserId: user.id,
+            reviewerUserId: user.id,
+            metadata,
+          });
 
       await tx.insert(auditEvents).values({
         eventId: context.event.id,
@@ -829,8 +1012,8 @@ export async function manualResultAction(
       });
     });
   } catch (error) {
-    if (error instanceof ResultPublicationError) {
-      return { status: "error", code: error.code };
+    if (isPublicationError(error)) {
+      return { status: "error", code: publicationErrorCode(error) };
     }
     throw error;
   }
@@ -838,5 +1021,81 @@ export async function manualResultAction(
   revalidateResults(context);
   redirect(
     `/admin/events/${eventId}/review/${context.match.id}?notice=manual_published`,
+  );
+}
+
+export async function correctTennisResultAction(
+  _previous: ScoresheetActionState,
+  formData: FormData,
+): Promise<ScoresheetActionState> {
+  const eventId = String(formData.get("eventId") ?? "");
+  const matchId = String(formData.get("matchId") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  const { user } = await requireEventOwner(eventId);
+
+  if (reason.length < 3) {
+    return {
+      status: "error",
+      code: "fix_errors",
+      fieldErrors: { reason: "reason_required" },
+    };
+  }
+
+  if (formData.get("explicitConfirmation") !== "true") {
+    return {
+      status: "error",
+      code: "fix_errors",
+      fieldErrors: { explicitConfirmation: "confirmation_required" },
+    };
+  }
+
+  const context = await loadMatchContext(matchId);
+  if (!context || context.event.id !== eventId) {
+    return { status: "error", code: "match_not_found" };
+  }
+
+  if (context.competition.sport !== "tennis") {
+    return { status: "error", code: "wrong_sport" };
+  }
+
+  if (context.match.status !== "published") {
+    return { status: "error", code: "result_not_published" };
+  }
+
+  const result = tennisResultFromManualForm(formData);
+  const validation = validateTennisResult(result, {
+    stage: context.match.stage,
+    homeTeamId: context.homeTeamId,
+    awayTeamId: context.awayTeamId,
+  });
+  if (!validation.valid) {
+    return { status: "error", code: validation.errors[0] ?? "invalid_result" };
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      await publishTennisResult(tx, {
+        matchId: context.match.id,
+        source: "manual",
+        result,
+        actorUserId: user.id,
+        reviewerUserId: user.id,
+        reason,
+        metadata: {
+          entryMode: "correction",
+          explicitConfirmation: true,
+        },
+      });
+    });
+  } catch (error) {
+    if (isPublicationError(error)) {
+      return { status: "error", code: publicationErrorCode(error) };
+    }
+    throw error;
+  }
+
+  revalidateResults(context);
+  redirect(
+    `/admin/events/${eventId}/review/${context.match.id}?notice=corrected`,
   );
 }
