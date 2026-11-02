@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: summercup-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: summercup
+      POSTGRES_PASSWORD: summercup
+      POSTGRES_DB: summercup
+    ports:
+      - "5433:5432"
+    volumes:
+      - summercup-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U summercup -d summercup"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: summercup-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+volumes:
+  summercup-postgres:
