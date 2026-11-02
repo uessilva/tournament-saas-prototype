@@ -457,6 +457,9 @@ const ptBR = {
   "invite.emailMismatchTitle": "E-mail diferente do convite",
   "invite.emailMismatchBody":
     "Este convite é para {invited}. Você está conectado como {current}.",
+  "invite.competitionCancelledTitle": "Competição cancelada",
+  "invite.competitionCancelledBody":
+    "A competição desta equipe foi cancelada, então este convite não pode mais conceder acesso de gerenciamento. Seus acessos existentes não foram alterados.",
   "invite.switchAccount": "Trocar de conta",
   "invite.goToTeams": "Ir para minhas equipes",
   "invite.backHome": "Voltar ao início",
@@ -1857,6 +1860,9 @@ const en: Dictionary = {
   "invite.emailMismatchTitle": "Different email from the invitation",
   "invite.emailMismatchBody":
     "This invitation is for {invited}. You are signed in as {current}.",
+  "invite.competitionCancelledTitle": "Competition cancelled",
+  "invite.competitionCancelledBody":
+    "This team's competition was cancelled, so this invitation can no longer grant manager access. Existing access was not changed.",
   "invite.switchAccount": "Switch account",
   "invite.goToTeams": "Go to my teams",
   "invite.backHome": "Back to the start",

@@ -10,6 +10,7 @@ import {
 
 import { db } from "../db/client";
 import { jobs, type Job } from "../db/schema";
+import { sealEmailPayload } from "./sealing";
 
 export const JOB_LEASE_MS = 2 * 60 * 1000;
 
@@ -21,11 +22,16 @@ export async function enqueueJob(input: {
   availableAt?: Date;
   maxAttempts?: number;
 }): Promise<Job> {
+  const payload =
+    input.type === "email.send"
+      ? sealEmailPayload(input.payload)
+      : input.payload;
+
   const [job] = await db
     .insert(jobs)
     .values({
       type: input.type,
-      payload: input.payload,
+      payload,
       availableAt: input.availableAt ?? new Date(),
       maxAttempts: input.maxAttempts ?? 3,
     })

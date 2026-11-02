@@ -1,6 +1,7 @@
 import type { Job } from "../db/schema";
 import { processJob } from "./handlers";
 import { completeJob, enqueueJob, failJob, type JobPayload } from "./queue";
+import { hydrateEmailJob } from "./sealing";
 
 /**
  * Demo fallback: run a job immediately while still recording the same
@@ -13,7 +14,7 @@ export async function runJobSynchronously(input: {
   const job = await enqueueJob(input);
 
   try {
-    await processJob(job);
+    await processJob(hydrateEmailJob(job));
     await completeJob(job.id);
     return { ...job, status: "completed", completedAt: new Date() };
   } catch (error) {

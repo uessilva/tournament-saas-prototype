@@ -1,5 +1,6 @@
 import { completeJob, enqueueJob, failJob, type JobPayload } from "./queue";
 import { processJob } from "./handlers";
+import { hydrateEmailJob } from "./sealing";
 
 const EMAIL_FAILURE_MESSAGE =
   "Email delivery failed. Check the local SMTP server and retry.";
@@ -20,7 +21,7 @@ export async function runEmailJob(
   });
 
   try {
-    await processJob(job);
+    await processJob(hydrateEmailJob(job));
     await completeJob(job.id);
     return { ok: true as const, jobId: job.id };
   } catch {

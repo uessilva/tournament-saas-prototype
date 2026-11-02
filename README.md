@@ -208,7 +208,7 @@ Copy `.env.example` to `.env`.
 | Variable | Purpose |
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string (`localhost:5433` by default) |
-| `AUTH_SECRET` | Auth.js JWT/session secret; replace for shared machines |
+| `AUTH_SECRET` | Auth.js JWT/session secret and key material for sealed email job payloads; replace for shared machines. Local development falls back to a known placeholder when it is unset; production requires it. |
 | `AUTH_URL` | Local app origin, `http://localhost:3000` by default |
 | `AUTH_TRUST_HOST` | Trust the local host header |
 | `SMTP_HOST` / `SMTP_PORT` | Mailpit SMTP, default `127.0.0.1:1025` |
@@ -293,6 +293,7 @@ Important protections include:
 - `lib/jobs/queue.ts` implements leased claims with `FOR UPDATE SKIP LOCKED`, attempts, backoff, failure visibility and manual retry.
 - `workers/index.ts` is a local polling worker. It logs job type and ID, never job payloads.
 - `lib/jobs/run.ts` is the synchronous demo fallback; it still records a real job row and leaves failures retryable.
+- `lib/jobs/sealing.ts` encrypts `email.send` body fields with AES-256-GCM before the job is inserted. Only recipient, Event, invitation, purpose and subject stay readable for filtering and manual retry. The key is derived from `AUTH_SECRET`; legacy plaintext jobs still process, and a decryption failure becomes a generic retryable job failure.
 - Scoresheet PDFs use stable AcroForm fields and a QR identity. Digital PDFs are read directly; the demo scan path uses representative fixed-region extraction rather than an external OCR service.
 - The Owner review queue exposes clearly labelled **Demo: folha digital** and **Demo: digitalização** shortcuts. The demo does not require Tesseract, an external AI service, or timing-dependent retries.
 - `lib/storage/local.ts` stores originals, previews and crops under `STORAGE_DIR`, rejects path traversal, and keeps only metadata in PostgreSQL.
