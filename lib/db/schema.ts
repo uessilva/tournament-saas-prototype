@@ -131,6 +131,11 @@ export const matchStatusEnum = pgEnum("match_status", [
 ]);
 export const matchStageEnum = pgEnum("match_stage", ["group", "knockout"]);
 export const matchSideEnum = pgEnum("match_side", ["home", "away"]);
+export const matchSlotSourceEnum = pgEnum("match_slot_source", [
+  "group_qualifier",
+  "match_winner",
+  "bye",
+]);
 export const resultSourceEnum = pgEnum("result_source", [
   "scoresheet",
   "manual",
@@ -241,6 +246,7 @@ export const competitions = pgTable(
     registrationDeadline: timestamp("registration_deadline", {
       withTimezone: true,
     }),
+    groupCount: integer("group_count").notNull().default(2),
     qualifiersPerGroup: integer("qualifiers_per_group").notNull().default(2),
     defaultMatchDurationMinutes: integer("default_match_duration_minutes")
       .notNull()
@@ -487,6 +493,7 @@ export const matches = pgTable(
     stage: matchStageEnum("stage").notNull().default("group"),
     roundLabel: text("round_label"),
     roundNumber: integer("round_number").notNull().default(1),
+    bracketSlot: integer("bracket_slot"),
     matchNumber: integer("match_number").notNull(),
     startsAt: timestamp("starts_at", { withTimezone: true }),
     durationMinutes: integer("duration_minutes"),
@@ -505,6 +512,11 @@ export const matches = pgTable(
     uniqueIndex("matches_competition_number_uq").on(
       table.competitionId,
       table.matchNumber,
+    ),
+    uniqueIndex("matches_competition_round_slot_uq").on(
+      table.competitionId,
+      table.roundNumber,
+      table.bracketSlot,
     ),
     index("matches_competition_starts_idx").on(
       table.competitionId,
@@ -529,6 +541,36 @@ export const matchEntries = pgTable(
   (table) => [
     uniqueIndex("match_entries_match_side_uq").on(table.matchId, table.side),
     uniqueIndex("match_entries_match_team_uq").on(table.matchId, table.teamId),
+  ],
+);
+
+/**
+ * Explicit knockout slot provenance. A home/away side is either a known group
+ * qualifier position, the winner of an earlier bracket match, or a Bye. Group
+ * fixtures leave these rows empty and use match_entries instead. Bye nodes are
+ * stored as non-playable matches so later rounds always have a stable winner
+ * source, but they never appear as public fixtures.
+ */
+export const matchSlots = pgTable(
+  "match_slots",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    side: matchSideEnum("side").notNull(),
+    sourceType: matchSlotSourceEnum("source_type").notNull(),
+    groupId: uuid("group_id").references(() => groups.id, {
+      onDelete: "set null",
+    }),
+    groupPosition: integer("group_position"),
+    sourceMatchId: uuid("source_match_id").references(() => matches.id, {
+      onDelete: "set null",
+    }),
+  },
+  (table) => [
+    uniqueIndex("match_slots_match_side_uq").on(table.matchId, table.side),
+    index("match_slots_source_match_idx").on(table.sourceMatchId),
   ],
 );
 
@@ -881,6 +923,7 @@ export const matchesRelations = relations(matches, ({ one, many }) => ({
   group: one(groups, { fields: [matches.groupId], references: [groups.id] }),
   venue: one(venues, { fields: [matches.venueId], references: [venues.id] }),
   entries: many(matchEntries),
+  slots: many(matchSlots),
   resultVersions: many(resultVersions),
   scoresheets: many(scoresheets),
   disputes: many(disputes),
@@ -892,6 +935,21 @@ export const matchEntriesRelations = relations(matchEntries, ({ one }) => ({
     references: [matches.id],
   }),
   team: one(teams, { fields: [matchEntries.teamId], references: [teams.id] }),
+}));
+
+export const matchSlotsRelations = relations(matchSlots, ({ one }) => ({
+  match: one(matches, {
+    fields: [matchSlots.matchId],
+    references: [matches.id],
+  }),
+  group: one(groups, {
+    fields: [matchSlots.groupId],
+    references: [groups.id],
+  }),
+  sourceMatch: one(matches, {
+    fields: [matchSlots.sourceMatchId],
+    references: [matches.id],
+  }),
 }));
 
 export const groupsRelations = relations(groups, ({ one, many }) => ({
@@ -984,6 +1042,7 @@ export type Competition = typeof competitions.$inferSelect;
 export type Team = typeof teams.$inferSelect;
 export type Participant = typeof participants.$inferSelect;
 export type Match = typeof matches.$inferSelect;
+export type MatchSlot = typeof matchSlots.$inferSelect;
 export type ResultVersion = typeof resultVersions.$inferSelect;
 export type Scoresheet = typeof scoresheets.$inferSelect;
 export type Job = typeof jobs.$inferSelect;

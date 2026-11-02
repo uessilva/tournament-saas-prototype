@@ -19,6 +19,7 @@ import {
 } from "@/components/public/badges";
 import { MatchRow } from "@/components/public/match-row";
 import { useI18n } from "@/lib/i18n/client";
+import { matchSideName } from "@/features/public/labels";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type {
   CompetitionSummary,
@@ -114,6 +115,38 @@ function CompetitionCard({
 }) {
   const { t, formatDateTime } = useI18n();
   const isFootball = competition.sport === "football";
+  const latestHome = latest
+    ? matchSideName(
+        latest.homeTeamName,
+        latest.homeSource,
+        latest.knockoutRoundCount,
+        t,
+      )
+    : null;
+  const latestAway = latest
+    ? matchSideName(
+        latest.awayTeamName,
+        latest.awaySource,
+        latest.knockoutRoundCount,
+        t,
+      )
+    : null;
+  const nextHome = next
+    ? matchSideName(
+        next.homeTeamName,
+        next.homeSource,
+        next.knockoutRoundCount,
+        t,
+      )
+    : null;
+  const nextAway = next
+    ? matchSideName(
+        next.awayTeamName,
+        next.awaySource,
+        next.knockoutRoundCount,
+        t,
+      )
+    : null;
 
   return (
     <article
@@ -163,11 +196,11 @@ function CompetitionCard({
           <>
             <p className="eyebrow text-muted">{t("home.latestResult")}</p>
             <p className="mt-2 text-sm font-bold">
-              {latest.homeTeamName}{" "}
+              {latestHome}{" "}
               <span className="score-numeral text-lg text-green">
                 {latest.homeScore}–{latest.awayScore}
               </span>{" "}
-              {latest.awayTeamName}
+              {latestAway}
             </p>
             <p className="mt-1 text-xs font-medium text-muted">
               {latest.scoreDetail}
@@ -177,7 +210,7 @@ function CompetitionCard({
           <>
             <p className="eyebrow text-muted">{t("home.nextUpTitle")}</p>
             <p className="mt-2 text-sm font-bold">
-              {next.homeTeamName} {t("match.vs")} {next.awayTeamName}
+              {nextHome} {t("match.vs")} {nextAway}
             </p>
             <p className="mt-1 text-xs font-medium text-muted">
               {next.startsAt
@@ -245,6 +278,22 @@ export function EventHubPage({
 }) {
   const { t, formatDate } = useI18n();
   const latest = data.recentResults[0];
+  const latestHome = latest
+    ? matchSideName(
+        latest.homeTeamName,
+        latest.homeSource,
+        latest.knockoutRoundCount,
+        t,
+      )
+    : null;
+  const latestAway = latest
+    ? matchSideName(
+        latest.awayTeamName,
+        latest.awaySource,
+        latest.knockoutRoundCount,
+        t,
+      )
+    : null;
   const competitions = data.competitions.map((competition) => ({
     name: competition.name,
     slug: competition.slug,
@@ -305,7 +354,7 @@ export function EventHubPage({
                     <ArrowRightIcon className="size-4" />
                   </a>
                   <a
-                    href="#results"
+                    href={`/events/${data.event.slug}/fixtures`}
                     className="inline-flex items-center gap-2 rounded-full border border-white/30 px-5 py-2.5 text-sm font-extrabold text-white transition-colors hover:bg-white/10"
                   >
                     {t("nav.matchCentre")}
@@ -322,13 +371,13 @@ export function EventHubPage({
                     <>
                       <div className="mt-4 flex items-center justify-between gap-3">
                         <span className="text-sm font-extrabold">
-                          {latest.homeTeamName}
+                          {latestHome}
                         </span>
                         <span className="score-numeral text-4xl font-semibold">
                           {latest.homeScore}–{latest.awayScore}
                         </span>
                         <span className="text-right text-sm font-extrabold">
-                          {latest.awayTeamName}
+                          {latestAway}
                         </span>
                       </div>
                       <p className="mt-3 text-xs font-semibold text-green-deep/80">

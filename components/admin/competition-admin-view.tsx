@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { AppTopBar } from "@/components/app-top-bar";
+import { DrawAdminPanel } from "@/components/admin/draw-admin-panel";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -431,6 +432,8 @@ export function CompetitionAdminView({
         <div className="mt-6 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-5">
             <RegistrationStateCard data={data} />
+
+            <DrawAdminPanel data={data} />
 
             <section className="surface p-5 sm:p-6">
               <p className="eyebrow text-green">{t("compAdmin.rulesEyebrow")}</p>

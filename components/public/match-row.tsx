@@ -5,6 +5,10 @@ import Link from "next/link";
 import { ClockIcon, MapPinIcon } from "@/components/icons";
 import { MatchStatusBadge, SportTag } from "@/components/public/badges";
 import { useI18n } from "@/lib/i18n/client";
+import {
+  matchRoundLabel,
+  matchSideName,
+} from "@/features/public/labels";
 import type { PublicMatch } from "@/features/public/types";
 
 export function MatchRow({
@@ -20,8 +24,22 @@ export function MatchRow({
 }) {
   const { t, formatDateTime, formatTime } = useI18n();
   const published = match.status === "published";
-  const homeWon = match.winnerTeamId === match.homeTeamId;
-  const awayWon = match.winnerTeamId === match.awayTeamId;
+  const homeWon =
+    match.homeTeamId != null && match.winnerTeamId === match.homeTeamId;
+  const awayWon =
+    match.awayTeamId != null && match.winnerTeamId === match.awayTeamId;
+  const homeName = matchSideName(
+    match.homeTeamName,
+    match.homeSource,
+    match.knockoutRoundCount,
+    t,
+  );
+  const awayName = matchSideName(
+    match.awayTeamName,
+    match.awaySource,
+    match.knockoutRoundCount,
+    t,
+  );
 
   return (
     <article className="group border-b border-line/80 py-4 last:border-b-0">
@@ -36,7 +54,7 @@ export function MatchRow({
         ) : (
           <SportTag sport={match.sport} />
         )}
-        {match.roundLabel ? <span>{match.roundLabel}</span> : null}
+        <span>{matchRoundLabel(match, t)}</span>
         {match.startsAt ? (
           <span className="inline-flex items-center gap-1">
             <ClockIcon className="size-3.5" />
@@ -65,9 +83,9 @@ export function MatchRow({
             <span
               className={`truncate text-[15px] ${
                 homeWon ? "font-extrabold" : "font-semibold"
-              }`}
+              } ${match.homeTeamName ? "" : "text-muted"}`}
             >
-              {match.homeTeamName}
+              {homeName}
             </span>
             <span className="text-xs font-bold text-muted">
               {t("match.vs")}
@@ -75,9 +93,9 @@ export function MatchRow({
             <span
               className={`truncate text-[15px] ${
                 awayWon ? "font-extrabold" : "font-semibold"
-              }`}
+              } ${match.awayTeamName ? "" : "text-muted"}`}
             >
-              {match.awayTeamName}
+              {awayName}
             </span>
           </div>
           {match.scoreDetail ? (

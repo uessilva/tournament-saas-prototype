@@ -39,6 +39,13 @@ export function ManageDashboard({
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
           {t("manage.body")}
         </p>
+        <Link
+          href="/manage/matches"
+          className="mt-4 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green"
+        >
+          {t("manage.viewFixtures")}
+          <ArrowRightIcon className="size-3.5" />
+        </Link>
 
         {inviteAccepted ? (
           <div

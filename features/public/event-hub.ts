@@ -5,7 +5,6 @@ import {
   eq,
   gt,
   inArray,
-  isNotNull,
   ne,
   sql,
 } from "drizzle-orm";
@@ -112,7 +111,7 @@ export async function getEventHubBySlug(
       sortOrder: competitions.sortOrder,
       teamCount: sql<number>`count(distinct ${teams.id})::int`,
       participantCount: sql<number>`count(distinct ${participants.id})::int`,
-      matchCount: sql<number>`count(distinct ${matches.id})::int`,
+      matchCount: sql<number>`count(distinct case when ${matches.isBye} = false then ${matches.id} end)::int`,
       publishedCount: sql<number>`count(distinct case when ${matches.status} = 'published' then ${matches.id} end)::int`,
     })
     .from(competitions)
@@ -147,6 +146,7 @@ export async function getEventHubBySlug(
       and(
         eq(competitions.eventId, event.id),
         eq(matches.status, "published"),
+        eq(matches.isBye, false),
       ),
     )
     .orderBy(sql`${matches.startsAt} desc nulls last`)
@@ -157,13 +157,12 @@ export async function getEventHubBySlug(
       and(
         eq(competitions.eventId, event.id),
         inArray(matches.status, ["scheduled", "awaiting_result", "in_review"]),
-        isNotNull(matches.startsAt),
         eq(matches.isBye, false),
         ne(competitions.status, "cancelled"),
       ),
     )
-    .orderBy(asc(matches.startsAt))
-    .limit(6);
+    .orderBy(sql`${matches.startsAt} asc nulls last`, asc(matches.matchNumber))
+    .limit(8);
 
   const venueRows = await db
     .select({ id: venues.id, name: venues.name })

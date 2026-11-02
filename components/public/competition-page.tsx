@@ -18,6 +18,7 @@ import {
 } from "@/components/public/badges";
 import { MatchRow } from "@/components/public/match-row";
 import { useI18n } from "@/lib/i18n/client";
+import { groupDisplayName } from "@/features/public/labels";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type { CompetitionPageData } from "@/features/competitions/types";
 
@@ -198,7 +199,9 @@ export function CompetitionPage({
                   <h2 className="display-title mt-2 text-3xl">
                     {isTennis
                       ? t("competition.partialStandings")
-                      : t("competition.footballPendingTitle")}
+                      : competition.drawGeneratedAt
+                        ? t("competition.footballGeneratedTitle")
+                        : t("competition.footballPendingTitle")}
                   </h2>
                 </div>
                 <p className="max-w-sm text-xs leading-5 text-muted">
@@ -212,11 +215,14 @@ export function CompetitionPage({
                 <div className="mt-6 grid gap-8">
                   {data.groups.map((group) => (
                     <div key={group.id}>
-                      <h3 className="text-sm font-extrabold">{group.name}</h3>
+                      <h3 className="text-sm font-extrabold">
+                        {groupDisplayName(group.name, t)}
+                      </h3>
                       <div className="mt-2 overflow-x-auto">
                         <table className="w-full min-w-[560px] text-left text-sm">
                           <caption className="sr-only">
-                            {group.name} — {t("competition.partialStandings")}
+                            {groupDisplayName(group.name, t)} —{" "}
+                            {t("competition.partialStandings")}
                           </caption>
                           <thead>
                             <tr className="border-b border-line text-[10px] uppercase tracking-[0.1em] text-muted">
@@ -291,10 +297,14 @@ export function CompetitionPage({
               ) : (
                 <div className="mt-6 rounded-2xl bg-cream p-5">
                   <p className="text-sm font-bold">
-                    {t("competition.footballPendingTitle")}
+                    {competition.drawGeneratedAt
+                      ? t("competition.footballGeneratedTitle")
+                      : t("competition.footballPendingTitle")}
                   </p>
                   <p className="mt-1.5 text-sm leading-6 text-muted">
-                    {t("competition.footballPendingBody")}
+                    {competition.drawGeneratedAt
+                      ? t("competition.footballGeneratedBody")
+                      : t("competition.footballPendingBody")}
                   </p>
                 </div>
               )}
@@ -309,6 +319,13 @@ export function CompetitionPage({
                 <p className="mt-1 text-xs font-medium text-muted">
                   {t("competition.resultsNote")}
                 </p>
+                <Link
+                  href={`/events/${data.event.slug}/fixtures?competition=${competition.slug}`}
+                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-extrabold text-green hover:underline"
+                >
+                  {t("fixtures.viewAll")}
+                  <ArrowRightIcon className="size-3.5" />
+                </Link>
               </div>
               <div className="mt-4">
                 {data.results.length ? (

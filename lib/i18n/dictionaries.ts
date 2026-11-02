@@ -29,6 +29,7 @@ const ptBR = {
   "nav.overview": "Visão geral",
   "nav.competitions": "Competições",
   "nav.matchCentre": "Jogos",
+  "nav.fixtures": "Jogos",
   "nav.about": "Sobre o evento",
   "nav.admin": "Área do organizador",
 
@@ -580,6 +581,106 @@ const ptBR = {
   "compAdmin.generated": "Torneio já gerado",
   "compAdmin.notGenerated": "Torneio ainda não gerado",
 
+  "competition.footballGeneratedTitle": "Sorteio publicado",
+  "competition.footballGeneratedBody":
+    "Os grupos e a chave do mata-mata estão definidos. Os jogos aparecem abaixo, mesmo antes do agendamento.",
+
+  "fixtures.eyebrow": "Central de jogos",
+  "fixtures.title": "Jogos do evento",
+  "fixtures.body":
+    "Todos os jogos gerados, incluindo partidas ainda sem horário. Filtre por competição e consulte os horários no fuso do evento.",
+  "fixtures.filterLabel": "Filtrar por competição",
+  "fixtures.allCompetitions": "Todas",
+  "fixtures.matchCount": "{count} jogos",
+  "fixtures.unscheduled": "Ainda sem horário",
+  "fixtures.emptyTitle": "Nenhum jogo gerado ainda",
+  "fixtures.emptyBody":
+    "Os jogos aparecem aqui assim que o organizador gerar o sorteio da competição.",
+  "fixtures.viewAll": "Ver todos os jogos",
+  "fixtures.groupRound": "{group} · Rodada {round}",
+  "fixtures.bye": "Bye",
+  "fixtures.groupWinner": "Vencedor {group}",
+  "fixtures.groupRunnerUp": "Vice {group}",
+  "fixtures.matchWinner": "Vencedor {round} · jogo {slot}",
+
+  "draw.eyebrow": "Sorteio",
+  "draw.title": "Grupos + mata-mata",
+  "draw.body":
+    "Configure grupos e classificados, pré-visualize o sorteio e gere os jogos. A semente salva torna o sorteio reproduzível.",
+  "draw.generatedBadge": "Gerado",
+  "draw.previewBadge": "Prévia",
+  "draw.lockedNotice":
+    "O sorteio não pode mais ser alterado porque já existe um resultado confirmado nesta competição.",
+  "draw.bracketSize": "Chave do mata-mata",
+  "draw.bracketSizeValue": "{size} vagas · {rounds} fases",
+  "draw.qualifierRule": "Classificação",
+  "draw.qualifierRuleValue": "{qualifiers} por grupo em {groups} grupos",
+  "draw.configTitle": "Configuração dos grupos",
+  "draw.configBody":
+    "Escolha o número de grupos e quantos entram por grupo. Não há melhor terceiro.",
+  "draw.groupCount": "Grupos",
+  "draw.qualifiersPerGroup": "Classificados por grupo",
+  "draw.oneQualifier": "1 classificado",
+  "draw.twoQualifiers": "2 classificados",
+  "draw.saveConfig": "Salvar configuração",
+  "draw.regenerateTitle": "Regerar sorteio",
+  "draw.regenerateBody":
+    "Gera uma nova semente e redistribui os inscritos. A prévia atualiza na hora.",
+  "draw.regenerate": "Regerar semente",
+  "draw.swapTitle": "Trocar inscritos no sorteio",
+  "draw.swapSecond": "Segundo inscrito",
+  "draw.swapAction": "Trocar posições",
+  "draw.generateTitle": "Gerar torneio",
+  "draw.generateBody":
+    "Requer inscrições fechadas, inscritos elegíveis e configuração válida. Cria grupos, jogos e a chave do mata-mata.",
+  "draw.registrationOpenHint":
+    "Feche as inscrições para liberar a geração do torneio.",
+  "draw.generate": "Gerar torneio",
+  "draw.regenerateDraw": "Regerar torneio",
+  "draw.previewTitle": "Prévia do sorteio",
+  "draw.groupFixtures": "Jogos da fase de grupos",
+  "draw.byeBadge": "Bye",
+  "draw.groupName": "Grupo {letter}",
+  "draw.final": "Final",
+  "draw.semiFinal": "Semifinal",
+  "draw.quarterFinal": "Quartas de final",
+  "draw.round": "Fase {round}",
+  "draw.qualifiersBadge": "{count} classificam",
+  "draw.nextStepTitle": "Próximo passo",
+  "draw.nextStepBody":
+    "A geração criou os jogos sem horário. O agendamento e o registro de resultados entram nas próximas etapas; os jogos já aparecem no hub público e na área do gerente.",
+  "draw.saved": "Configuração salva.",
+  "draw.generated": "Torneio gerado a partir da semente salva.",
+  "draw.seedRegenerated": "Nova semente gerada. O sorteio foi redistribuído.",
+  "draw.entrantSwapped": "Inscritos trocados. O sorteio foi atualizado.",
+  "draw.errorRegistrationOpen": "Feche as inscrições antes de gerar o torneio.",
+  "draw.errorIneligible": "Todos os inscritos precisam estar elegíveis.",
+  "draw.errorNotEnough": "A competição precisa de pelo menos dois inscritos.",
+  "draw.errorGroupMinimum": "Cada grupo precisa de pelo menos dois inscritos.",
+  "draw.errorQualifiers":
+    "Não há inscritos suficientes para os classificados configurados.",
+  "draw.errorGroupCount": "Escolha um número de grupos válido para os inscritos.",
+  "draw.errorQualifierCount": "Escolha um ou dois classificados por grupo.",
+  "draw.errorSwap": "Escolha dois inscritos diferentes.",
+  "draw.errorLocked":
+    "O sorteio está bloqueado após o primeiro resultado confirmado.",
+  "draw.errorCompetitionLocked": "A competição está encerrada ou cancelada.",
+  "draw.errorFormat":
+    "A geração está disponível apenas para o formato grupos + mata-mata.",
+  "draw.errorFailed": "Não foi possível concluir a ação do sorteio.",
+
+  "manage.viewFixtures": "Ver meus jogos",
+
+  "manageFixtures.eyebrow": "Área do gerente",
+  "manageFixtures.title": "Meus jogos",
+  "manageFixtures.body":
+    "Jogos das equipes que você gerencia, com horários no fuso do evento. Partidas sem horário continuam visíveis.",
+  "manageFixtures.fixturesTitle": "Jogos das minhas equipes",
+  "manageFixtures.matchCount": "{count} jogos",
+  "manageFixtures.emptyTitle": "Nenhum jogo gerado para suas equipes",
+  "manageFixtures.emptyBody":
+    "Os jogos aparecem aqui depois que o organizador gerar o sorteio da competição.",
+
   "notFound.title": "Página não encontrada",
   "notFound.body": "O endereço pode estar incorreto ou o conteúdo foi removido.",
   "notFound.back": "Voltar à Summer Cup",
@@ -619,6 +720,7 @@ const en: Dictionary = {
   "nav.overview": "Overview",
   "nav.competitions": "Competitions",
   "nav.matchCentre": "Matches",
+  "nav.fixtures": "Fixtures",
   "nav.about": "About the event",
   "nav.admin": "Organiser area",
 
@@ -1167,6 +1269,107 @@ const en: Dictionary = {
     "The tournament can only be generated with registration closed and all entrants eligible. Reopening is blocked after generation.",
   "compAdmin.generated": "Tournament already generated",
   "compAdmin.notGenerated": "Tournament not generated yet",
+
+  "competition.footballGeneratedTitle": "Draw published",
+  "competition.footballGeneratedBody":
+    "The groups and knockout bracket are set. Fixtures appear below, even before they are scheduled.",
+
+  "fixtures.eyebrow": "Match centre",
+  "fixtures.title": "Event fixtures",
+  "fixtures.body":
+    "Every generated fixture, including matches without a time yet. Filter by competition and read times in the event time zone.",
+  "fixtures.filterLabel": "Filter by competition",
+  "fixtures.allCompetitions": "All",
+  "fixtures.matchCount": "{count} matches",
+  "fixtures.unscheduled": "Not scheduled yet",
+  "fixtures.emptyTitle": "No fixtures generated yet",
+  "fixtures.emptyBody":
+    "Fixtures appear here as soon as the organiser generates the competition draw.",
+  "fixtures.viewAll": "View all fixtures",
+  "fixtures.groupRound": "{group} · Round {round}",
+  "fixtures.bye": "Bye",
+  "fixtures.groupWinner": "{group} winner",
+  "fixtures.groupRunnerUp": "{group} runner-up",
+  "fixtures.matchWinner": "{round} winner · match {slot}",
+
+  "draw.eyebrow": "Draw",
+  "draw.title": "Groups + knockout",
+  "draw.body":
+    "Configure groups and qualifiers, preview the draw and generate the fixtures. The stored seed makes the draw reproducible.",
+  "draw.generatedBadge": "Generated",
+  "draw.previewBadge": "Preview",
+  "draw.lockedNotice":
+    "The draw can no longer change because this competition already has a confirmed result.",
+  "draw.bracketSize": "Knockout bracket",
+  "draw.bracketSizeValue": "{size} places · {rounds} rounds",
+  "draw.qualifierRule": "Qualification",
+  "draw.qualifierRuleValue": "{qualifiers} per group across {groups} groups",
+  "draw.configTitle": "Group configuration",
+  "draw.configBody":
+    "Choose the number of groups and how many qualify from each. There is no best-third route.",
+  "draw.groupCount": "Groups",
+  "draw.qualifiersPerGroup": "Qualifiers per group",
+  "draw.oneQualifier": "1 qualifier",
+  "draw.twoQualifiers": "2 qualifiers",
+  "draw.saveConfig": "Save configuration",
+  "draw.regenerateTitle": "Regenerate draw",
+  "draw.regenerateBody":
+    "Creates a new seed and redistributes entrants. The preview updates immediately.",
+  "draw.regenerate": "Regenerate seed",
+  "draw.swapTitle": "Swap draw entrants",
+  "draw.swapSecond": "Second entrant",
+  "draw.swapAction": "Swap positions",
+  "draw.generateTitle": "Generate tournament",
+  "draw.generateBody":
+    "Requires closed registration, eligible entrants and a valid configuration. Creates groups, fixtures and the knockout bracket.",
+  "draw.registrationOpenHint":
+    "Close registration to enable tournament generation.",
+  "draw.generate": "Generate tournament",
+  "draw.regenerateDraw": "Regenerate tournament",
+  "draw.previewTitle": "Draw preview",
+  "draw.groupFixtures": "Group-stage fixtures",
+  "draw.byeBadge": "Bye",
+  "draw.groupName": "Group {letter}",
+  "draw.final": "Final",
+  "draw.semiFinal": "Semi-final",
+  "draw.quarterFinal": "Quarter-final",
+  "draw.round": "Round {round}",
+  "draw.qualifiersBadge": "{count} qualify",
+  "draw.nextStepTitle": "Next step",
+  "draw.nextStepBody":
+    "Generation created the fixtures without times. Scheduling and result entry arrive in later tickets; the fixtures are already visible on the public hub and in the manager area.",
+  "draw.saved": "Configuration saved.",
+  "draw.generated": "Tournament generated from the stored seed.",
+  "draw.seedRegenerated": "New seed generated. The draw was redistributed.",
+  "draw.entrantSwapped": "Entrants swapped. The draw was updated.",
+  "draw.errorRegistrationOpen":
+    "Close registration before generating the tournament.",
+  "draw.errorIneligible": "Every entrant must be eligible.",
+  "draw.errorNotEnough": "A competition needs at least two entrants.",
+  "draw.errorGroupMinimum": "Each group needs at least two entrants.",
+  "draw.errorQualifiers":
+    "There are not enough entrants for the configured qualifiers.",
+  "draw.errorGroupCount": "Choose a valid number of groups for the entrants.",
+  "draw.errorQualifierCount": "Choose one or two qualifiers per group.",
+  "draw.errorSwap": "Choose two different entrants.",
+  "draw.errorLocked":
+    "The draw is locked after the first confirmed result.",
+  "draw.errorCompetitionLocked": "The competition is completed or cancelled.",
+  "draw.errorFormat":
+    "Generation is available only for the groups + knockout format.",
+  "draw.errorFailed": "The draw action could not be completed.",
+
+  "manage.viewFixtures": "View my fixtures",
+
+  "manageFixtures.eyebrow": "Manager area",
+  "manageFixtures.title": "My fixtures",
+  "manageFixtures.body":
+    "Fixtures for the teams you manage, with times in the event time zone. Matches without a time stay visible.",
+  "manageFixtures.fixturesTitle": "My teams' fixtures",
+  "manageFixtures.matchCount": "{count} matches",
+  "manageFixtures.emptyTitle": "No fixtures generated for your teams yet",
+  "manageFixtures.emptyBody":
+    "Fixtures appear here after the organiser generates the competition draw.",
 
   "notFound.title": "Page not found",
   "notFound.body": "The address may be incorrect or the content was removed.",

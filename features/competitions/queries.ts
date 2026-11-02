@@ -105,6 +105,7 @@ export async function getCompetitionPage(
       and(
         eq(matches.competitionId, competition.id),
         eq(matches.status, "published"),
+        eq(matches.isBye, false),
       ),
     )
     .orderBy(sql`${matches.startsAt} desc nulls last`);
@@ -114,16 +115,17 @@ export async function getCompetitionPage(
       and(
         eq(matches.competitionId, competition.id),
         inArray(matches.status, ["scheduled", "awaiting_result", "in_review"]),
-        isNotNull(matches.startsAt),
+        eq(matches.isBye, false),
       ),
     )
-    .orderBy(asc(matches.startsAt));
+    .orderBy(sql`${matches.startsAt} asc nulls last`, asc(matches.matchNumber));
 
   const cancelledRows = await publicMatchQuery()
     .where(
       and(
         eq(matches.competitionId, competition.id),
         eq(matches.status, "cancelled"),
+        eq(matches.isBye, false),
       ),
     )
     .orderBy(sql`${matches.startsAt} desc nulls last`);
@@ -140,10 +142,15 @@ export async function getCompetitionPage(
       }));
 
     const standingsMatches = results
-      .filter((match) => match.groupId === group.id)
+      .filter(
+        (match) =>
+          match.groupId === group.id &&
+          match.homeTeamId != null &&
+          match.awayTeamId != null,
+      )
       .map((match) => ({
-        homeTeamId: match.homeTeamId,
-        awayTeamId: match.awayTeamId,
+        homeTeamId: match.homeTeamId!,
+        awayTeamId: match.awayTeamId!,
         winnerTeamId: match.winnerTeamId,
         sets: match.sets,
         isWalkover: match.isWalkover,
@@ -215,6 +222,7 @@ export async function getCompetitionPage(
       rosterMax: competition.rosterMax,
       registrationState: registration.open ? "open" : "closed",
       registrationDeadline: toIso(competition.registrationDeadline),
+      groupCount: competition.groupCount,
       qualifiersPerGroup: competition.qualifiersPerGroup,
       defaultMatchDurationMinutes: competition.defaultMatchDurationMinutes,
       drawSeed: competition.drawSeed,
