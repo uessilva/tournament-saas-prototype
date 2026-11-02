@@ -223,6 +223,13 @@ function ConfigurationEditor({ data }: { data: AdminCompetitionData }) {
               <option value="tennis">{t("competition.tennis")}</option>
             </select>
             {sportLocked ? (
+              <input
+                type="hidden"
+                name="sport"
+                value={competition.sport}
+              />
+            ) : null}
+            {sportLocked ? (
               <p className="mt-1 text-[10px] font-semibold text-clay">
                 {cancelled
                   ? t("compLifecycle.mutationsBlocked")
@@ -248,6 +255,13 @@ function ConfigurationEditor({ data }: { data: AdminCompetitionData }) {
               disabled={durationLocked}
               className={inputClass}
             />
+            {durationLocked ? (
+              <input
+                type="hidden"
+                name="defaultMatchDurationMinutes"
+                value={competition.defaultMatchDurationMinutes}
+              />
+            ) : null}
             {state.fieldErrors?.defaultMatchDurationMinutes ? (
               <p role="alert" className="mt-1 text-xs font-bold text-red-700">
                 {t("compAdmin.durationInvalid")}
@@ -273,6 +287,13 @@ function ConfigurationEditor({ data }: { data: AdminCompetitionData }) {
               disabled={eligibilityLocked}
               className={inputClass}
             />
+            {eligibilityLocked ? (
+              <input
+                type="hidden"
+                name="birthDateFrom"
+                value={competition.birthDateFrom ?? ""}
+              />
+            ) : null}
             {state.fieldErrors?.birthDateFrom ? (
               <p role="alert" className="mt-1 text-xs font-bold text-red-700">
                 {t("compAdmin.dateInvalid")}
@@ -291,6 +312,13 @@ function ConfigurationEditor({ data }: { data: AdminCompetitionData }) {
               disabled={eligibilityLocked}
               className={inputClass}
             />
+            {eligibilityLocked ? (
+              <input
+                type="hidden"
+                name="birthDateTo"
+                value={competition.birthDateTo ?? ""}
+              />
+            ) : null}
             {state.fieldErrors?.birthDateTo ? (
               <p role="alert" className="mt-1 text-xs font-bold text-red-700">
                 {state.fieldErrors.birthDateTo === "before_from"
@@ -316,6 +344,13 @@ function ConfigurationEditor({ data }: { data: AdminCompetitionData }) {
               disabled={eligibilityLocked}
               className={inputClass}
             />
+            {eligibilityLocked ? (
+              <input
+                type="hidden"
+                name="rosterMin"
+                value={competition.rosterMin ?? ""}
+              />
+            ) : null}
             {state.fieldErrors?.rosterMin ? (
               <p role="alert" className="mt-1 text-xs font-bold text-red-700">
                 {t("compAdmin.rosterInvalid")}
@@ -336,6 +371,13 @@ function ConfigurationEditor({ data }: { data: AdminCompetitionData }) {
               disabled={eligibilityLocked}
               className={inputClass}
             />
+            {eligibilityLocked ? (
+              <input
+                type="hidden"
+                name="rosterMax"
+                value={competition.rosterMax ?? ""}
+              />
+            ) : null}
             {state.fieldErrors?.rosterMax ? (
               <p role="alert" className="mt-1 text-xs font-bold text-red-700">
                 {state.fieldErrors.rosterMax === "before_min"
