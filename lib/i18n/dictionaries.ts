@@ -118,7 +118,12 @@ const ptBR = {
   "competition.knockout": "Mata-mata",
   "competition.partialStandings": "Classificação parcial",
   "competition.standingsNote":
-    "Vitória vale 2 pontos. Desempate: pontos, vitórias, saldo de sets e saldo de games.",
+    "Vitória vale 2 pontos. Desempate: pontos, confronto direto quando há empate entre dois, saldo de sets, saldo de games e sorteio semeado.",
+  "competition.seededDrawNote":
+    "Desempate final por sorteio semeado reproduzível. Semente: {seed}.",
+  "competition.leadersTitle": "Lideranças do tênis",
+  "competition.leadersBody":
+    "Aces e duplas faltas acumulados nos resultados publicados desta competição. W.O. não gera estatísticas.",
   "competition.footballStandingsNote":
     "Vitória vale 3 pontos. A classificação aparece quando os primeiros resultados forem publicados.",
   "competition.oneParticipantTeam": "Equipe individual · 1 participante",
@@ -174,6 +179,10 @@ const ptBR = {
   "standings.goalsAgainst": "GC",
   "standings.goalDifference": "SG",
   "standings.points": "Pts",
+  "standings.tiebreak.head_to_head": "Confronto direto",
+  "standings.tiebreak.set_difference": "Saldo de sets",
+  "standings.tiebreak.game_difference": "Saldo de games",
+  "standings.tiebreak.seeded_draw": "Sorteio semeado",
   "leaders.aces": "Aces",
   "leaders.doubleFaults": "Duplas faltas",
   "leaders.goals": "Gols",
@@ -819,9 +828,9 @@ const ptBR = {
   "review.awaitingTitle": "Partidas sem folha ativa",
   "review.awaitingEmpty": "Todas as partidas têm uma folha ativa ou resultado publicado.",
   "review.publishedTitle": "Resultados publicados",
-  "review.noMatchesTitle": "Nenhuma partida de futebol encontrada",
+  "review.noMatchesTitle": "Nenhuma partida encontrada",
   "review.noMatchesBody":
-    "Gere o sorteio do futebol para que as partidas apareçam aqui.",
+    "Gere o sorteio da competição para que as partidas apareçam aqui.",
   "review.openReview": "Revisar folha",
   "review.openMatch": "Abrir partida",
   "review.viewHistory": "Ver histórico",
@@ -912,13 +921,36 @@ const ptBR = {
   "review.manualWalkoverWinner": "Vencedor do W.O.",
   "review.manualPenaltyHome": "Pênaltis da casa",
   "review.manualPenaltyAway": "Pênaltis do visitante",
+  "review.tennisManualTitle": "Resultado manual de tênis",
+  "review.tennisManualBody":
+    "Informe os sets e tie-breaks. O vencedor é derivado de dois sets ganhos. Aces e duplas faltas alimentam as lideranças públicas; W.O. não gera estatísticas.",
+  "review.tennisSets": "Sets · melhor de três",
+  "review.tennisSet": "Set {number}",
+  "review.tennisTiebreakHome": "TB casa",
+  "review.tennisTiebreakAway": "TB fora",
+  "review.tennisSetsHint":
+    "Use 6–0 a 6–4, 7–5 ou 7–6 com tie-break. O terceiro set é completo, sem match tie-break. Deixe o set 3 vazio em vitórias por 2–0.",
+  "review.tennisHomeAces": "Aces da casa",
+  "review.tennisAwayAces": "Aces do visitante",
+  "review.tennisHomeDoubleFaults": "Duplas faltas da casa",
+  "review.tennisAwayDoubleFaults": "Duplas faltas do visitante",
   "review.manualNotes": "Observações internas",
+  "review.correctionEyebrow": "Correção auditável",
+  "review.correctionTitle": "Corrigir resultado publicado",
+  "review.correctionBody":
+    "A correção exige motivo, cria uma nova versão e recalcula classificação, avanço e lideranças. Correções de vencedor no mata-mata são bloqueadas quando já existe resultado posterior.",
+  "review.correctionReason": "Motivo da correção",
+  "review.correctionConfirmation":
+    "Confirmo a correção e entendo que o resultado público será atualizado.",
+  "review.correctionPublish": "Publicar correção",
   "review.manualConfirmation":
     "Confirmo que conferi o resultado e assumo a publicação manual deste jogo.",
   "review.manualPublish": "Publicar resultado manual",
   "review.notice.published": "Resultado confirmado e publicado.",
   "review.notice.manual_published":
     "Resultado manual confirmado e publicado. A folha ativa foi encerrada.",
+  "review.notice.corrected":
+    "Correção publicada com motivo registrado. Classificação e lideranças foram recalculadas.",
   "review.error.unauthorized": "Entre novamente para continuar.",
   "review.error.forbidden": "Você não tem acesso a esta partida.",
   "review.error.match_not_found": "Partida não encontrada.",
@@ -946,6 +978,34 @@ const ptBR = {
   "review.error.fix_errors": "Revise os campos destacados.",
   "review.error.action_failed": "Não foi possível concluir a ação.",
   "review.error.result_version_failed": "Não foi possível criar a versão do resultado.",
+  "review.error.wrong_sport": "Este resultado não pertence ao tênis.",
+  "review.error.result_not_published": "Só é possível corrigir um resultado publicado.",
+  "review.error.downstream_result_exists":
+    "Há um resultado confirmado em uma partida seguinte do mata-mata. Corrija ou reabra as partidas posteriores em ordem inversa antes de alterar este vencedor.",
+  "review.error.tennis_sets_required":
+    "Informe dois ou três sets válidos no melhor de três.",
+  "review.error.third_set_required":
+    "Um set para cada lado exige o terceiro set completo.",
+  "review.error.unnecessary_third_set":
+    "Com 2–0 não há terceiro set. Deixe o set 3 vazio.",
+  "review.error.tennis_winner_undetermined":
+    "Não foi possível determinar o vencedor pelos sets informados.",
+  "review.error.invalid_home_aces": "Informe os aces da casa como inteiro entre 0 e 100.",
+  "review.error.invalid_away_aces": "Informe os aces do visitante como inteiro entre 0 e 100.",
+  "review.error.invalid_home_double_faults": "Informe as duplas faltas da casa como inteiro entre 0 e 100.",
+  "review.error.invalid_away_double_faults": "Informe as duplas faltas do visitante como inteiro entre 0 e 100.",
+  "review.error.set_1_invalid_games": "Set 1: use games entre 0 e 7.",
+  "review.error.set_2_invalid_games": "Set 2: use games entre 0 e 7.",
+  "review.error.set_3_invalid_games": "Set 3: use games entre 0 e 7.",
+  "review.error.set_1_invalid_score": "Set 1: placar inválido. Use 6–0 a 6–4, 7–5 ou 7–6.",
+  "review.error.set_2_invalid_score": "Set 2: placar inválido. Use 6–0 a 6–4, 7–5 ou 7–6.",
+  "review.error.set_3_invalid_score": "Set 3: placar inválido. Use 6–0 a 6–4, 7–5 ou 7–6.",
+  "review.error.set_1_tiebreak_required": "Set 1 em 7–6 exige o placar do tie-break.",
+  "review.error.set_2_tiebreak_required": "Set 2 em 7–6 exige o placar do tie-break.",
+  "review.error.set_3_tiebreak_required": "Set 3 em 7–6 exige o placar do tie-break.",
+  "review.error.set_1_tiebreak_invalid": "Set 1: tie-break deve ter no mínimo 7 pontos e dois de vantagem.",
+  "review.error.set_2_tiebreak_invalid": "Set 2: tie-break deve ter no mínimo 7 pontos e dois de vantagem.",
+  "review.error.set_3_tiebreak_invalid": "Set 3: tie-break deve ter no mínimo 7 pontos e dois de vantagem.",
 
   "manageScoresheet.title": "Folha de jogo",
   "manageScoresheet.none": "Não enviada",
@@ -1093,7 +1153,12 @@ const en: Dictionary = {
   "competition.knockout": "Knockout",
   "competition.partialStandings": "Provisional standings",
   "competition.standingsNote":
-    "A win is worth 2 points. Tie-break: points, wins, set difference and game difference.",
+    "A win is worth 2 points. Tie-break: points, head-to-head when exactly two are level, set difference, game difference and a seeded draw.",
+  "competition.seededDrawNote":
+    "The final tie-break is a reproducible seeded draw. Seed: {seed}.",
+  "competition.leadersTitle": "Tennis leaders",
+  "competition.leadersBody":
+    "Aces and double faults accumulated from this competition's published results. Walkovers create no statistics.",
   "competition.footballStandingsNote":
     "A win is worth 3 points. Standings appear when the first results are published.",
   "competition.oneParticipantTeam": "Individual entrant · 1 participant",
@@ -1149,6 +1214,10 @@ const en: Dictionary = {
   "standings.goalsAgainst": "GA",
   "standings.goalDifference": "GD",
   "standings.points": "Pts",
+  "standings.tiebreak.head_to_head": "Head-to-head",
+  "standings.tiebreak.set_difference": "Set difference",
+  "standings.tiebreak.game_difference": "Game difference",
+  "standings.tiebreak.seeded_draw": "Seeded draw",
   "leaders.aces": "Aces",
   "leaders.doubleFaults": "Double faults",
   "leaders.goals": "Goals",
@@ -1790,9 +1859,9 @@ const en: Dictionary = {
   "review.awaitingTitle": "Matches without an active sheet",
   "review.awaitingEmpty": "Every match has an active sheet or a published result.",
   "review.publishedTitle": "Published results",
-  "review.noMatchesTitle": "No football matches found",
+  "review.noMatchesTitle": "No matches found",
   "review.noMatchesBody":
-    "Generate the football draw so the matches appear here.",
+    "Generate the competition draw so its matches appear here.",
   "review.openReview": "Review sheet",
   "review.openMatch": "Open match",
   "review.viewHistory": "View history",
@@ -1883,13 +1952,36 @@ const en: Dictionary = {
   "review.manualWalkoverWinner": "Walkover winner",
   "review.manualPenaltyHome": "Home penalties",
   "review.manualPenaltyAway": "Away penalties",
+  "review.tennisManualTitle": "Manual tennis result",
+  "review.tennisManualBody":
+    "Enter the sets and tie-breaks. The winner is derived from two set wins. Aces and double faults feed the public leaders; a walkover creates no statistics.",
+  "review.tennisSets": "Sets · best of three",
+  "review.tennisSet": "Set {number}",
+  "review.tennisTiebreakHome": "TB home",
+  "review.tennisTiebreakAway": "TB away",
+  "review.tennisSetsHint":
+    "Use 6–0 to 6–4, 7–5 or 7–6 with a tie-break. The third set is a full set, never a match tie-break. Leave set 3 empty for a 2–0 win.",
+  "review.tennisHomeAces": "Home aces",
+  "review.tennisAwayAces": "Away aces",
+  "review.tennisHomeDoubleFaults": "Home double faults",
+  "review.tennisAwayDoubleFaults": "Away double faults",
   "review.manualNotes": "Internal notes",
+  "review.correctionEyebrow": "Auditable correction",
+  "review.correctionTitle": "Correct a published result",
+  "review.correctionBody":
+    "A correction requires a reason, creates a new version and recalculates standings, advancement and leaders. A changed knockout winner is blocked when a later result is already published.",
+  "review.correctionReason": "Correction reason",
+  "review.correctionConfirmation":
+    "I confirm this correction and understand the public result will update.",
+  "review.correctionPublish": "Publish correction",
   "review.manualConfirmation":
     "I confirm I checked the result and take responsibility for publishing this match manually.",
   "review.manualPublish": "Publish manual result",
   "review.notice.published": "Result confirmed and published.",
   "review.notice.manual_published":
     "Manual result confirmed and published. The active sheet was closed.",
+  "review.notice.corrected":
+    "Correction published with a recorded reason. Standings and leaders were recalculated.",
   "review.error.unauthorized": "Sign in again to continue.",
   "review.error.forbidden": "You do not have access to this match.",
   "review.error.match_not_found": "Match not found.",
@@ -1917,6 +2009,34 @@ const en: Dictionary = {
   "review.error.fix_errors": "Review the highlighted fields.",
   "review.error.action_failed": "The action could not be completed.",
   "review.error.result_version_failed": "The result version could not be created.",
+  "review.error.wrong_sport": "This result does not belong to tennis.",
+  "review.error.result_not_published": "Only a published result can be corrected.",
+  "review.error.downstream_result_exists":
+    "A later knockout match already has a confirmed result. Correct or reopen later matches in reverse order before changing this winner.",
+  "review.error.tennis_sets_required":
+    "Enter two or three valid sets for a best-of-three match.",
+  "review.error.third_set_required":
+    "One set each requires the full third set.",
+  "review.error.unnecessary_third_set":
+    "At 2–0 there is no third set. Leave set 3 empty.",
+  "review.error.tennis_winner_undetermined":
+    "The winner could not be derived from the sets entered.",
+  "review.error.invalid_home_aces": "Enter home aces as an integer from 0 to 100.",
+  "review.error.invalid_away_aces": "Enter away aces as an integer from 0 to 100.",
+  "review.error.invalid_home_double_faults": "Enter home double faults as an integer from 0 to 100.",
+  "review.error.invalid_away_double_faults": "Enter away double faults as an integer from 0 to 100.",
+  "review.error.set_1_invalid_games": "Set 1: use games from 0 to 7.",
+  "review.error.set_2_invalid_games": "Set 2: use games from 0 to 7.",
+  "review.error.set_3_invalid_games": "Set 3: use games from 0 to 7.",
+  "review.error.set_1_invalid_score": "Set 1: invalid score. Use 6–0 to 6–4, 7–5 or 7–6.",
+  "review.error.set_2_invalid_score": "Set 2: invalid score. Use 6–0 to 6–4, 7–5 or 7–6.",
+  "review.error.set_3_invalid_score": "Set 3: invalid score. Use 6–0 to 6–4, 7–5 or 7–6.",
+  "review.error.set_1_tiebreak_required": "A 7–6 set 1 requires the tie-break score.",
+  "review.error.set_2_tiebreak_required": "A 7–6 set 2 requires the tie-break score.",
+  "review.error.set_3_tiebreak_required": "A 7–6 set 3 requires the tie-break score.",
+  "review.error.set_1_tiebreak_invalid": "Set 1: the tie-break needs at least 7 points and a two-point lead.",
+  "review.error.set_2_tiebreak_invalid": "Set 2: the tie-break needs at least 7 points and a two-point lead.",
+  "review.error.set_3_tiebreak_invalid": "Set 3: the tie-break needs at least 7 points and a two-point lead.",
 
   "manageScoresheet.title": "Scoresheet",
   "manageScoresheet.none": "Not uploaded",

@@ -1,4 +1,5 @@
-import { and, asc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNotNull, sql } from "drizzle-orm";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 import { db } from "@/lib/db/client";
 import {
@@ -7,7 +8,9 @@ import {
   groupEntries,
   groups,
   matches,
+  participantStatistics,
   participants,
+  resultVersions,
   teams,
   venues,
 } from "@/lib/db/schema";
@@ -17,7 +20,69 @@ import type {
   CompetitionGroup,
   CompetitionPageData,
 } from "@/features/competitions/types";
+import type { LeaderRow, Sport } from "@/features/public/types";
 import { mapPublicMatch, publicMatchQuery } from "@/features/public/matches";
+
+async function competitionLeaders(
+  competitionId: string,
+  column: AnyPgColumn,
+): Promise<LeaderRow[]> {
+  const rows = await db
+    .select({
+      participantId: participants.id,
+      firstName: participants.firstName,
+      lastName: participants.lastName,
+      teamName: teams.name,
+      total: sql<number>`coalesce(sum(${column}), 0)::int`,
+    })
+    .from(participantStatistics)
+    .innerJoin(
+      resultVersions,
+      and(
+        eq(participantStatistics.resultVersionId, resultVersions.id),
+        eq(resultVersions.isCurrent, true),
+      ),
+    )
+    .innerJoin(matches, eq(participantStatistics.matchId, matches.id))
+    .innerJoin(
+      participants,
+      eq(participantStatistics.participantId, participants.id),
+    )
+    .innerJoin(teams, eq(participantStatistics.teamId, teams.id))
+    .where(
+      and(eq(matches.competitionId, competitionId), gt(column, 0)),
+    )
+    .groupBy(
+      participants.id,
+      participants.firstName,
+      participants.lastName,
+      teams.name,
+    )
+    .orderBy(sql`sum(${column}) desc`, asc(participants.firstName))
+    .limit(5);
+
+  return rows.map((row) => ({
+    participantId: row.participantId,
+    name: `${row.firstName} ${row.lastName}`.trim(),
+    teamName: row.teamName,
+    total: row.total,
+  }));
+}
+
+async function getCompetitionLeaders(competitionId: string, sport: Sport) {
+  const [aces, doubleFaults, goals, assists] = await Promise.all([
+    competitionLeaders(competitionId, participantStatistics.aces),
+    competitionLeaders(competitionId, participantStatistics.doubleFaults),
+    sport === "football"
+      ? competitionLeaders(competitionId, participantStatistics.goals)
+      : Promise.resolve([]),
+    sport === "football"
+      ? competitionLeaders(competitionId, participantStatistics.assists)
+      : Promise.resolve([]),
+  ]);
+
+  return { aces, doubleFaults, goals, assists };
+}
 
 function toIso(value: Date | null | undefined) {
   return value ? value.toISOString() : null;
@@ -154,14 +219,21 @@ export async function getCompetitionPage(
         winnerTeamId: match.winnerTeamId,
         sets: match.sets,
         isWalkover: match.isWalkover,
+        isCancelled: match.isCancelled,
       }));
 
     return {
       id: group.id,
       name: group.name,
-      standings: calculateTennisStandings(standingsTeams, standingsMatches),
+      standings: calculateTennisStandings(
+        standingsTeams,
+        standingsMatches,
+        competition.drawSeed ?? "",
+      ),
     };
   });
+
+  const leaders = await getCompetitionLeaders(competition.id, competition.sport);
 
   const venueRows = await db
     .select({ id: venues.id, name: venues.name })
@@ -237,6 +309,7 @@ export async function getCompetitionPage(
     results,
     upcoming: upcomingRows.map(mapPublicMatch),
     cancelled: cancelledRows.map(mapPublicMatch),
+    leaders,
     stats: {
       matchCount:
         results.length + upcomingRows.length + cancelledRows.length,
