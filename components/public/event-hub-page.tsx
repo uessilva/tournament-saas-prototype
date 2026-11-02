@@ -19,6 +19,7 @@ import {
 } from "@/components/public/badges";
 import { MatchRow } from "@/components/public/match-row";
 import { useI18n } from "@/lib/i18n/client";
+import { formatTimeZoneLabel } from "@/lib/timezone";
 import { matchSideName } from "@/features/public/labels";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type {
@@ -456,7 +457,8 @@ export function EventHubPage({
               </h2>
             </div>
             <p className="text-xs font-bold text-muted">
-              {t("home.timezoneValue")}
+              {t("home.timezone")}:{" "}
+              {formatTimeZoneLabel(data.event.timezone)}
             </p>
           </div>
 
@@ -598,7 +600,10 @@ export function EventHubPage({
                     {t("home.timezone")}
                   </span>
                   <span className="mt-1 block font-bold">
-                    {t("home.timezoneValue")}
+                    {formatTimeZoneLabel(
+                      data.event.timezone,
+                      new Date(data.event.startsAt),
+                    )}
                   </span>
                 </p>
                 <p>
@@ -615,7 +620,7 @@ export function EventHubPage({
         </section>
       </main>
 
-      <SiteFooter eventSlug={data.event.slug} />
+      <SiteFooter eventSlug={data.event.slug} timezone={data.event.timezone} />
     </div>
   );
 }

@@ -4,8 +4,15 @@ import Link from "next/link";
 
 import { BallIcon } from "@/components/icons";
 import { useI18n } from "@/lib/i18n/client";
+import { formatTimeZoneLabel } from "@/lib/timezone";
 
-export function SiteFooter({ eventSlug }: { eventSlug: string }) {
+export function SiteFooter({
+  eventSlug,
+  timezone,
+}: {
+  eventSlug: string;
+  timezone?: string;
+}) {
   const { t } = useI18n();
 
   return (
@@ -45,7 +52,9 @@ export function SiteFooter({ eventSlug }: { eventSlug: string }) {
               {t("home.adminAccess")}
             </Link>
             <span className="font-medium text-muted">
-              {t("home.timezoneValue")}
+              {timezone
+                ? `${t("home.timezone")}: ${formatTimeZoneLabel(timezone)}`
+                : t("home.timezoneValue")}
             </span>
           </div>
         </div>

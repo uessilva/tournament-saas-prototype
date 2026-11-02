@@ -18,6 +18,7 @@ import {
   bracketRoundCount,
   nextPowerOfTwo,
 } from "@/features/competitions/draw";
+import { effectiveDurationMinutes } from "@/features/matches/scheduling";
 import type {
   PublicMatch,
   PublicMatchSource,
@@ -53,7 +54,10 @@ export type PublicMatchRow = {
   bracketSlot: number | null;
   isBye: boolean;
   startsAt: Date | null;
+  durationOverrideMinutes: number | null;
+  defaultDurationMinutes: number;
   status: string;
+  venueId: string | null;
   venueName: string | null;
   homeTeamId: string | null;
   homeTeamName: string | null;
@@ -218,7 +222,13 @@ export function mapPublicMatch(row: PublicMatchRow): PublicMatch {
     knockoutRoundCount: bracketRoundCount(bracketSize),
     isBye: row.isBye,
     startsAt: toIso(row.startsAt),
+    durationMinutes: effectiveDurationMinutes(
+      row.durationOverrideMinutes,
+      row.defaultDurationMinutes,
+    ),
+    durationOverrideMinutes: row.durationOverrideMinutes,
     status: row.status,
+    venueId: row.venueId,
     venueName: row.venueName,
     homeTeamId: row.homeTeamId,
     homeTeamName: row.homeTeamName,
@@ -270,7 +280,10 @@ export function publicMatchQuery() {
       bracketSlot: matches.bracketSlot,
       isBye: matches.isBye,
       startsAt: matches.startsAt,
+      durationOverrideMinutes: matches.durationMinutes,
+      defaultDurationMinutes: competitions.defaultMatchDurationMinutes,
       status: matches.status,
+      venueId: venues.id,
       venueName: venues.name,
       homeTeamId: homeTeam.id,
       homeTeamName: homeTeam.name,

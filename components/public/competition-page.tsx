@@ -18,6 +18,7 @@ import {
 } from "@/components/public/badges";
 import { MatchRow } from "@/components/public/match-row";
 import { useI18n } from "@/lib/i18n/client";
+import { formatTimeZoneLabel } from "@/lib/timezone";
 import { groupDisplayName } from "@/features/public/labels";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
 import type { CompetitionPageData } from "@/features/competitions/types";
@@ -350,7 +351,7 @@ export function CompetitionPage({
                     {t("competition.upcoming")}
                   </h2>
                   <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted">
-                    {t("home.timezoneValue")}
+                    {formatTimeZoneLabel(data.event.timezone)}
                   </span>
                 </div>
                 <div className="mt-2">
@@ -509,7 +510,7 @@ export function CompetitionPage({
         </div>
       </main>
 
-      <SiteFooter eventSlug={data.event.slug} />
+      <SiteFooter eventSlug={data.event.slug} timezone={data.event.timezone} />
     </div>
   );
 }

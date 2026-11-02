@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -518,6 +519,12 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
         <div className="mt-5 rounded-xl bg-soft-green p-4 text-xs leading-5 text-green">
           <p className="font-extrabold">{t("draw.nextStepTitle")}</p>
           <p className="mt-1">{t("draw.nextStepBody")}</p>
+          <Link
+            href={`/admin/events/${data.event.id}/schedule`}
+            className="mt-2 inline-flex items-center gap-1 font-extrabold text-green underline underline-offset-2 hover:text-green-deep"
+          >
+            {t("draw.openSchedule")}
+          </Link>
         </div>
       ) : null}
     </section>

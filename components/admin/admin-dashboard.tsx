@@ -85,6 +85,13 @@ export function AdminDashboard({
               {t("nav.competitions")}
             </a>
             <Link
+              href={`/admin/events/${data.event.id}/schedule`}
+              className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 font-bold text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              {t("admin.schedule")}
+              <ChevronRightIcon className="size-3.5" />
+            </Link>
+            <Link
               href={`/admin/events/${data.event.id}/teams`}
               className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 font-bold text-white/70 transition-colors hover:bg-white/5 hover:text-white"
             >
@@ -145,13 +152,22 @@ export function AdminDashboard({
                 {data.event.locationLabel}
               </p>
             </div>
-            <Link
-              href={`/events/${data.event.slug}`}
-              className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green"
-            >
-              {t("admin.publicHub")}
-              <ArrowUpRightIcon className="size-3.5" />
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={`/admin/events/${data.event.id}/schedule`}
+                className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2.5 text-xs font-extrabold text-ink transition-colors hover:border-green hover:text-green"
+              >
+                <CalendarIcon className="size-3.5" />
+                {t("admin.schedule")}
+              </Link>
+              <Link
+                href={`/events/${data.event.slug}`}
+                className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-green"
+              >
+                {t("admin.publicHub")}
+                <ArrowUpRightIcon className="size-3.5" />
+              </Link>
+            </div>
           </header>
 
           {resetSuccess ? (
