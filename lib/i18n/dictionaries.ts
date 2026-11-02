@@ -116,6 +116,15 @@ const ptBR = {
   "competition.upcoming": "Próximos jogos",
   "competition.groupStage": "Fase de grupos",
   "competition.knockout": "Mata-mata",
+  "competition.leagueTable": "Tabela da liga",
+  "competition.leagueStandingsNote":
+    "Todos contra todos: cada inscrito enfrenta os demais uma vez. A classificação usa apenas resultados confirmados.",
+  "competition.bracketTitle": "Chave do mata-mata",
+  "competition.bracketBody":
+    "Confrontos eliminatórios com byes automáticos. Cada vencedor avança para a fase seguinte.",
+  "competition.bracketPendingTitle": "Chave ainda não publicada",
+  "competition.bracketPendingBody":
+    "A chave aparece assim que o organizador gerar o mata-mata.",
   "competition.partialStandings": "Classificação parcial",
   "competition.standingsNote":
     "Vitória vale 2 pontos. Desempate: pontos, confronto direto quando há empate entre dois, saldo de sets, saldo de games e sorteio semeado.",
@@ -715,6 +724,7 @@ const ptBR = {
     "Os jogos aparecem aqui assim que o organizador gerar o sorteio da competição.",
   "fixtures.viewAll": "Ver todos os jogos",
   "fixtures.groupRound": "{group} · Rodada {round}",
+  "fixtures.leagueRound": "Rodada {round}",
   "fixtures.bye": "Bye",
   "fixtures.groupWinner": "Vencedor {group}",
   "fixtures.groupRunnerUp": "Vice {group}",
@@ -785,9 +795,18 @@ const ptBR = {
   "draw.errorCancelledMatch":
     "Restaure as partidas canceladas antes de regerar o sorteio.",
   "draw.errorCompetitionLocked": "A competição está encerrada ou cancelada.",
-  "draw.errorFormat":
-    "A geração está disponível apenas para o formato grupos + mata-mata.",
+  "draw.errorFormat": "Escolha um formato de competição válido.",
+  "draw.errorFormatLocked":
+    "O formato não pode mudar depois que o torneio foi gerado.",
   "draw.errorFailed": "Não foi possível concluir a ação do sorteio.",
+  "draw.format": "Formato da competição",
+  "draw.formatHint":
+    "Escolha entre todos contra todos, eliminatória simples ou grupos + mata-mata. O formato fica travado após a geração.",
+  "draw.formatLocked":
+    "O formato está travado porque o torneio já foi gerado. Regenere apenas com o mesmo formato.",
+  "draw.directEntrantsHint":
+    "Este formato usa todos os inscritos elegíveis diretamente no sorteio, sem grupos.",
+  "draw.roundRobinValue": "{count} inscritos · todos contra todos",
 
   "schedule.eyebrow": "Agendamento",
   "schedule.title": "Agenda dos jogos",
@@ -1283,6 +1302,8 @@ const ptBR = {
   "standings.emptyBody": "As tabelas aparecem depois que o organizador gerar os grupos e publicar os primeiros resultados.",
   "standings.noGroupsTitle": "Grupos ainda não definidos",
   "standings.noGroupsBody": "O sorteio desta competição foi gerado, mas não há grupos persistidos para exibir.",
+  "standings.noBracketTitle": "Chave ainda não publicada",
+  "standings.noBracketBody": "A chave do mata-mata aparece assim que o organizador gerar os confrontos.",
   "standings.pendingTitle": "Aguardando o sorteio",
   "standings.pendingBody": "A classificação aparece depois que o organizador gerar os grupos desta competição.",
   "standings.viewFull": "Ver classificação completa",
@@ -1443,6 +1464,15 @@ const en: Dictionary = {
   "competition.upcoming": "Next up",
   "competition.groupStage": "Group stage",
   "competition.knockout": "Knockout",
+  "competition.leagueTable": "League table",
+  "competition.leagueStandingsNote":
+    "Round robin: every entrant meets every other once. The table uses confirmed results only.",
+  "competition.bracketTitle": "Knockout bracket",
+  "competition.bracketBody":
+    "Elimination fixtures with automatic Byes. Each winner advances to the next round.",
+  "competition.bracketPendingTitle": "Bracket not published yet",
+  "competition.bracketPendingBody":
+    "The bracket appears as soon as the organiser generates the knockout draw.",
   "competition.partialStandings": "Provisional standings",
   "competition.standingsNote":
     "A win is worth 2 points. Tie-break: points, head-to-head when exactly two are level, set difference, game difference and a seeded draw.",
@@ -2041,6 +2071,7 @@ const en: Dictionary = {
     "Fixtures appear here as soon as the organiser generates the competition draw.",
   "fixtures.viewAll": "View all fixtures",
   "fixtures.groupRound": "{group} · Round {round}",
+  "fixtures.leagueRound": "Round {round}",
   "fixtures.bye": "Bye",
   "fixtures.groupWinner": "{group} winner",
   "fixtures.groupRunnerUp": "{group} runner-up",
@@ -2112,9 +2143,18 @@ const en: Dictionary = {
   "draw.errorCancelledMatch":
     "Restore cancelled matches before regenerating the draw.",
   "draw.errorCompetitionLocked": "The competition is completed or cancelled.",
-  "draw.errorFormat":
-    "Generation is available only for the groups + knockout format.",
+  "draw.errorFormat": "Choose a valid competition format.",
+  "draw.errorFormatLocked":
+    "The format cannot change after the tournament has been generated.",
   "draw.errorFailed": "The draw action could not be completed.",
+  "draw.format": "Competition format",
+  "draw.formatHint":
+    "Choose round robin, single elimination or groups + knockout. The format is locked after generation.",
+  "draw.formatLocked":
+    "The format is locked because the tournament is already generated. Regenerate with the same format.",
+  "draw.directEntrantsHint":
+    "This format places every eligible entrant directly in the draw, without groups.",
+  "draw.roundRobinValue": "{count} entrants · round robin",
 
   "schedule.eyebrow": "Scheduling",
   "schedule.title": "Match schedule",
@@ -2607,6 +2647,8 @@ const en: Dictionary = {
   "standings.emptyBody": "Tables appear after the organiser generates groups and publishes the first results.",
   "standings.noGroupsTitle": "Groups not defined yet",
   "standings.noGroupsBody": "This competition's draw was generated, but no persisted groups were found.",
+  "standings.noBracketTitle": "Bracket not published yet",
+  "standings.noBracketBody": "The knockout bracket appears as soon as the organiser generates the fixtures.",
   "standings.pendingTitle": "Waiting for the draw",
   "standings.pendingBody": "Standings appear after the organiser generates this competition's groups.",
   "standings.viewFull": "View full standings",

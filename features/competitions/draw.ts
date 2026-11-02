@@ -1,11 +1,15 @@
 /**
- * Pure groups + knockout draw rules.
+ * Pure tournament draw rules for every supported format.
  *
  * Preview and persistence both call `buildDrawPlan`, so a stored seed and the
- * persisted entrant order always produce the same groups, fixtures and bracket.
+ * persisted entrant order always produce the same fixtures and bracket.
  * `teams.seedPosition` is the draw order. Regenerating a draw uses
  * `randomizeDrawOrder` with the stored seed; swapping entrants exchanges their
  * draw positions directly.
+ *
+ * - `groups_knockout`: group tables plus a crossed-qualifier knockout bracket.
+ * - `round_robin`: one league table where every entrant meets every other once.
+ * - `single_elimination`: a next-power-of-two knockout bracket with Byes.
  */
 
 export const MIN_ENTRANTS_PER_GROUP = 2;
@@ -15,7 +19,16 @@ export const SUPPORTED_QUALIFIERS = [1, 2] as const;
 
 export type QualifierPosition = (typeof SUPPORTED_QUALIFIERS)[number];
 
+export const COMPETITION_FORMATS = [
+  "round_robin",
+  "single_elimination",
+  "groups_knockout",
+] as const;
+
+export type CompetitionFormat = (typeof COMPETITION_FORMATS)[number];
+
 export type DrawConfig = {
+  format: CompetitionFormat;
   groupCount: number;
   qualifiersPerGroup: number;
   seed: string;
@@ -50,9 +63,17 @@ export type ByeSource = {
   type: "bye";
 };
 
+/** A known entrant placed directly in a knockout first-round slot. */
+export type EntrantSource = {
+  type: "entrant";
+  entrantId: string;
+  entrantName: string;
+};
+
 export type DrawSource =
   | GroupQualifierSource
   | MatchWinnerSource
+  | EntrantSource
   | ByeSource;
 
 export type GroupFixturePlan = {
@@ -84,19 +105,31 @@ export type DrawPlan = {
 export type DrawValidationError =
   | "not_enough_entrants"
   | "ineligible_entrants"
+  | "invalid_format"
   | "invalid_group_count"
   | "invalid_qualifiers"
   | "group_below_min"
   | "insufficient_qualifiers";
 
 export type DrawValidationInput = {
+  format: CompetitionFormat;
   entrantCount: number;
   eligibleEntrantCount: number;
   groupCount: number;
   qualifiersPerGroup: number;
 };
 
+export function isCompetitionFormat(
+  value: unknown,
+): value is CompetitionFormat {
+  return (
+    typeof value === "string" &&
+    (COMPETITION_FORMATS as readonly string[]).includes(value)
+  );
+}
+
 export function validateDrawConfig({
+  format,
   entrantCount,
   eligibleEntrantCount,
   groupCount,
@@ -110,6 +143,16 @@ export function validateDrawConfig({
   if (eligibleEntrantCount < entrantCount) {
     errors.push("ineligible_entrants");
   }
+  if (!isCompetitionFormat(format)) {
+    errors.push("invalid_format");
+  }
+
+  // Group configuration is only meaningful for groups + knockout. A round
+  // robin or single-elimination draw accepts every eligible entrant directly.
+  if (format !== "groups_knockout") {
+    return [...new Set(errors)];
+  }
+
   if (
     !Number.isInteger(groupCount) ||
     groupCount < MIN_GROUPS ||
@@ -228,8 +271,15 @@ export function standardBracketOrder(size: number) {
   return order;
 }
 
-function groupFixturesFor(group: DrawGroup): GroupFixturePlan[] {
-  const players: Array<DrawEntrant | null> = [...group.entrants];
+/**
+ * Circle-method single round robin. Each entrant meets every other exactly
+ * once. The same helper drives a knockout group or the whole league table.
+ */
+function roundRobinFixturesFor(
+  entrants: DrawEntrant[],
+  groupIndex: number,
+): GroupFixturePlan[] {
+  const players: Array<DrawEntrant | null> = [...entrants];
   if (players.length < 2) {
     return [];
   }
@@ -246,7 +296,7 @@ function groupFixturesFor(group: DrawGroup): GroupFixturePlan[] {
       const away = players[players.length - 1 - index];
       if (home && away) {
         fixtures.push({
-          groupIndex: group.index,
+          groupIndex,
           roundNumber: round + 1,
           pairingIndex,
           homeEntrantId: home.id,
@@ -263,6 +313,44 @@ function groupFixturesFor(group: DrawGroup): GroupFixturePlan[] {
     players.splice(0, players.length, fixed, ...rest);
   }
 
+  return fixtures;
+}
+
+function groupFixturesFor(group: DrawGroup): GroupFixturePlan[] {
+  return roundRobinFixturesFor(group.entrants, group.index);
+}
+
+function knockoutRoundsFor(
+  firstRound: KnockoutFixturePlan[],
+  bracketSize: number,
+): KnockoutFixturePlan[] {
+  const fixtures = [...firstRound];
+  let previousRoundMatches = bracketSize / 2;
+  let roundNumber = 2;
+  while (previousRoundMatches > 1) {
+    const currentMatches = previousRoundMatches / 2;
+    for (let bracketSlot = 1; bracketSlot <= currentMatches; bracketSlot += 1) {
+      fixtures.push({
+        roundNumber,
+        bracketSlot,
+        sources: [
+          {
+            type: "match_winner",
+            roundNumber: roundNumber - 1,
+            bracketSlot: bracketSlot * 2 - 1,
+          },
+          {
+            type: "match_winner",
+            roundNumber: roundNumber - 1,
+            bracketSlot: bracketSlot * 2,
+          },
+        ],
+        isBye: false,
+      });
+    }
+    previousRoundMatches = currentMatches;
+    roundNumber += 1;
+  }
   return fixtures;
 }
 
@@ -349,15 +437,74 @@ function assignQualifierSeeds(
   return rankToSource;
 }
 
-export function buildDrawPlan(
-  entrants: DrawEntrant[],
+function buildRoundRobinPlan(
+  ordered: DrawEntrant[],
   config: DrawConfig,
 ): DrawPlan {
-  const ordered = [...entrants].sort(compareEntrants);
-  if (ordered.length < 2) {
-    throw new Error("A draw needs at least two entrants.");
+  return {
+    config,
+    groups: [],
+    groupFixtures: roundRobinFixturesFor(ordered, 0),
+    knockoutFixtures: [],
+    bracketSize: 0,
+    knockoutRoundCount: 0,
+    qualifiers: [],
+    entrantCount: ordered.length,
+  };
+}
+
+function buildSingleEliminationPlan(
+  ordered: DrawEntrant[],
+  config: DrawConfig,
+): DrawPlan {
+  const bracketSize = nextPowerOfTwo(ordered.length);
+  const seedOrder = standardBracketOrder(bracketSize);
+
+  const sourceForRank = (rank: number): DrawSource => {
+    const entrant = ordered[rank - 1];
+    if (!entrant) {
+      return { type: "bye" };
+    }
+    return {
+      type: "entrant",
+      entrantId: entrant.id,
+      entrantName: entrant.name,
+    };
+  };
+
+  const firstRound: KnockoutFixturePlan[] = [];
+  for (let index = 0; index < seedOrder.length; index += 2) {
+    const sources: [DrawSource, DrawSource] = [
+      sourceForRank(seedOrder[index]!),
+      sourceForRank(seedOrder[index + 1]!),
+    ];
+    if (sources[0].type === "bye" && sources[1].type === "bye") {
+      throw new Error("Draw produced a bye without an advancing entrant.");
+    }
+    firstRound.push({
+      roundNumber: 1,
+      bracketSlot: index / 2 + 1,
+      sources,
+      isBye: sources.some((source) => source.type === "bye"),
+    });
   }
 
+  return {
+    config,
+    groups: [],
+    groupFixtures: [],
+    knockoutFixtures: knockoutRoundsFor(firstRound, bracketSize),
+    bracketSize,
+    knockoutRoundCount: bracketRoundCount(bracketSize),
+    qualifiers: [],
+    entrantCount: ordered.length,
+  };
+}
+
+function buildGroupsKnockoutPlan(
+  ordered: DrawEntrant[],
+  config: DrawConfig,
+): DrawPlan {
   const groups: DrawGroup[] = Array.from(
     { length: config.groupCount },
     (_, index) => ({
@@ -417,7 +564,7 @@ export function buildDrawPlan(
   };
 
   const seedOrder = standardBracketOrder(bracketSize);
-  const knockoutFixtures: KnockoutFixturePlan[] = [];
+  const firstRound: KnockoutFixturePlan[] = [];
 
   for (let index = 0; index < seedOrder.length; index += 2) {
     const sources: [DrawSource, DrawSource] = [
@@ -438,7 +585,7 @@ export function buildDrawPlan(
       );
     }
 
-    knockoutFixtures.push({
+    firstRound.push({
       roundNumber: 1,
       bracketSlot: index / 2 + 1,
       sources,
@@ -446,41 +593,32 @@ export function buildDrawPlan(
     });
   }
 
-  let previousRoundMatches = bracketSize / 2;
-  let roundNumber = 2;
-  while (previousRoundMatches > 1) {
-    const currentMatches = previousRoundMatches / 2;
-    for (let bracketSlot = 1; bracketSlot <= currentMatches; bracketSlot += 1) {
-      knockoutFixtures.push({
-        roundNumber,
-        bracketSlot,
-        sources: [
-          {
-            type: "match_winner",
-            roundNumber: roundNumber - 1,
-            bracketSlot: bracketSlot * 2 - 1,
-          },
-          {
-            type: "match_winner",
-            roundNumber: roundNumber - 1,
-            bracketSlot: bracketSlot * 2,
-          },
-        ],
-        isBye: false,
-      });
-    }
-    previousRoundMatches = currentMatches;
-    roundNumber += 1;
-  }
-
   return {
     config,
     groups,
     groupFixtures,
-    knockoutFixtures,
+    knockoutFixtures: knockoutRoundsFor(firstRound, bracketSize),
     bracketSize,
     knockoutRoundCount: bracketRoundCount(bracketSize),
     qualifiers,
     entrantCount: ordered.length,
   };
+}
+
+export function buildDrawPlan(
+  entrants: DrawEntrant[],
+  config: DrawConfig,
+): DrawPlan {
+  const ordered = [...entrants].sort(compareEntrants);
+  if (ordered.length < 2) {
+    throw new Error("A draw needs at least two entrants.");
+  }
+
+  if (config.format === "round_robin") {
+    return buildRoundRobinPlan(ordered, config);
+  }
+  if (config.format === "single_elimination") {
+    return buildSingleEliminationPlan(ordered, config);
+  }
+  return buildGroupsKnockoutPlan(ordered, config);
 }

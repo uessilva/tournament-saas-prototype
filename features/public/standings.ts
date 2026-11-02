@@ -1,8 +1,9 @@
 import { and, asc, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { competitions, events } from "@/lib/db/schema";
+import { competitions, events, matches } from "@/lib/db/schema";
 import { loadCompetitionStandings } from "@/features/competitions/standings-queries";
+import { mapPublicMatch, publicMatchQuery } from "@/features/public/matches";
 import type {
   PublicCompetitionStandings,
   StandingsPageData,
@@ -57,6 +58,19 @@ export async function getStandingsPage(
       drawSeed: competition.drawSeed,
       drawGeneratedAt: competition.drawGeneratedAt?.toISOString() ?? null,
       groups: await loadCompetitionStandings(competition),
+      fixtures:
+        competition.format === "single_elimination"
+          ? (
+              await publicMatchQuery()
+                .where(
+                  and(
+                    eq(matches.competitionId, competition.id),
+                    eq(matches.isBye, false),
+                  ),
+                )
+                .orderBy(asc(matches.roundNumber), asc(matches.bracketSlot))
+            ).map(mapPublicMatch)
+          : [],
     })),
   );
 

@@ -9,22 +9,164 @@ import {
 } from "@/lib/db/schema";
 import { calculateFootballStandings } from "@/features/competitions/football-standings";
 import { calculateTennisStandings } from "@/features/competitions/tennis-standings";
+import type { CompetitionFormat } from "@/features/competitions/draw";
 import type { CompetitionGroup } from "@/features/competitions/types";
+import type { PublicMatch } from "@/features/public/types";
 import { mapPublicMatch, publicMatchQuery } from "@/features/public/matches";
+
+type StandingsTeam = {
+  teamId: string;
+  teamName: string;
+  seedPosition: number;
+};
 
 type StandingsCompetition = {
   id: string;
   sport: "football" | "tennis";
+  format: CompetitionFormat;
   drawSeed: string | null;
 };
 
+function footballGroup(
+  group: { id: string; name: string },
+  teams: StandingsTeam[],
+  results: PublicMatch[],
+  drawSeed: string,
+  allMatches = false,
+): CompetitionGroup {
+  const standingsMatches = results
+    .filter(
+      (match) =>
+        (allMatches || match.groupId === group.id) &&
+        match.homeTeamId != null &&
+        match.awayTeamId != null &&
+        match.homeScore != null &&
+        match.awayScore != null,
+    )
+    .map((match) => ({
+      homeTeamId: match.homeTeamId!,
+      awayTeamId: match.awayTeamId!,
+      homeScore: Number(match.homeScore),
+      awayScore: Number(match.awayScore),
+      isWalkover: match.isWalkover,
+      walkoverWinnerTeamId: match.isWalkover ? match.winnerTeamId : null,
+    }));
+
+  const calculated = calculateFootballStandings(
+    teams,
+    standingsMatches,
+    drawSeed,
+  );
+
+  return {
+    id: group.id,
+    name: group.name,
+    standings: calculated.rows,
+    seededDraws: calculated.seededDraws,
+  };
+}
+
+function tennisGroup(
+  group: { id: string; name: string },
+  teams: StandingsTeam[],
+  results: PublicMatch[],
+  drawSeed: string,
+  allMatches = false,
+): CompetitionGroup {
+  const standingsMatches = results
+    .filter(
+      (match) =>
+        (allMatches || match.groupId === group.id) &&
+        match.homeTeamId != null &&
+        match.awayTeamId != null,
+    )
+    .map((match) => ({
+      homeTeamId: match.homeTeamId!,
+      awayTeamId: match.awayTeamId!,
+      winnerTeamId: match.winnerTeamId,
+      sets: match.sets,
+      isWalkover: match.isWalkover,
+    }));
+
+  return {
+    id: group.id,
+    name: group.name,
+    standings: calculateTennisStandings(
+      teams,
+      standingsMatches,
+      drawSeed,
+    ),
+    seededDraws: [],
+  };
+}
+
+async function loadLeagueTable(
+  competition: StandingsCompetition,
+): Promise<CompetitionGroup[]> {
+  const teamRows = await db
+    .select({ id: teams.id, name: teams.name, seedPosition: teams.seedPosition })
+    .from(teams)
+    .where(eq(teams.competitionId, competition.id))
+    .orderBy(asc(teams.seedPosition), asc(teams.name));
+
+  if (!teamRows.length) {
+    return [];
+  }
+
+  const resultRows = await publicMatchQuery()
+    .where(
+      and(
+        eq(matches.competitionId, competition.id),
+        eq(matches.stage, "group"),
+        ne(matches.status, "cancelled"),
+        isNull(matches.cancelledAt),
+      ),
+    )
+    .orderBy(asc(matches.matchNumber));
+
+  const results = resultRows.map(mapPublicMatch);
+  const standingsTeams = teamRows.map((team, index) => ({
+    teamId: team.id,
+    teamName: team.name,
+    seedPosition: team.seedPosition ?? index + 1,
+  }));
+  const league = { id: competition.id, name: "league" };
+
+  return [
+    competition.sport === "football"
+      ? footballGroup(
+          league,
+          standingsTeams,
+          results,
+          competition.drawSeed ?? competition.id,
+          true,
+        )
+      : tennisGroup(
+          league,
+          standingsTeams,
+          results,
+          competition.drawSeed ?? competition.id,
+          true,
+        ),
+  ];
+}
+
 /**
- * Builds every group table from current confirmed result versions. Cancelled
+ * Builds every public table from current confirmed result versions. A round
+ * robin has one league table holding every entrant; groups + knockout keeps
+ * one table per group; single elimination has no table at all. Cancelled
  * Matches are excluded even though their schedule history is retained.
  */
 export async function loadCompetitionStandings(
   competition: StandingsCompetition,
 ): Promise<CompetitionGroup[]> {
+  if (competition.format === "single_elimination") {
+    return [];
+  }
+  if (competition.format === "round_robin") {
+    return loadLeagueTable(competition);
+  }
+
   const groupRows = await db
     .select({ id: groups.id, name: groups.name, sortOrder: groups.sortOrder })
     .from(groups)
@@ -70,63 +212,18 @@ export async function loadCompetitionStandings(
         seedPosition: entry.seedPosition,
       }));
 
-    if (competition.sport === "football") {
-      const standingsMatches = results
-        .filter(
-          (match) =>
-            match.groupId === group.id &&
-            match.homeTeamId != null &&
-            match.awayTeamId != null &&
-            match.homeScore != null &&
-            match.awayScore != null,
+    return competition.sport === "football"
+      ? footballGroup(
+          group,
+          standingsTeams,
+          results,
+          competition.drawSeed ?? competition.id,
         )
-        .map((match) => ({
-          homeTeamId: match.homeTeamId!,
-          awayTeamId: match.awayTeamId!,
-          homeScore: Number(match.homeScore),
-          awayScore: Number(match.awayScore),
-          isWalkover: match.isWalkover,
-          walkoverWinnerTeamId: match.isWalkover ? match.winnerTeamId : null,
-        }));
-
-      const calculated = calculateFootballStandings(
-        standingsTeams,
-        standingsMatches,
-        competition.drawSeed ?? competition.id,
-      );
-
-      return {
-        id: group.id,
-        name: group.name,
-        standings: calculated.rows,
-        seededDraws: calculated.seededDraws,
-      };
-    }
-
-    const standingsMatches = results
-      .filter(
-        (match) =>
-          match.groupId === group.id &&
-          match.homeTeamId != null &&
-          match.awayTeamId != null,
-      )
-      .map((match) => ({
-        homeTeamId: match.homeTeamId!,
-        awayTeamId: match.awayTeamId!,
-        winnerTeamId: match.winnerTeamId,
-        sets: match.sets,
-        isWalkover: match.isWalkover,
-      }));
-
-    return {
-      id: group.id,
-      name: group.name,
-      standings: calculateTennisStandings(
-        standingsTeams,
-        standingsMatches,
-        competition.drawSeed ?? competition.id,
-      ),
-      seededDraws: [],
-    };
+      : tennisGroup(
+          group,
+          standingsTeams,
+          results,
+          competition.drawSeed ?? competition.id,
+        );
   });
 }

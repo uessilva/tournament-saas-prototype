@@ -18,6 +18,7 @@ import {
 } from "@/components/public/badges";
 import { MatchRow } from "@/components/public/match-row";
 import { StandingsTable } from "@/components/public/standings-table";
+import { knockoutRoundLabel } from "@/features/public/labels";
 import { useI18n } from "@/lib/i18n/client";
 import { formatTimeZoneLabel } from "@/lib/timezone";
 import type { DictionaryKey } from "@/lib/i18n/dictionaries";
@@ -42,6 +43,12 @@ export function CompetitionPage({
   const { t, formatDate, formatDateTime } = useI18n();
   const competition = data.competition;
   const isTennis = competition.sport === "tennis";
+  const isGroups = competition.format === "groups_knockout";
+  const isRoundRobin = competition.format === "round_robin";
+  const isElimination = competition.format === "single_elimination";
+  const bracketRounds = [
+    ...new Set(data.bracket.map((match) => match.roundNumber)),
+  ].sort((a, b) => a - b);
   const registrationState =
     competition.status === "cancelled"
       ? "closed"
@@ -161,17 +168,19 @@ export function CompetitionPage({
                     {t("common.minutes")}
                   </dd>
                 </div>
-                <div>
-                  <dt className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted">
-                    {t("competition.qualifiers")}
-                  </dt>
-                  <dd className="mt-0.5 font-bold">
-                    {t("competition.qualifiersValue").replace(
-                      "{count}",
-                      String(competition.qualifiersPerGroup),
-                    )}
-                  </dd>
-                </div>
+                {isGroups ? (
+                  <div>
+                    <dt className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted">
+                      {t("competition.qualifiers")}
+                    </dt>
+                    <dd className="mt-0.5 font-bold">
+                      {t("competition.qualifiersValue").replace(
+                        "{count}",
+                        String(competition.qualifiersPerGroup),
+                      )}
+                    </dd>
+                  </div>
+                ) : null}
               </dl>
             </aside>
           </div>
@@ -204,20 +213,28 @@ export function CompetitionPage({
                     {t("competition.standings")}
                   </p>
                   <h2 className="display-title mt-2 text-3xl">
-                    {data.groups.length
-                      ? t("competition.groupStandingsTitle")
-                      : isTennis
-                        ? t("competition.partialStandings")
-                        : competition.drawGeneratedAt
-                          ? t("competition.footballGeneratedTitle")
-                          : t("competition.footballPendingTitle")}
+                    {isElimination
+                      ? t("competition.bracketTitle")
+                      : isRoundRobin
+                        ? t("competition.leagueTable")
+                        : data.groups.length
+                          ? t("competition.groupStandingsTitle")
+                          : isTennis
+                            ? t("competition.partialStandings")
+                            : competition.drawGeneratedAt
+                              ? t("competition.footballGeneratedTitle")
+                              : t("competition.footballPendingTitle")}
                   </h2>
                 </div>
                 <div className="flex flex-col items-start gap-2 sm:items-end">
                   <p className="max-w-sm text-xs leading-5 text-muted">
-                    {isTennis
-                      ? t("competition.standingsNote")
-                      : t("competition.footballStandingsNote")}
+                    {isElimination
+                      ? t("competition.bracketBody")
+                      : isRoundRobin
+                        ? t("competition.leagueStandingsNote")
+                        : isTennis
+                          ? t("competition.standingsNote")
+                          : t("competition.footballStandingsNote")}
                   </p>
                   {data.groups.length ? (
                     <Link
@@ -246,14 +263,59 @@ export function CompetitionPage({
                 </p>
               ) : null}
 
-              {data.groups.length ? (
+              {isElimination ? (
+                data.bracket.length ? (
+                  <div className="mt-6 space-y-5">
+                    {bracketRounds.map((roundNumber) => (
+                      <div key={roundNumber}>
+                        <p className="eyebrow text-muted">
+                          {knockoutRoundLabel(
+                            roundNumber,
+                            data.bracket[0]?.knockoutRoundCount ?? 1,
+                            t,
+                          )}
+                        </p>
+                        <div className="mt-1">
+                          {data.bracket
+                            .filter(
+                              (match) => match.roundNumber === roundNumber,
+                            )
+                            .map((match) => (
+                              <MatchRow
+                                key={match.id}
+                                match={match}
+                                timezone={data.event.timezone}
+                                eventSlug={data.event.slug}
+                              />
+                            ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-6 rounded-2xl bg-cream p-5">
+                    <p className="text-sm font-bold">
+                      {competition.drawGeneratedAt
+                        ? t("competition.bracketPendingTitle")
+                        : t("competition.footballPendingTitle")}
+                    </p>
+                    <p className="mt-1.5 text-sm leading-6 text-muted">
+                      {competition.drawGeneratedAt
+                        ? t("competition.bracketPendingBody")
+                        : t("competition.footballPendingBody")}
+                    </p>
+                  </div>
+                )
+              ) : data.groups.length ? (
                 <div className="mt-6 grid gap-8">
                   {data.groups.map((group) => (
                     <StandingsTable
                       key={group.id}
                       group={group}
                       sport={competition.sport}
-                      qualifiersPerGroup={competition.qualifiersPerGroup}
+                      qualifiersPerGroup={
+                        isGroups ? competition.qualifiersPerGroup : 0
+                      }
                     />
                   ))}
                 </div>

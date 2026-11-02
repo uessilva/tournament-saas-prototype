@@ -44,8 +44,10 @@ export type PublicMatchRow = {
   competitionName: string;
   competitionSlug: string;
   sport: Sport;
+  format: string;
   groupCount: number;
   qualifiersPerGroup: number;
+  bracketSize: number | null;
   stage: "group" | "knockout";
   groupId: string | null;
   groupName: string | null;
@@ -215,9 +217,9 @@ function sideSource(
 
 export function mapPublicMatch(row: PublicMatchRow): PublicMatch {
   const score = scoreSummary(row);
-  const bracketSize = nextPowerOfTwo(
-    Math.max(2, row.groupCount * row.qualifiersPerGroup),
-  );
+  const bracketSize =
+    row.bracketSize ??
+    nextPowerOfTwo(Math.max(2, row.groupCount * row.qualifiersPerGroup));
 
   return {
     id: row.id,
@@ -226,6 +228,7 @@ export function mapPublicMatch(row: PublicMatchRow): PublicMatch {
     competitionName: row.competitionName,
     competitionSlug: row.competitionSlug,
     sport: row.sport,
+    format: row.format,
     stage: row.stage,
     groupId: row.groupId,
     groupName: row.groupName,
@@ -284,8 +287,10 @@ export function publicMatchQuery() {
       competitionName: competitions.name,
       competitionSlug: competitions.slug,
       sport: competitions.sport,
+      format: competitions.format,
       groupCount: competitions.groupCount,
       qualifiersPerGroup: competitions.qualifiersPerGroup,
+      bracketSize: competitions.bracketSize,
       stage: matches.stage,
       groupId: matches.groupId,
       groupName: groupName.name,

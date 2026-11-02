@@ -344,7 +344,10 @@ export async function planCompetitionAdvancement(
       const sourceFor = (side: "home" | "away"): AdvancementSource | null => {
         const slot = slotByMatchSide.get(`${match.id}:${side}`);
         if (!slot) {
-          return null;
+          // Single-elimination first-round sides have no slot provenance; the
+          // entrant is stored directly in match_entries.
+          const teamId = entryByMatchSide.get(`${match.id}:${side}`);
+          return teamId ? { type: "entrant", teamId } : null;
         }
         if (slot.sourceType === "bye") {
           return { type: "bye" };

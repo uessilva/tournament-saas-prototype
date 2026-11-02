@@ -24,8 +24,10 @@ import { getRegistrationStatus } from "@/features/competitions/registration";
 import { getEntrantRosterStatus } from "@/features/competitions/eligibility";
 import {
   buildDrawPlan,
+  isCompetitionFormat,
   randomizeDrawOrder,
   validateDrawConfig,
+  type CompetitionFormat,
   type DrawConfig,
   type DrawEntrant,
   type DrawPlan,
@@ -82,11 +84,16 @@ function actionError(error: unknown): DrawActionState {
 }
 
 function parseConfig(formData: FormData): DrawConfig {
+  const rawFormat = formData.get("format");
+  if (!isCompetitionFormat(rawFormat)) {
+    throw new DrawActionError("invalid_format", { format: "invalid" });
+  }
+
   const groupCount = z.coerce.number().int().safeParse(
-    formData.get("groupCount"),
+    formData.get("groupCount") ?? 2,
   );
   const qualifiersPerGroup = z.coerce.number().int().safeParse(
-    formData.get("qualifiersPerGroup"),
+    formData.get("qualifiersPerGroup") ?? 2,
   );
 
   if (!groupCount.success) {
@@ -103,10 +110,27 @@ function parseConfig(formData: FormData): DrawConfig {
   const seed = String(formData.get("seed") ?? "").trim();
 
   return {
+    format: rawFormat,
     groupCount: groupCount.data,
     qualifiersPerGroup: qualifiersPerGroup.data,
     seed,
   };
+}
+
+function lockedConfigFormat(
+  competition: { format: CompetitionFormat; drawGeneratedAt: Date | null },
+  requested: CompetitionFormat,
+) {
+  if (competition.drawGeneratedAt && requested !== competition.format) {
+    throw new DrawActionError("format_locked");
+  }
+  return requested;
+}
+
+function formatForCompetition(
+  competition: typeof competitions.$inferSelect,
+): CompetitionFormat {
+  return competition.format;
 }
 
 async function withDrawMutation(
@@ -275,10 +299,7 @@ function assertGenerationReady(
   config: DrawConfig,
 ) {
   assertNotCancelled(competition);
-
-  if (competition.format !== "groups_knockout") {
-    throw new DrawActionError("unsupported_format");
-  }
+  lockedConfigFormat(competition, config.format);
 
   const registration = getRegistrationStatus(competition);
   if (registration.open) {
@@ -286,6 +307,7 @@ function assertGenerationReady(
   }
 
   const errors = validateDrawConfig({
+    format: config.format,
     entrantCount,
     eligibleEntrantCount,
     groupCount: config.groupCount,
@@ -298,7 +320,9 @@ function assertGenerationReady(
         ? "qualifiersPerGroup"
         : first === "invalid_group_count"
           ? "groupCount"
-          : "draw"]: first,
+          : first === "invalid_format"
+            ? "format"
+            : "draw"]: first,
     });
   }
 }
@@ -351,16 +375,18 @@ async function persistDraw({
     .delete(groups)
     .where(eq(groups.competitionId, competition.id));
 
-  const groupRows = await tx
-    .insert(groups)
-    .values(
-      plan.groups.map((group) => ({
-        competitionId: competition.id,
-        name: group.name,
-        sortOrder: group.index + 1,
-      })),
-    )
-    .returning({ id: groups.id, name: groups.name });
+  const groupRows = plan.groups.length
+    ? await tx
+        .insert(groups)
+        .values(
+          plan.groups.map((group) => ({
+            competitionId: competition.id,
+            name: group.name,
+            sortOrder: group.index + 1,
+          })),
+        )
+        .returning({ id: groups.id, name: groups.name })
+    : [];
 
   const groupIdByName = new Map(
     groupRows.map((group) => [group.name, group.id]),
@@ -404,7 +430,10 @@ async function persistDraw({
   for (const fixture of groupFixtures) {
     values.push({
       competitionId: competition.id,
-      groupId: groupIdByName.get(plan.groups[fixture.groupIndex]!.name)!,
+      groupId:
+        plan.groups.length > 0
+          ? groupIdByName.get(plan.groups[fixture.groupIndex]!.name)!
+          : null,
       stage: "group",
       roundNumber: fixture.roundNumber,
       bracketSlot: null,
@@ -461,15 +490,21 @@ async function persistDraw({
       },
     );
   }
-  if (matchEntryValues.length) {
-    await tx.insert(matchEntries).values(matchEntryValues);
-  }
 
   const slotValues: Array<typeof matchSlots.$inferInsert> = [];
   for (const [number, fixture] of knockoutFixtureByNumber) {
     const matchId = matchIdByNumber.get(number)!;
     fixture.sources.forEach((source, index) => {
       const side = index === 0 ? "home" : "away";
+
+      if (source.type === "entrant") {
+        matchEntryValues.push({
+          matchId,
+          side,
+          teamId: source.entrantId,
+        });
+        return;
+      }
 
       if (source.type === "group_qualifier") {
         slotValues.push({
@@ -505,6 +540,9 @@ async function persistDraw({
       });
     });
   }
+  if (matchEntryValues.length) {
+    await tx.insert(matchEntries).values(matchEntryValues);
+  }
   if (slotValues.length) {
     await tx.insert(matchSlots).values(slotValues);
   }
@@ -512,10 +550,12 @@ async function persistDraw({
   await tx
     .update(competitions)
     .set({
+      format: plan.config.format,
       drawSeed: plan.config.seed,
       drawGeneratedAt: now,
       groupCount: plan.config.groupCount,
       qualifiersPerGroup: plan.config.qualifiersPerGroup,
+      bracketSize: plan.bracketSize || null,
       registrationState: "closed",
       status: "in_progress",
       updatedAt: now,
@@ -528,8 +568,9 @@ async function persistDraw({
     type: "draw.generated",
     entityType: "competition",
     entityId: competition.id,
-    summary: `${competition.name} groups and knockout draw generated from seed ${plan.config.seed}.`,
+    summary: `${competition.name} ${plan.config.format} draw generated from seed ${plan.config.seed}.`,
     metadata: {
+      format: plan.config.format,
       seed: plan.config.seed,
       groups: plan.groups.length,
       qualifiersPerGroup: plan.config.qualifiersPerGroup,
@@ -556,7 +597,11 @@ export async function generateDrawAction(
       rawConfig.seed ||
       context.competition.drawSeed ||
       defaultDrawSeed(context.competition.id);
-    const config = { ...rawConfig, seed };
+    const config = {
+      ...rawConfig,
+      format: lockedConfigFormat(context.competition, rawConfig.format),
+      seed,
+    };
 
     assertGenerationReady(
       context.competition,
@@ -605,9 +650,14 @@ export async function saveDrawConfigAction(
       rawConfig.seed ||
       context.competition.drawSeed ||
       defaultDrawSeed(context.competition.id);
-    const config = { ...rawConfig, seed };
+    const config = {
+      ...rawConfig,
+      format: lockedConfigFormat(context.competition, rawConfig.format),
+      seed,
+    };
 
     const errors = validateDrawConfig({
+      format: config.format,
       entrantCount: context.orderedEntrants.length,
       eligibleEntrantCount: context.eligibleEntrantCount,
       groupCount: config.groupCount,
@@ -619,7 +669,9 @@ export async function saveDrawConfigAction(
           ? "qualifiersPerGroup"
           : errors[0] === "invalid_group_count"
             ? "groupCount"
-            : "draw"]: errors[0]!,
+            : errors[0] === "invalid_format"
+              ? "format"
+              : "draw"]: errors[0]!,
       });
     }
 
@@ -647,6 +699,7 @@ export async function saveDrawConfigAction(
       await context.tx
         .update(competitions)
         .set({
+          format: config.format,
           groupCount: config.groupCount,
           qualifiersPerGroup: config.qualifiersPerGroup,
           drawSeed: seed,
@@ -663,6 +716,7 @@ export async function saveDrawConfigAction(
       entityId: context.competition.id,
       summary: `${context.competition.name} draw configuration saved.`,
       metadata: {
+        format: config.format,
         seed,
         groups: config.groupCount,
         qualifiersPerGroup: config.qualifiersPerGroup,
@@ -692,8 +746,13 @@ export async function regenerateDrawSeedAction(
     assertNotCancelled(context.competition);
 
     const seed = `summer-cup-${randomBytes(4).toString("hex")}`;
-    const config = { ...rawConfig, seed };
+    const config = {
+      ...rawConfig,
+      format: lockedConfigFormat(context.competition, rawConfig.format),
+      seed,
+    };
     const errors = validateDrawConfig({
+      format: config.format,
       entrantCount: context.orderedEntrants.length,
       eligibleEntrantCount: context.eligibleEntrantCount,
       groupCount: config.groupCount,
@@ -733,6 +792,7 @@ export async function regenerateDrawSeedAction(
       await context.tx
         .update(competitions)
         .set({
+          format: config.format,
           groupCount: config.groupCount,
           qualifiersPerGroup: config.qualifiersPerGroup,
           drawSeed: seed,
@@ -748,7 +808,7 @@ export async function regenerateDrawSeedAction(
       entityType: "competition",
       entityId: context.competition.id,
       summary: `${context.competition.name} draw seed regenerated.`,
-      metadata: { seed },
+      metadata: { format: config.format, seed },
     });
 
     revalidateDraw(
@@ -825,25 +885,21 @@ export async function swapDrawEntrantsAction(
       .sort((a, b) => a.seedPosition - b.seedPosition);
 
     if (context.competition.drawGeneratedAt) {
-      assertGenerationReady(
-        context.competition,
-        swappedOrder.length,
-        context.eligibleEntrantCount,
-        {
-          groupCount: context.competition.groupCount,
-          qualifiersPerGroup: context.competition.qualifiersPerGroup,
-          seed:
-            context.competition.drawSeed ??
-            defaultDrawSeed(context.competition.id),
-        },
-      );
-      const plan = buildDrawPlan(swappedOrder, {
+      const swapConfig: DrawConfig = {
+        format: formatForCompetition(context.competition),
         groupCount: context.competition.groupCount,
         qualifiersPerGroup: context.competition.qualifiersPerGroup,
         seed:
           context.competition.drawSeed ??
           defaultDrawSeed(context.competition.id),
-      });
+      };
+      assertGenerationReady(
+        context.competition,
+        swappedOrder.length,
+        context.eligibleEntrantCount,
+        swapConfig,
+      );
+      const plan = buildDrawPlan(swappedOrder, swapConfig);
       await persistDraw({
         tx: context.tx,
         competition: context.competition,

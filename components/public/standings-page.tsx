@@ -6,7 +6,9 @@ import { ArrowLeftIcon, BallIcon, TennisIcon, TrophyIcon } from "@/components/ic
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 import { SportTag } from "@/components/public/badges";
+import { MatchRow } from "@/components/public/match-row";
 import { StandingsTable } from "@/components/public/standings-table";
+import { knockoutRoundLabel } from "@/features/public/labels";
 import { useI18n } from "@/lib/i18n/client";
 import type { StandingsPageData } from "@/features/public/types";
 
@@ -184,46 +186,110 @@ export function StandingsPage({
                 </div>
 
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-bold text-muted">
-                  <span className="rounded-full bg-cream px-2.5 py-1">
-                    {t("standings.qualifiersValue").replace(
-                      "{count}",
-                      String(competition.qualifiersPerGroup),
-                    )}
-                  </span>
+                  {competition.format === "groups_knockout" ? (
+                    <span className="rounded-full bg-cream px-2.5 py-1">
+                      {t("standings.qualifiersValue").replace(
+                        "{count}",
+                        String(competition.qualifiersPerGroup),
+                      )}
+                    </span>
+                  ) : null}
                   <span className="rounded-full bg-cream px-2.5 py-1">
                     {t("standings.walkoverNote")}
                   </span>
                 </div>
 
-                <TieBreakExplanation
-                  sport={competition.sport}
-                  seed={competition.drawSeed}
-                />
-
-                {competition.groups.length ? (
-                  <div className="mt-5 grid gap-7 lg:grid-cols-2">
-                    {competition.groups.map((group) => (
-                      <StandingsTable
-                        key={group.id}
-                        group={group}
-                        sport={competition.sport}
-                        qualifiersPerGroup={competition.qualifiersPerGroup}
-                      />
-                    ))}
-                  </div>
+                {competition.format === "single_elimination" ? (
+                  competition.fixtures.length ? (
+                    <div className="mt-5 flex flex-wrap items-start gap-5">
+                      {[
+                        ...new Set(
+                          competition.fixtures.map(
+                            (match) => match.roundNumber,
+                          ),
+                        ),
+                      ]
+                        .sort((a, b) => a - b)
+                        .map((roundNumber) => (
+                          <div
+                            key={roundNumber}
+                            className="min-w-[260px] flex-1"
+                          >
+                            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted">
+                              {knockoutRoundLabel(
+                                roundNumber,
+                                competition.fixtures[0]
+                                  ?.knockoutRoundCount ?? 1,
+                                t,
+                              )}
+                            </p>
+                            {competition.fixtures
+                              .filter(
+                                (match) =>
+                                  match.roundNumber === roundNumber,
+                              )
+                              .map((match) => (
+                                <MatchRow
+                                  key={match.id}
+                                  match={match}
+                                  timezone={data.event.timezone}
+                                  eventSlug={data.event.slug}
+                                />
+                              ))}
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="mt-5 rounded-2xl bg-cream p-5">
+                      <p className="text-sm font-bold">
+                        {competition.drawGeneratedAt
+                          ? t("standings.noBracketTitle")
+                          : t("standings.pendingTitle")}
+                      </p>
+                      <p className="mt-1.5 text-sm leading-6 text-muted">
+                        {competition.drawGeneratedAt
+                          ? t("standings.noBracketBody")
+                          : t("standings.pendingBody")}
+                      </p>
+                    </div>
+                  )
                 ) : (
-                  <div className="mt-5 rounded-2xl bg-cream p-5">
-                    <p className="text-sm font-bold">
-                      {competition.drawGeneratedAt
-                        ? t("standings.noGroupsTitle")
-                        : t("standings.pendingTitle")}
-                    </p>
-                    <p className="mt-1.5 text-sm leading-6 text-muted">
-                      {competition.drawGeneratedAt
-                        ? t("standings.noGroupsBody")
-                        : t("standings.pendingBody")}
-                    </p>
-                  </div>
+                  <>
+                    <TieBreakExplanation
+                      sport={competition.sport}
+                      seed={competition.drawSeed}
+                    />
+
+                    {competition.groups.length ? (
+                      <div className="mt-5 grid gap-7 lg:grid-cols-2">
+                        {competition.groups.map((group) => (
+                          <StandingsTable
+                            key={group.id}
+                            group={group}
+                            sport={competition.sport}
+                            qualifiersPerGroup={
+                              competition.format === "groups_knockout"
+                                ? competition.qualifiersPerGroup
+                                : 0
+                            }
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-5 rounded-2xl bg-cream p-5">
+                        <p className="text-sm font-bold">
+                          {competition.drawGeneratedAt
+                            ? t("standings.noGroupsTitle")
+                            : t("standings.pendingTitle")}
+                        </p>
+                        <p className="mt-1.5 text-sm leading-6 text-muted">
+                          {competition.drawGeneratedAt
+                            ? t("standings.noGroupsBody")
+                            : t("standings.pendingBody")}
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </section>
             ))}

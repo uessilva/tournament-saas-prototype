@@ -47,6 +47,8 @@ function Feedback({ state }: { state: DrawActionState }) {
       cancelled_match_exists: "draw.errorCancelledMatch",
       competition_locked: "draw.errorCompetitionLocked",
       unsupported_format: "draw.errorFormat",
+      invalid_format: "draw.errorFormat",
+      format_locked: "draw.errorFormatLocked",
       action_failed: "draw.errorFailed",
     };
     return (
@@ -173,15 +175,26 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
   const canEdit = draw.canEdit && !cancelled;
   const validationErrors = draw.validationErrors;
   const registrationOpen = data.competition.registrationOpen;
+  const isGroups = draw.format === "groups_knockout";
+  const formatLocked = draw.generated;
+  const formatOptions = [
+    "round_robin",
+    "single_elimination",
+    "groups_knockout",
+  ] as const;
 
   return (
     <section id="draw" className="surface p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="eyebrow text-green">{t("draw.eyebrow")}</p>
-          <h2 className="display-title mt-2 text-3xl">{t("draw.title")}</h2>
+          <h2 className="display-title mt-2 text-3xl">
+            {isGroups
+              ? t("draw.title")
+              : t(`format.${draw.format}` as DictionaryKey)}
+          </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            {t("draw.body")}
+            {isGroups ? t("draw.body") : t("draw.formatHint")}
           </p>
         </div>
         <span
@@ -217,22 +230,35 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
           </div>
           <div>
             <dt className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-muted">
-              {t("draw.bracketSize")}
+              {t("competition.format")}
             </dt>
             <dd className="mt-0.5 font-bold">
-              {t("draw.bracketSizeValue")
-                .replace("{size}", String(draw.bracketSize))
-                .replace("{rounds}", String(draw.knockoutRoundCount))}
+              {t(`format.${draw.format}` as DictionaryKey)}
             </dd>
           </div>
           <div>
             <dt className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-muted">
-              {t("draw.qualifierRule")}
+              {isGroups ? t("draw.qualifierRule") : t("draw.bracketSize")}
             </dt>
             <dd className="mt-0.5 font-bold">
-              {t("draw.qualifierRuleValue")
-                .replace("{groups}", String(draw.groupCount))
-                .replace("{qualifiers}", String(draw.qualifiersPerGroup))}
+              {isGroups
+                ? t("draw.qualifierRuleValue")
+                    .replace("{groups}", String(draw.groupCount))
+                    .replace(
+                      "{qualifiers}",
+                      String(draw.qualifiersPerGroup),
+                    )
+                : draw.format === "round_robin"
+                  ? t("draw.roundRobinValue").replace(
+                      "{count}",
+                      String(data.entrants.length),
+                    )
+                  : t("draw.bracketSizeValue")
+                      .replace("{size}", String(draw.bracketSize))
+                      .replace(
+                        "{rounds}",
+                        String(draw.knockoutRoundCount),
+                      )}
             </dd>
           </div>
         </dl>
@@ -247,47 +273,79 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
           <input type="hidden" name="eventId" value={data.event.id} />
           <input type="hidden" name="competitionId" value={data.competition.id} />
           <input type="hidden" name="seed" value={draw.seed} />
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="draw-group-count"
-                className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted"
-              >
-                {t("draw.groupCount")}
-              </label>
-              <select
-                id="draw-group-count"
-                name="groupCount"
-                defaultValue={String(draw.groupCount)}
-                disabled={!canEdit}
-                className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold focus:border-green focus:bg-white focus:outline-none disabled:opacity-60"
-              >
-                {groupOptions.map((count) => (
-                  <option key={count} value={count}>
-                    {count}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="draw-qualifier-count"
-                className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted"
-              >
-                {t("draw.qualifiersPerGroup")}
-              </label>
-              <select
-                id="draw-qualifier-count"
-                name="qualifiersPerGroup"
-                defaultValue={String(draw.qualifiersPerGroup)}
-                disabled={!canEdit}
-                className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold focus:border-green focus:bg-white focus:outline-none disabled:opacity-60"
-              >
-                <option value="1">{t("draw.oneQualifier")}</option>
-                <option value="2">{t("draw.twoQualifiers")}</option>
-              </select>
-            </div>
+          <div className="mt-3">
+            <label
+              htmlFor="draw-format"
+              className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted"
+            >
+              {t("draw.format")}
+            </label>
+            <select
+              id="draw-format"
+              name="format"
+              defaultValue={draw.format}
+              disabled={!canEdit || formatLocked}
+              className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold focus:border-green focus:bg-white focus:outline-none disabled:opacity-60"
+            >
+              {formatOptions.map((format) => (
+                <option key={format} value={format}>
+                  {t(`format.${format}` as DictionaryKey)}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-[11px] font-medium text-muted">
+              {formatLocked
+                ? t("draw.formatLocked")
+                : t("draw.formatHint")}
+            </p>
           </div>
+          {isGroups ? (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="draw-group-count"
+                  className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted"
+                >
+                  {t("draw.groupCount")}
+                </label>
+                <select
+                  id="draw-group-count"
+                  name="groupCount"
+                  defaultValue={String(draw.groupCount)}
+                  disabled={!canEdit}
+                  className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold focus:border-green focus:bg-white focus:outline-none disabled:opacity-60"
+                >
+                  {groupOptions.map((count) => (
+                    <option key={count} value={count}>
+                      {count}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="draw-qualifier-count"
+                  className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted"
+                >
+                  {t("draw.qualifiersPerGroup")}
+                </label>
+                <select
+                  id="draw-qualifier-count"
+                  name="qualifiersPerGroup"
+                  defaultValue={String(draw.qualifiersPerGroup)}
+                  disabled={!canEdit}
+                  className="mt-1 w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm font-semibold focus:border-green focus:bg-white focus:outline-none disabled:opacity-60"
+                >
+                  <option value="1">{t("draw.oneQualifier")}</option>
+                  <option value="2">{t("draw.twoQualifiers")}</option>
+                </select>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-3 rounded-lg bg-cream px-3 py-2 text-[11px] leading-5 text-muted">
+              {t("draw.directEntrantsHint")}
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap gap-2">
             <SubmitButton
               label={t("draw.saveConfig")}
@@ -305,6 +363,7 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
           <form action={seedAction} className="mt-3">
             <input type="hidden" name="eventId" value={data.event.id} />
             <input type="hidden" name="competitionId" value={data.competition.id} />
+            <input type="hidden" name="format" value={draw.format} />
             <input type="hidden" name="groupCount" value={draw.groupCount} />
             <input
               type="hidden"
@@ -321,6 +380,7 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
           <form action={swapAction} className="mt-4 space-y-2 border-t border-line pt-4">
             <input type="hidden" name="eventId" value={data.event.id} />
             <input type="hidden" name="competitionId" value={data.competition.id} />
+            <input type="hidden" name="format" value={draw.format} />
             <label
               htmlFor="draw-swap-first"
               className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted"
@@ -370,6 +430,7 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
                 ({
                   not_enough_entrants: "draw.errorNotEnough",
                   ineligible_entrants: "draw.errorIneligible",
+                  invalid_format: "draw.errorFormat",
                   invalid_group_count: "draw.errorGroupCount",
                   invalid_qualifiers: "draw.errorQualifierCount",
                   group_below_min: "draw.errorGroupMinimum",
@@ -385,6 +446,7 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
       <form action={generateAction} className="mt-5 rounded-xl bg-ink p-4 text-white">
         <input type="hidden" name="eventId" value={data.event.id} />
         <input type="hidden" name="competitionId" value={data.competition.id} />
+        <input type="hidden" name="format" value={draw.format} />
         <input type="hidden" name="seed" value={draw.seed} />
         <input type="hidden" name="groupCount" value={draw.groupCount} />
         <input
@@ -445,9 +507,17 @@ export function DrawAdminPanel({ data }: { data: AdminCompetitionData }) {
                   className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-paper px-2.5 py-1.5"
                 >
                   <span className="text-[9px] font-extrabold uppercase tracking-[0.08em] text-muted">
-                    {t("fixtures.groupRound")
-                      .replace("{group}", groupDisplayName(fixture.groupName, t))
-                      .replace("{round}", String(fixture.roundNumber))}
+                    {draw.format === "round_robin"
+                      ? t("fixtures.leagueRound").replace(
+                          "{round}",
+                          String(fixture.roundNumber),
+                        )
+                      : t("fixtures.groupRound")
+                          .replace(
+                            "{group}",
+                            groupDisplayName(fixture.groupName, t),
+                          )
+                          .replace("{round}", String(fixture.roundNumber))}
                   </span>
                   <span className="font-bold">
                     {fixtureName(fixture, "home", draw.knockoutRoundCount, t)}
