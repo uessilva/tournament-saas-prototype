@@ -740,7 +740,7 @@ function TennisResultForm({
                     type="number"
                     inputMode="numeric"
                     min={0}
-                    max={30}
+                    max={name.startsWith("Tiebreak") ? 30 : 7}
                     defaultValue={value ?? ""}
                     className="mt-1 w-full rounded-lg border border-line bg-white px-2 py-2 font-mono text-sm font-bold outline-none focus:border-green disabled:bg-cream"
                   />
