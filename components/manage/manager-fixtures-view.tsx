@@ -99,14 +99,12 @@ export function ManagerFixturesView({
                     eventSlug={eventSlug}
                     showCompetition
                   />
-                  {match.sport === "football" ? (
-                    <ManagerScoresheetActions
-                      matchId={match.id}
-                      matchStatus={match.status}
-                      sheets={data.scoresheetsByMatch[match.id] ?? []}
-                      timezone={timezone}
-                    />
-                  ) : null}
+                  <ManagerScoresheetActions
+                    matchId={match.id}
+                    matchStatus={match.status}
+                    sheets={data.scoresheetsByMatch[match.id] ?? []}
+                    timezone={timezone}
+                  />
                   <ManagerDisputeActions
                     matchId={match.id}
                     matchStatus={match.status}
